@@ -1,0 +1,9 @@
+#Copy file from container
+kubectl cp namespace/container-name:file.ext dest/path/file.ext
+
+
+#Create config to scp
+az ssh config --ip jumpboxIP --file .\azuressh.config
+
+#SCP from Jumpbox to local
+scp -F .\azuressh.config jumpboxIP:path/to/the/file/just/downloaded/file.ext local/path\file.ext

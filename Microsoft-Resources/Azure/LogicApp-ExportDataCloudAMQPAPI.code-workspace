@@ -1,0 +1,854 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "HTTP": {
+                "inputs": {
+                    "authentication": {
+                        "password": "VMkgmaKKM9yEpgDjHPqUiZRJAcIJ8mtR",
+                        "type": "Basic",
+                        "username": "svsdnqnm"
+                    },
+                    "headers": {
+                        "ContentType": "application/json"
+                    },
+                    "method": "GET",
+                    "uri": "https://eager-swan.rmq.cloudamqp.com/api/nodes/rabbit@eager-swan-01?memory=true"
+                },
+                "runAfter": {},
+                "runtimeConfiguration": {
+                    "staticResult": {
+                        "name": "HTTP0",
+                        "staticResultOptions": "Disabled"
+                    }
+                },
+                "type": "Http"
+            },
+            "Initialize_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "JsonOutputAPI",
+                            "type": "string",
+                            "value": "@{body('HTTP')}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "HTTP": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_2": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Memlimit",
+                            "type": "string",
+                            "value": "{\"mem_limit\":@{body('Parse_JSON')?['mem_limit']},\"disk_free_limit\":@{body('Parse_JSON')?['disk_free_limit']}}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Parse_JSON": {
+                "inputs": {
+                    "content": "@variables('JsonOutputAPI')",
+                    "schema": {
+                        "properties": {
+                            "applications": {
+                                "items": {
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "description",
+                                        "version"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "auth_mechanisms": {
+                                "items": {
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "description",
+                                        "enabled"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "channel_closed": {
+                                "type": "number"
+                            },
+                            "channel_closed_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "channel_created": {
+                                "type": "number"
+                            },
+                            "channel_created_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "cluster_links": {
+                                "type": "array"
+                            },
+                            "config_files": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            "connection_closed": {
+                                "type": "number"
+                            },
+                            "connection_closed_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "connection_created": {
+                                "type": "number"
+                            },
+                            "connection_created_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "context_switches": {
+                                "type": "number"
+                            },
+                            "context_switches_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "contexts": {
+                                "items": {
+                                    "properties": {
+                                        "cowboy_opts": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "ip": {
+                                            "type": "string"
+                                        },
+                                        "path": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "string"
+                                        },
+                                        "ssl": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "description",
+                                        "path",
+                                        "cowboy_opts",
+                                        "ip",
+                                        "port",
+                                        "ssl"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "db_dir": {
+                                "type": "string"
+                            },
+                            "disk_free": {
+                                "type": "number"
+                            },
+                            "disk_free_alarm": {
+                                "type": "boolean"
+                            },
+                            "disk_free_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "disk_free_limit": {
+                                "type": "number"
+                            },
+                            "enabled_plugins": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            "exchange_types": {
+                                "items": {
+                                    "properties": {
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "internal_purpose": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "description",
+                                        "enabled"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "fd_total": {
+                                "type": "number"
+                            },
+                            "fd_used": {
+                                "type": "number"
+                            },
+                            "fd_used_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "gc_bytes_reclaimed": {
+                                "type": "number"
+                            },
+                            "gc_bytes_reclaimed_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "gc_num": {
+                                "type": "number"
+                            },
+                            "gc_num_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_file_handle_open_attempt_avg_time": {
+                                "type": "number"
+                            },
+                            "io_file_handle_open_attempt_avg_time_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_file_handle_open_attempt_count": {
+                                "type": "number"
+                            },
+                            "io_file_handle_open_attempt_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_read_avg_time": {
+                                "type": "number"
+                            },
+                            "io_read_avg_time_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_read_bytes": {
+                                "type": "number"
+                            },
+                            "io_read_bytes_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_read_count": {
+                                "type": "number"
+                            },
+                            "io_read_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_reopen_count": {
+                                "type": "number"
+                            },
+                            "io_reopen_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_seek_avg_time": {
+                                "type": "number"
+                            },
+                            "io_seek_avg_time_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_seek_count": {
+                                "type": "number"
+                            },
+                            "io_seek_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_sync_avg_time": {
+                                "type": "number"
+                            },
+                            "io_sync_avg_time_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_sync_count": {
+                                "type": "number"
+                            },
+                            "io_sync_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_write_avg_time": {
+                                "type": "number"
+                            },
+                            "io_write_avg_time_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_write_bytes": {
+                                "type": "number"
+                            },
+                            "io_write_bytes_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "io_write_count": {
+                                "type": "number"
+                            },
+                            "io_write_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "log_files": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            "mem_alarm": {
+                                "type": "boolean"
+                            },
+                            "mem_calculation_strategy": {
+                                "type": "string"
+                            },
+                            "mem_limit": {
+                                "type": "number"
+                            },
+                            "mem_used": {
+                                "type": "number"
+                            },
+                            "mem_used_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "memory": {
+                                "properties": {
+                                    "allocated_unused": {
+                                        "type": "number"
+                                    },
+                                    "atom": {
+                                        "type": "number"
+                                    },
+                                    "binary": {
+                                        "type": "number"
+                                    },
+                                    "code": {
+                                        "type": "number"
+                                    },
+                                    "connection_channels": {
+                                        "type": "number"
+                                    },
+                                    "connection_other": {
+                                        "type": "number"
+                                    },
+                                    "connection_readers": {
+                                        "type": "number"
+                                    },
+                                    "connection_writers": {
+                                        "type": "number"
+                                    },
+                                    "metrics": {
+                                        "type": "number"
+                                    },
+                                    "mgmt_db": {
+                                        "type": "number"
+                                    },
+                                    "mnesia": {
+                                        "type": "number"
+                                    },
+                                    "msg_index": {
+                                        "type": "number"
+                                    },
+                                    "other_ets": {
+                                        "type": "number"
+                                    },
+                                    "other_proc": {
+                                        "type": "number"
+                                    },
+                                    "other_system": {
+                                        "type": "number"
+                                    },
+                                    "plugins": {
+                                        "type": "number"
+                                    },
+                                    "queue_procs": {
+                                        "type": "number"
+                                    },
+                                    "queue_slave_procs": {
+                                        "type": "number"
+                                    },
+                                    "reserved_unallocated": {
+                                        "type": "number"
+                                    },
+                                    "strategy": {
+                                        "type": "string"
+                                    },
+                                    "total": {
+                                        "properties": {
+                                            "allocated": {
+                                                "type": "number"
+                                            },
+                                            "erlang": {
+                                                "type": "number"
+                                            },
+                                            "rss": {
+                                                "type": "number"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "metrics_gc_queue_length": {
+                                "properties": {
+                                    "channel_closed": {
+                                        "type": "number"
+                                    },
+                                    "channel_consumer_deleted": {
+                                        "type": "number"
+                                    },
+                                    "connection_closed": {
+                                        "type": "number"
+                                    },
+                                    "consumer_deleted": {
+                                        "type": "number"
+                                    },
+                                    "exchange_deleted": {
+                                        "type": "number"
+                                    },
+                                    "node_node_deleted": {
+                                        "type": "number"
+                                    },
+                                    "queue_deleted": {
+                                        "type": "number"
+                                    },
+                                    "vhost_deleted": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "mnesia_disk_tx_count": {
+                                "type": "number"
+                            },
+                            "mnesia_disk_tx_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "mnesia_ram_tx_count": {
+                                "type": "number"
+                            },
+                            "mnesia_ram_tx_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "msg_store_read_count": {
+                                "type": "number"
+                            },
+                            "msg_store_read_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "msg_store_write_count": {
+                                "type": "number"
+                            },
+                            "msg_store_write_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "net_ticktime": {
+                                "type": "number"
+                            },
+                            "os_pid": {
+                                "type": "string"
+                            },
+                            "partitions": {
+                                "type": "array"
+                            },
+                            "proc_total": {
+                                "type": "number"
+                            },
+                            "proc_used": {
+                                "type": "number"
+                            },
+                            "proc_used_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "processors": {
+                                "type": "number"
+                            },
+                            "queue_created": {
+                                "type": "number"
+                            },
+                            "queue_created_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "queue_declared": {
+                                "type": "number"
+                            },
+                            "queue_declared_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "queue_deleted": {
+                                "type": "number"
+                            },
+                            "queue_deleted_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "queue_index_journal_write_count": {
+                                "type": "number"
+                            },
+                            "queue_index_journal_write_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "queue_index_read_count": {
+                                "type": "number"
+                            },
+                            "queue_index_read_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "queue_index_write_count": {
+                                "type": "number"
+                            },
+                            "queue_index_write_count_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "rates_mode": {
+                                "type": "string"
+                            },
+                            "run_queue": {
+                                "type": "number"
+                            },
+                            "running": {
+                                "type": "boolean"
+                            },
+                            "sockets_total": {
+                                "type": "number"
+                            },
+                            "sockets_used": {
+                                "type": "number"
+                            },
+                            "sockets_used_details": {
+                                "properties": {
+                                    "rate": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "type": {
+                                "type": "string"
+                            },
+                            "uptime": {
+                                "type": "number"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "Initialize_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "Parse_JSON_2": {
+                "inputs": {
+                    "content": "@variables('Memlimit')",
+                    "schema": {
+                        "properties": {
+                            "inputs": {
+                                "properties": {
+                                    "variables": {
+                                        "items": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "name",
+                                                "type",
+                                                "value"
+                                            ],
+                                            "type": "object"
+                                        },
+                                        "type": "array"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "Initialize_variable_2": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "Send_Data": {
+                "inputs": {
+                    "body": "@variables('Memlimit')",
+                    "headers": {
+                        "Log-Type": "CloudAMQP"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/api/logs"
+                },
+                "runAfter": {
+                    "Parse_JSON_2": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "staticResults": {
+            "HTTP0": {
+                "outputs": {
+                    "headers": {},
+                    "statusCode": "OK"
+                },
+                "status": "Succeeded"
+            }
+        },
+        "triggers": {
+            "Recurrence": {
+                "recurrence": {
+                    "frequency": "Minute",
+                    "interval": 5
+                },
+                "type": "Recurrence"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "azureloganalyticsdatacollector": {
+                    "connectionId": "/subscriptions/40b3527d-7dc4-45a4-89e1-21a7147fa9f7/resourceGroups/VM/providers/Microsoft.Web/connections/azureloganalyticsdatacollector-2",
+                    "connectionName": "azureloganalyticsdatacollector-2",
+                    "id": "/subscriptions/40b3527d-7dc4-45a4-89e1-21a7147fa9f7/providers/Microsoft.Web/locations/westeurope/managedApis/azureloganalyticsdatacollector"
+                }
+            }
+        }
+    }
+}
