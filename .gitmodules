@@ -1,3 +1,6 @@
 [submodule "Linux-Resources"]
 	path = Linux-Resources
 	url = https://Catskan@github.com/Catskan/Linux-resources.git
+[submodule "Microsoft-Resources"]
+	path = Microsoft-Resources
+	url = https://Catskan@github.com/Catskan/Microsoft-resources.git
