@@ -1,0 +1,916 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Branch_name": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "BranchName",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "ClientName": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "TenantName",
+                            "type": "string",
+                            "value": "@{outputs('Keep_client_name')?['body']}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "SharepointID": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Condition": {
+                "actions": {
+                    "Pipeline_success": {
+                        "inputs": {
+                            "body": {
+                                "Body": "<p>Tenant @{variables('TenantName')} was created. Partner: @{triggerBody()?['Partner']?['Value']}</p>",
+                                "Subject": "Tenant @{variables('TenantName')} was created. Partner : @{triggerBody()?['Partner']?['Value']}",
+                                "To": "794a6a31.martellotech.com@ca.teams.ms;4b2f54b5.martellotech.com@ca.teams.ms"
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['office365_1']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/v2/Mail"
+                        },
+                        "runAfter": {},
+                        "type": "ApiConnection"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Pipeline_Error": {
+                            "inputs": {
+                                "body": {
+                                    "Body": "<p>Pipeline error @{variables('PipelineName')} - @{variables('BranchName')}</p>",
+                                    "Subject": "Pipeline error @{variables('PipelineName')} - @{variables('BranchName')}",
+                                    "To": "794a6a31.martellotech.com@ca.teams.ms;4b2f54b5.martellotech.com@ca.teams.ms"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['office365_2']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/v2/Mail"
+                            },
+                            "runAfter": {},
+                            "type": "ApiConnection"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('Result')",
+                                "succeeded"
+                            ]
+                        },
+                        {
+                            "equals": [
+                                "@variables('State')",
+                                "completed"
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Until": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "Condition_2": {
+                "actions": {
+                    "BuildID": {
+                        "inputs": {
+                            "name": "BuildID",
+                            "value": "@body('Retrive_Pipeline_Run_ID')?['id']"
+                        },
+                        "runAfter": {
+                            "Retrive_Pipeline_Run_ID": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "SetVariable"
+                    },
+                    "Deploy_SWO": {
+                        "inputs": {
+                            "body": {
+                                "Body": "{\n    \"resources\": {\n        \"repositories\": {\n            \"self\": {\n                \"refName\": \"refs/heads/master\"\n            }\n        }\n    },\n    \"variables\": {\n        \"CLIENTNAME\": {\n            \"isSecret\": false,\n            \"value\": \"@{variables('TenantName')}\"\n        },\n       \"SHAREPOINTID\": {\n            \"isSecret\": false,\n            \"value\": \"@{variables('SharepointID')}\"\n       },\n       \"LICENCE_LEVEL\": {\n            \"isSecret\": false,\n            \"value\": \"@{variables('LicenseLevel')}\"\n       },\n      \"LICENSE_TYPE\": {\n           \"isSecret\": false,\n           \"value\": \"@{variables('LicenseType')}\"\n    },\n     \"EXEC_LOGICAPP\": {\n           \"isSecret\": false,\n           \"value\": true\n   }\n  }\n}",
+                                "Method": "POST",
+                                "Uri": "https://dev.azure.com/gsxsolutions/cbmt/_apis/pipelines/@{variables('PipelineID')}/runs?api-version=6.0-preview.1"
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['visualstudioteamservices_1']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/httprequest",
+                            "queries": {
+                                "account": "gsxsolutions"
+                            }
+                        },
+                        "runAfter": {
+                            "Pipeline_ID_SWO": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection"
+                    },
+                    "Pipeline_ID_SWO": {
+                        "inputs": {
+                            "name": "PipelineID",
+                            "value": 256
+                        },
+                        "runAfter": {},
+                        "type": "SetVariable"
+                    },
+                    "Retrive_Pipeline_Run_ID": {
+                        "inputs": {
+                            "content": "@body('Deploy_SWO')",
+                            "schema": {
+                                "properties": {
+                                    "_links": {
+                                        "properties": {
+                                            "pipeline": {
+                                                "properties": {
+                                                    "href": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "pipeline.web": {
+                                                "properties": {
+                                                    "href": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "self": {
+                                                "properties": {
+                                                    "href": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "web": {
+                                                "properties": {
+                                                    "href": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "createdDate": {
+                                        "type": "string"
+                                    },
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "pipeline": {
+                                        "properties": {
+                                            "folder": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "revision": {
+                                                "type": "integer"
+                                            },
+                                            "url": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "resources": {
+                                        "properties": {
+                                            "repositories": {
+                                                "properties": {
+                                                    "self": {
+                                                        "properties": {
+                                                            "refName": {
+                                                                "type": "string"
+                                                            },
+                                                            "repository": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "version": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "state": {
+                                        "type": "string"
+                                    },
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "runAfter": {
+                            "Deploy_SWO": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ParseJson"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Parse_JSON": {
+                            "inputs": {
+                                "content": "@body('Run_the_deploy_pipeline')",
+                                "schema": {
+                                    "properties": {
+                                        "_links": {
+                                            "properties": {
+                                                "pipeline": {
+                                                    "properties": {
+                                                        "href": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "pipeline.web": {
+                                                    "properties": {
+                                                        "href": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "self": {
+                                                    "properties": {
+                                                        "href": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "web": {
+                                                    "properties": {
+                                                        "href": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "createdDate": {
+                                            "type": "string"
+                                        },
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "pipeline": {
+                                            "properties": {
+                                                "folder": {
+                                                    "type": "string"
+                                                },
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "revision": {
+                                                    "type": "integer"
+                                                },
+                                                "url": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "resources": {
+                                            "properties": {
+                                                "repositories": {
+                                                    "properties": {
+                                                        "self": {
+                                                            "properties": {
+                                                                "refName": {
+                                                                    "type": "string"
+                                                                },
+                                                                "repository": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "type": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "version": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "state": {
+                                            "type": "string"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "runAfter": {
+                                "Run_the_deploy_pipeline": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ParseJson"
+                        },
+                        "PipelineID_tenant": {
+                            "inputs": {
+                                "name": "PipelineID",
+                                "value": 250
+                            },
+                            "runAfter": {},
+                            "type": "SetVariable"
+                        },
+                        "Run_the_deploy_pipeline": {
+                            "inputs": {
+                                "body": {
+                                    "Body": "{\n    \"resources\": {\n        \"repositories\": {\n            \"self\": {\n                \"refName\": \"refs/heads/master\"\n            }\n        }\n    },\n    \"variables\": {\n        \"CLIENTNAME\": {\n            \"isSecret\": false,\n            \"value\": \"@{variables('TenantName')}\"\n        },\n       \"SHAREPOINTID\": {\n            \"isSecret\": false,\n            \"value\": \"@{variables('SharepointID')}\"\n       },\n       \"LICENCE_LEVEL\": {\n            \"isSecret\": false,\n            \"value\": \"@{variables('LicenseLevel')}\"\n       },\n      \"LICENSE_TYPE\": {\n           \"isSecret\": false,\n           \"value\": \"@{variables('LicenseType')}\"\n    },\n     \"EXEC_LOGICAPP\": {\n           \"isSecret\": false,\n           \"value\": true\n   }\n  }\n}",
+                                    "Method": "POST",
+                                    "Uri": "https://dev.azure.com/gsxsolutions/cbmt/_apis/pipelines/@{variables('PipelineID')}/runs?api-version=6.0-preview.1"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['visualstudioteamservices_2']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/httprequest",
+                                "queries": {
+                                    "account": "gsxsolutions"
+                                }
+                            },
+                            "runAfter": {
+                                "PipelineID_tenant": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection"
+                        },
+                        "Set_variable_7": {
+                            "inputs": {
+                                "name": "BuildID",
+                                "value": "@body('Parse_JSON')?['id']"
+                            },
+                            "runAfter": {
+                                "Parse_JSON": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "SetVariable"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@triggerBody()?['Partner']?['Value']",
+                                "SoftwareOne"
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Switch": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "Init_BuildID": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "BuildID",
+                            "type": "integer"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Init_Pipeline_ID": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Init_LicenseLevel": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "LicenseLevel",
+                            "type": "integer"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "LicenseType": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Init_Pipeline_ID": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "PipelineID",
+                            "type": "integer"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Init_LicenseLevel": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_PipelineName": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "PipelineName",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Branch_name": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "State",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_3": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_3": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Result",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Condition_2": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Keep_client_name": {
+                "inputs": {
+                    "code": "var tenantURL = workflowContext.trigger.outputs.body.o365_x0020_tenant;\r\n\r\nvar tenant = tenantURL.split('.');\r\n\r\nvar name = tenant[0];\r\nvar domain  = tenant[1];\r\nvar prefix = tenant[2];\r\n\r\nreturn name;"
+                },
+                "runAfter": {},
+                "type": "JavaScriptCode"
+            },
+            "LicenseType": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "LicenseType",
+                            "type": "string",
+                            "value": "@triggerBody()?['Licence_x0020_Type']?['Value']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "ClientName": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "SharepointID": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "SharepointID",
+                            "type": "integer",
+                            "value": "@triggerBody()?['ID']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Keep_client_name": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Switch": {
+                "cases": {
+                    "Enterprise": {
+                        "actions": {
+                            "Set_variable_5": {
+                                "inputs": {
+                                    "name": "LicenseLevel",
+                                    "value": 150
+                                },
+                                "runAfter": {},
+                                "type": "SetVariable"
+                            }
+                        },
+                        "case": "Enterprise"
+                    },
+                    "Essential": {
+                        "actions": {
+                            "Set_variable_4": {
+                                "inputs": {
+                                    "name": "LicenseLevel",
+                                    "value": 100
+                                },
+                                "runAfter": {},
+                                "type": "SetVariable"
+                            }
+                        },
+                        "case": "Essential"
+                    },
+                    "Ultimate": {
+                        "actions": {
+                            "Set_variable_6": {
+                                "inputs": {
+                                    "name": "LicenseLevel",
+                                    "value": 200
+                                },
+                                "runAfter": {},
+                                "type": "SetVariable"
+                            }
+                        },
+                        "case": "Ultimate"
+                    }
+                },
+                "default": {
+                    "actions": {}
+                },
+                "expression": "@variables('LicenseType')",
+                "runAfter": {
+                    "Init_BuildID": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Switch"
+            },
+            "Until": {
+                "actions": {
+                    "Get_pipeline_status": {
+                        "inputs": {
+                            "body": {
+                                "Method": "GET",
+                                "Uri": "https://dev.azure.com/gsxsolutions/cbmt/_apis/pipelines/@{variables('PipelineID')}/runs/@{variables('BuildID')}?api-version=6.0-preview.1"
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['visualstudioteamservices_3']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/httprequest",
+                            "queries": {
+                                "account": "gsxsolutions"
+                            }
+                        },
+                        "runAfter": {},
+                        "type": "ApiConnection"
+                    },
+                    "Parse_JSON_3": {
+                        "inputs": {
+                            "content": "@body('Get_pipeline_status')",
+                            "schema": {
+                                "properties": {
+                                    "_links": {
+                                        "properties": {
+                                            "pipeline": {
+                                                "properties": {
+                                                    "href": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "pipeline.web": {
+                                                "properties": {
+                                                    "href": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "self": {
+                                                "properties": {
+                                                    "href": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "web": {
+                                                "properties": {
+                                                    "href": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "createdDate": {
+                                        "type": "string"
+                                    },
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "pipeline": {
+                                        "properties": {
+                                            "folder": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "revision": {
+                                                "type": "integer"
+                                            },
+                                            "url": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "resources": {
+                                        "properties": {
+                                            "repositories": {
+                                                "properties": {
+                                                    "self": {
+                                                        "properties": {
+                                                            "refName": {
+                                                                "type": "string"
+                                                            },
+                                                            "repository": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "version": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "state": {
+                                        "type": "string"
+                                    },
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "runAfter": {
+                            "Get_pipeline_status": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ParseJson"
+                    },
+                    "Set_PipelineName": {
+                        "inputs": {
+                            "name": "PipelineName",
+                            "value": "@body('Parse_JSON_3')?['pipeline']?['name']"
+                        },
+                        "runAfter": {
+                            "Set_variable_3": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "SetVariable"
+                    },
+                    "Set_variable": {
+                        "inputs": {
+                            "name": "State",
+                            "value": "@body('Parse_JSON_3')?['state']"
+                        },
+                        "runAfter": {
+                            "Parse_JSON_3": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "SetVariable"
+                    },
+                    "Set_variable_2": {
+                        "inputs": {
+                            "name": "Result",
+                            "value": "@body('Parse_JSON_3')?['result']"
+                        },
+                        "runAfter": {
+                            "Set_variable": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "SetVariable"
+                    },
+                    "Set_variable_3": {
+                        "inputs": {
+                            "name": "BranchName",
+                            "value": "@body('Parse_JSON_3')?['name']"
+                        },
+                        "runAfter": {
+                            "Set_variable_2": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "SetVariable"
+                    }
+                },
+                "expression": "@equals(variables('State'), 'completed')",
+                "limit": {
+                    "count": 3600,
+                    "timeout": "PT1H"
+                },
+                "runAfter": {
+                    "Initialize_PipelineName": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Until"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "When_an_item_is_created": {
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['sharepointonline']['connectionId']"
+                        }
+                    },
+                    "method": "get",
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://martello.sharepoint.com/sites/GSX-IT'))}/tables/@{encodeURIComponent(encodeURIComponent('f7c1e322-bb8e-4b91-91d1-675361635137'))}/onnewitems"
+                },
+                "recurrence": {
+                    "frequency": "Hour",
+                    "interval": 4
+                },
+                "splitOn": "@triggerBody()?['value']",
+                "type": "ApiConnection"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "office365_1": {
+                    "connectionId": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/resourceGroups/cbmtprod_logicapps/providers/Microsoft.Web/connections/office365-1",
+                    "connectionName": "office365-1",
+                    "id": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/providers/Microsoft.Web/locations/westeurope/managedApis/office365"
+                },
+                "office365_2": {
+                    "connectionId": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/resourceGroups/cbmtprod_logicapps/providers/Microsoft.Web/connections/office365-2",
+                    "connectionName": "office365-2",
+                    "id": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/providers/Microsoft.Web/locations/westeurope/managedApis/office365"
+                },
+                "sharepointonline": {
+                    "connectionId": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/resourceGroups/cbmtprod_logicapps/providers/Microsoft.Web/connections/sharepointonline-3",
+                    "connectionName": "sharepointonline-3",
+                    "id": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/providers/Microsoft.Web/locations/westeurope/managedApis/sharepointonline"
+                },
+                "visualstudioteamservices_1": {
+                    "connectionId": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/resourceGroups/cbmtprod_logicapps/providers/Microsoft.Web/connections/visualstudioteamservices-1",
+                    "connectionName": "visualstudioteamservices-1",
+                    "id": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/providers/Microsoft.Web/locations/westeurope/managedApis/visualstudioteamservices"
+                },
+                "visualstudioteamservices_2": {
+                    "connectionId": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/resourceGroups/cbmtprod_logicapps/providers/Microsoft.Web/connections/visualstudioteamservices-2",
+                    "connectionName": "visualstudioteamservices-2",
+                    "id": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/providers/Microsoft.Web/locations/westeurope/managedApis/visualstudioteamservices"
+                },
+                "visualstudioteamservices_3": {
+                    "connectionId": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/resourceGroups/cbmtprod_logicapps/providers/Microsoft.Web/connections/visualstudioteamservices-3",
+                    "connectionName": "visualstudioteamservices-3",
+                    "id": "/subscriptions/efcfb0fe-d308-4c80-9615-57eddb9b2d2a/providers/Microsoft.Web/locations/westeurope/managedApis/visualstudioteamservices"
+                }
+            }
+        }
+    }
+}

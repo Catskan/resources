@@ -1,0 +1,239 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Initialize_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "SHAREPOINTID",
+                            "type": "integer",
+                            "value": "@int(triggerBody()?['variables']?['SHAREPOINTID']?['value'])"
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_2": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "SQLSERVERNAME",
+                            "type": "string",
+                            "value": "@triggerBody()?['variables']?['SQLSERVERNAME']?['value']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_3": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "SQLUSERNAME",
+                            "type": "string",
+                            "value": "@triggerBody()?['variables']?['SQLUSERNAME']?['value']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_6": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_4": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "SQLPASSWORD",
+                            "type": "string",
+                            "value": "@triggerBody()?['variables']?['SQLPASSWORD']?['value']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_3": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_5": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "TENANTURL",
+                            "type": "string",
+                            "value": "@triggerBody()?['variables']?['TENANTURL']?['value']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_4": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_6": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "SQLDATABASENAME",
+                            "type": "string",
+                            "value": "@triggerBody()?['variables']?['SQLDATABASENAME']?['value']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_2": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Update_item": {
+                "inputs": {
+                    "body": {
+                        "Creation_x0020_Date": "@{utcNow()}",
+                        "Production_x0020_start_x0020_dat": "@{utcNow()}",
+                        "SQL_x0020_Database": "@{variables('SQLDATABASENAME')}",
+                        "SQL_x0020_Server": "@variables('SQLSERVERNAME')",
+                        "SQL_x0020_User_x0020_Password": "@variables('SQLPASSWORD')",
+                        "SQL_x0020_Username": "@variables('SQLUSERNAME')",
+                        "Status": {
+                            "Value": "In Production"
+                        },
+                        "WEBUI_x0020_Url": "@variables('TENANTURL')"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['sharepointonline']['connectionId']"
+                        }
+                    },
+                    "method": "patch",
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://martello.sharepoint.com/sites/GSX-ProjectSWO'))}/tables/@{encodeURIComponent(encodeURIComponent('9d50a43a-4d83-4aec-94c5-6ad9289e3063'))}/items/@{encodeURIComponent(variables('SHAREPOINTID'))}"
+                },
+                "runAfter": {
+                    "Initialize_variable_5": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "manual": {
+                "conditions": [],
+                "inputs": {
+                    "schema": {
+                        "properties": {
+                            "variables": {
+                                "properties": {
+                                    "SHAREPOINTID": {
+                                        "properties": {
+                                            "isSecret": {
+                                                "type": "boolean"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "SQLDATABASENAME": {
+                                        "properties": {
+                                            "isSecret": {
+                                                "type": "boolean"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "SQLPASSWORD": {
+                                        "properties": {
+                                            "isSecret": {
+                                                "type": "boolean"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "SQLSERVERNAME": {
+                                        "properties": {
+                                            "isSecret": {
+                                                "type": "boolean"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "SQLUSERNAME": {
+                                        "properties": {
+                                            "isSecret": {
+                                                "type": "boolean"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "TENANTURL": {
+                                        "properties": {
+                                            "isSecret": {
+                                                "type": "boolean"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "kind": "Http",
+                "operationOptions": "EnableSchemaValidation, SuppressWorkflowHeadersOnResponse",
+                "type": "Request"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "sharepointonline": {
+                    "connectionId": "/subscriptions/a548cb3d-0887-4b87-8460-6bf34967538b/resourceGroups/aurelien-rg/providers/Microsoft.Web/connections/sharepointonline-1",
+                    "connectionName": "sharepointonline-1",
+                    "id": "/subscriptions/a548cb3d-0887-4b87-8460-6bf34967538b/providers/Microsoft.Web/locations/westeurope/managedApis/sharepointonline"
+                }
+            }
+        }
+    }
+}
