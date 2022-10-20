@@ -1,13 +1,13 @@
-# Using Git for VDX
+# Using Git for CLUSTER1
 
 First, you want to get a local "clone" of the main repo (i.e., the latest and greatest).
 ```
-git clone https://github.com/martellotech/vdx.git
+git clone https://github.com/martellotech/cluster1.git
 ```
 
-This command makes a local directory called `vdx`
+This command makes a local directory called `cluster1`
 ```
-cd vdx
+cd cluster1
 
 git status
 ```
@@ -35,7 +35,7 @@ Let's say you're working on a JIRA ticket, CBMT-124. You want to have a working 
     ```
     > git fetch --all
     Fetching origin
-    Fetching vdx.user
+    Fetching cluster1.user
     ```
 
 2. Create a local branch from the latest origin
@@ -105,7 +105,7 @@ Let's say you're working on a JIRA ticket, CBMT-124. You want to have a working 
     remote: Analyzing objects... (3/3) (58 ms)
     remote: Storing packfile... done (52 ms)
     remote: Storing index... done (47 ms)
-    To https://github.com/martellotech/vdx.git
+    To https://github.com/martellotech/cluster1.git
     * [new branch]      CBMT-124_work_on_repo_help -> VX-124_work_on_repo_help
     Branch 'VX-124_work_on_repo_help' set up to track remote branch 'VX-124_work_on_repo_help' from 'cbmt.gstewart'.
     ```
@@ -139,7 +139,7 @@ Let's say you're working on a JIRA ticket, CBMT-124. You want to have a working 
     remote: Analyzing objects... (10/10) (39 ms)
     remote: Storing packfile... done (60 ms)
     remote: Storing index... done (78 ms)
-    To https://github.com/martellotech/vdx.git
+    To https://github.com/martellotech/cluster1.git
       4c3e1ec..8e5a1a6  VX-124_work_on_repo_help -> VX-124_work_on_repo_help
     ```
 
@@ -170,7 +170,7 @@ Next, you **pull** the changes and rebase your branch to the latest origin.
 
 ```
 > git pull --rebase origin main
-From https://github.com/martellotech/vdx.git
+From https://github.com/martellotech/cluster1.git
  * branch            master     -> FETCH_HEAD
 Current branch VX-124_work_on_repo_help is up to date.
 ```

@@ -1,0 +1,67 @@
+jobs:
+- job: Create_Resources_Job
+  pool:
+    vmImage: 'windows-2019'
+  steps:
+    #take variables to be used from the shared Keyvault
+    - task: AzureKeyVault@1
+      displayName: Shared Azurekeyvault Variables Import
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        KeyVaultName: '$(shared-keyvault)'
+        SecretsFilter: '*'
+        runAsPreJob: true
+
+    #Retrieve the name of the variable that contains the name of the tenant's keyvault
+    - task: AzureCLI@2
+      displayName: Getting Tenant Keyvault name
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        scriptType: ps
+        scriptLocation: inlineScript
+        inlineScript: |
+          $getvariable = az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| Select-String -pattern '^$(CUSTOMERNAME)KVname$'
+          $kvname = az keyvault secret show --name $getvariable --vault-name $(vaultsNamesKeyvault) --query 'value'
+          $kvname = $kvname.Trim('"','''')
+          Write-Host ("##vso[task.setvariable variable=TENANTKV;]$kvname")
+
+    #take variables to be used from the tenant Keyvault
+    - task: AzureKeyVault@1
+      displayName: Tenant Azurekeyvault Variables Import
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        KeyVaultName: '$(TENANTKV)'
+        SecretsFilter: '*'
+        runAsPreJob: false
+
+    #Create DNS record for the client FQDN
+    - task: AzureCLI@2
+      displayName: Creating A Record in DNS Zone
+      inputs:
+        azureSubscription: '$(dns-azure-subscription)'
+        scriptType: ps
+        scriptLocation: inlineScript
+        inlineScript: |
+          if (${env:CBMT} -eq 'False') {
+          $recordExists=$(az network dns record-set a list -g $(dnsZoneRG) -z $(cluster1CL1DnsZoneName) | select-string $(CUSTOMERNAME))
+          if (![string]::IsNullOrEmpty($recordExists)) {
+            Write-Host "Record exists... Deleting it"
+            az network dns record-set a delete -g $(dnsZoneRG) -z $(cluster1CL1DnsZoneName) -n $(CUSTOMERNAME) --yes
+            Write-Host "Creating the new one"
+            az network dns record-set a add-record -g $(dnsZoneRG) -z $(cluster1CL1DnsZoneName) -n $(CUSTOMERNAME) -a $(cluster1IngressPublicIP) --ttl 300
+          }else {
+            Write-Host "Record doesn't exist... Creating it"
+            az network dns record-set a add-record -g $(dnsZoneRG) -z $(cluster1CL1DnsZoneName) -n $(CUSTOMERNAME) -a $(cluster1IngressPublicIP) --ttl 300
+            }
+          } elseif (${env:CBMT} -eq 'True') {
+          $recordExists=$(az network dns record-set a list -g $(dnsZoneRG) -z $(dnsZoneName) | select-string $(CUSTOMERNAME))
+          if (![string]::IsNullOrEmpty($recordExists)) {
+            Write-Host "Record exists... Deleting it"
+            az network dns record-set a delete -g $(dnsZoneRG) -z $(dnsZoneName) -n $(CUSTOMERNAME) --yes
+            Write-Host "Creating the new one"
+            az network dns record-set a add-record -g $(dnsZoneRG) -z $(dnsZoneName) -n $(CUSTOMERNAME) -a $(appGwPublicIp) --ttl 300
+          }else {
+            Write-Host "Record doesn't exist... Creating it"
+            az network dns record-set a add-record -g $(dnsZoneRG) -z $(dnsZoneName) -n $(CUSTOMERNAME) -a $(appGwPublicIp) --ttl 300
+            }
+          }

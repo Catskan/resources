@@ -1,0 +1,69 @@
+jobs:
+  - job: Ingress_controller_job
+    pool:
+      name: $(agent-pool-name)
+      demands:
+      - agent.os -equals Linux
+    
+    steps:
+    - task: Bash@3
+      displayName: Get aks credentials
+      inputs:
+        targetType: 'inline'
+        Script: |
+          az login --identity
+          az account set --subscription $(azure-subscription-id)
+          az aks get-credentials --resource-group $(aks-resource-group) --name $(aks-cluster-name) --overwrite-existing --file /home/azureuser/.kube/config
+          export KUBECONFIG=/home/azureuser/.kube/config
+          kubelogin convert-kubeconfig -l msi
+
+    - task: Bash@3
+      displayName: Ingress Controller Creation
+      inputs:
+        targetType: 'inline'
+        script: |
+          IngressImageTag=$(INGRESS_IMAGE_TAG)
+          INGRESS_CONTROLLER_VERSION=(${IngressImageTag//-/ })
+          git clone https://github.com/nginxinc/kubernetes-ingress/
+          cd kubernetes-ingress/deployments/helm-chart
+          git checkout v$INGRESS_CONTROLLER_VERSION
+          kubectl create namespace ingress-nginx-cluster1
+          helm repo add nginx-stable https://helm.nginx.com/stable
+          helm repo update nginx-stable
+          helm install nginx-ingress-cluster1 nginx-stable/nginx-ingress \
+              --set controller.nginxplus=true \
+              --set controller.image.repository=$(azureContainerRegistry)/nginx-plus-ingress \
+              --set controller.image.tag=$(INGRESS_IMAGE_TAG) \
+              --set controller.image.pullPolicy=$(NGINX_PULL_POLICY) \
+              --set controller.config.name=nginx-config \
+              --set controller.config.entries."ssl-protocols"='TLSv1.2 TLSv1.3' \
+              --set controller.config.entries."proxy-set-headers"=ingress-nginx/custom-headers \
+              --set controller.nodeSelector."kubernetes\.io/os"=linux \
+              --set controller.nodeSelector."pods"=ingress \
+              --set controller.enableCustomResources=true \
+              --set controller.globalConfiguraion.create=true \
+              --set controller.enableSnippets=true \
+              --set controller.replicaCount=2 \
+              --set controller.ingressClass=nginx-cluster1 \
+              --set controller.globalConfiguration.spec."hsts"=true \
+              --set controller.healthStatus=true \
+              --set controller.healthStatusURI=/nginx-health \
+              --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
+              --set controller.service.type=LoadBalancer \
+              --set controller.service.loadBalancerIP=$(cluster1IngressPublicIP) \
+              --set controller.nginxDebug=false \
+              --set controller.logLevel=2 \
+              --set configmap.error-log-level=debug \
+              --set controller.enablePreviewPolicies=false \
+              --set controller.enableOIDC=false \
+              --namespace ingress-nginx-cluster1
+  
+    - task: Kubernetes@1
+      displayName: Deploy Nginx ConfigMap
+      inputs:
+        connectionType: 'None'
+        forceUpdateConfigMap: true
+        namespace: 'ingress-nginx-cluster1'
+        command: apply
+        arguments: -f $(System.DefaultWorkingDirectory)/deployment/pipelines-files/kubernetes-files/nginx-ingress/nginx-config.yaml
+        secretType: 'generic'

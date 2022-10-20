@@ -1,0 +1,19 @@
+jobs:
+- job: Tenant_Validation
+  pool:
+    name: $(agent-pool-name)
+    demands:
+    - agent.os -equals Linux
+
+  steps:
+  - task: Bash@3
+    displayName: 'Check Tenant Existence Inside Environment'
+    inputs:
+      targetType: 'inline'
+      script: |
+        if kubectl get namespace $(CUSTOMERNAME); then
+          echo "tenant exists in the environment, proceeding with the update"
+        else          
+          echo "##vso[task.logissue type=error]The tenant: $(CUSTOMERNAME) is not deployed inside $(ENVIRONMENT) cluster, please verify the tenantname and selected environment";
+          error 1
+        fi 

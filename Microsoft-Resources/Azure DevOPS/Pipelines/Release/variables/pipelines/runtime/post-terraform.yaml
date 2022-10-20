@@ -1,0 +1,5 @@
+variables:
+  AGENT_NAME: 'devops-agent-mtlo'
+  JUMPBOX_NAME: 'jumpboxvm'
+  AZ_DEVOPS_URL: 'https://dev.azure.com/martellotechnologies'
+  AZ_DEVOPS_PAT: 'clogycemupldafyqhi5ezz7nvfxcsnzqs77hwanqng2da465wumq'

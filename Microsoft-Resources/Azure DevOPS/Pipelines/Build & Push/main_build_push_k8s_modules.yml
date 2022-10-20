@@ -1,0 +1,69 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+---
+parameters:
+- name: environment
+  displayName: Environment
+  type: string
+  default:
+    dev
+  values:
+    - dev
+    - qa
+    - prod-west-eu
+    - prod-east-us
+- name: IngressControllerImageTag
+  displayName: Ingress Controller Image Tag
+  type: string
+  default: ' '
+- name: CertManagerVersion
+  displayName: Cert-Manager Version
+  type: string
+  default: ' '
+- name: SrcElasticAgentImageName
+  displayName: Official Elastic Agent Image Name (repository:image)
+  type: string
+  default: ' '
+- name: BuildIngressControllerImage
+  displayName: Build NGINX PLUS Ingress Controller
+  type: string
+  default: 'True'
+- name: ImportCertManagerImages
+  displayName: Import Cert-Manager Images
+  type: string
+  default: 'True'
+- name: ImportElasticAgentImages
+  displayName: Import Elastic-Agent Image
+  type: string
+  default: 'True'
+  
+trigger: none
+
+variables:
+- template: ../deployment/variables/environments/env-vars-${{ parameters.environment }}.yaml
+- template: ../deployment/variables/pipelines/static/pipelines-vars-${{ parameters.environment }}.yaml
+- template: ./variables/pipelines/runtime/build-input-vars.yaml
+  parameters:
+    IngressControllerImageTag: ${{ parameters.IngressControllerImageTag }}
+    CertManagerVersion: ${{ parameters.CertManagerVersion }}
+    SrcElasticAgentImageName: ${{ parameters.SrcElasticAgentImageName }}
+    environment: ${{ parameters.environment }}
+#Different steps to run (We can choose a only one step)
+stages:
+- stage: Build_Push_IngressController_Image
+  condition: eq(${{ parameters.BuildIngressControllerImage }}, 'True')
+  jobs:
+    - template: ./pipelines-jobs/kubernetes-modules/ingress-controller/Build_Push_Ingress-NGINX_PLUS.yml    
+- stage: Push_CertManager_Images
+  condition: eq(${{ parameters.ImportCertManagerImages }}, 'True')
+  jobs:
+    - template: ./pipelines-jobs/kubernetes-modules/cert-manager/Push_Cert-Manager_Images.yml   
+- stage: Push_ElasticAgent_Image
+  condition: eq(${{ parameters.ImportElasticAgentImages }}, 'True')
+  jobs:
+    - template: ./pipelines-jobs/kubernetes-modules/elastic-agent/Push_Elastic-Agent_Image.yml
+
+
+

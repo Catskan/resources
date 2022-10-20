@@ -1,0 +1,10 @@
+variables:
+  DEST_AZURE_SUBSCRIPTION: GSX MSmonitor Hosted Prod
+  DEST_REGISTRY_NAME: cbmtprod
+  DEST_MTLO_AZURE_SUBSCRIPTION: CLUSTER1-Prod
+  DEST_MTLO_REGISTRY_NAME: cluster1prod
+  SRC_AZURE_SUBSCRIPTION: MSmonitor Hosted QA (6aa1df46-8bd3-446f-b779-f53420e889a3)
+  SRC_REGISTRY_NAME: cbmtqa
+  SHARED_KEYVAULT: cluster1-prod-eastus
+  
+

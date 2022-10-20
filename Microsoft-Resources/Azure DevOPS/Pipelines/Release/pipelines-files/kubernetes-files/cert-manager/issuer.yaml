@@ -1,0 +1,25 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: #{CUSTOMERNAME}#-issuer
+spec:
+  acme:
+       # The ACME server URL
+    server: #{cert-manager-acme-server-url}#
+       # Email address used for ACME registration
+    email: #{cert-manager-registration-email}#
+       # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name:  #{cert-manager-private-key-name}# 
+    solvers:
+    - dns01:
+         azureDNS:
+          clientID: #{cert-manager-sp-appId}#
+          clientSecretSecretRef:
+            name: cert-manager-sp-config
+            key: sp-secret
+          environment: AzurePublicCloud
+          hostedZoneName: #{cluster1CL1DnsZoneName}#
+          resourceGroupName: #{dnsZoneRG}#
+          subscriptionID: #{cert-manager-azure-subscription-id}#
+          tenantID: #{cert-manager-sp-tenantId}#

@@ -1,0 +1,75 @@
+jobs:
+- job: Upgrade_CERT_MANAGER
+  pool:
+    name: $(agent-pool-name)
+    demands:
+    - agent.os -equals Linux
+  steps:
+  # Check if the image exist
+  - task: AzureCLI@2
+    displayName: Test if the image exist
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        if az acr repository show-tags --repository cert-manager-controller --name $(azureContainerRegistry) | grep $(CERTMANAGER_IMAGE_TAG); 
+        then echo "$(CERTMANAGER_IMAGE_TAG) exist. Continue ..."; 
+        else echo "$(CERTMANAGER_IMAGE_TAG) not found inside $(azureContainerRegistry)/cert-manager-controller ."; exit 1; 
+        fi
+  # Display the current image version, the customername and if swo or not
+  - task: Bash@3
+    displayName: 'Update Build Title Name'
+    inputs:
+      targetType: 'inline'
+      script: | 
+        echo "##vso[build.updatebuildnumber]UPGRADETO-CERT-MANAGER-$(CERTMANAGER_IMAGE_TAG)_ENV=$(ENVIRONMENT)"
+
+  - task: Bash@3
+    displayName: Get aks credentials
+    inputs:
+      targetType: 'inline'
+      Script: |
+        az login --identity
+        az account set --subscription $(azure-subscription-id)
+        az aks get-credentials --resource-group $(aks-resource-group) --name $(aks-cluster-name) --overwrite-existing --file /home/azureuser/.kube/config
+        export KUBECONFIG=/home/azureuser/.kube/config
+        kubelogin convert-kubeconfig -l msi
+
+  - task: Bash@3
+    displayName: Create-Manager upgrade
+    inputs:
+      targetType: 'inline'
+      script: |
+        ##Test if jetstack repo exist
+        if [[ $grep == *"jetstack"* ]]; then
+        helm repo update jetstack 
+        else
+        helm repo add jetstack https://charts.jetstack.io
+        helm repo update
+        fi
+        helm upgrade \
+        cert-manager jetstack/cert-manager \
+        --version $(CERTMANAGER_IMAGE_TAG) \
+        --set installCRDs=true \
+        --set nodeSelector."kubernetes\.io/os"=linux \
+        --set nodeSelector."pods"=cluster1 \
+        --set image.repository=$(azureContainerRegistry)/cert-manager-controller \
+        --set image.tag=$(CERTMANAGER_IMAGE_TAG) \
+        --set webhook.image.repository=$(azureContainerRegistry)/cert-manager-webhook \
+        --set webhook.image.tag=$(CERTMANAGER_IMAGE_TAG) \
+        --set webhook.nodeSelector."kubernetes\.io/os"=linux \
+        --set webhook.nodeSelector."pods"=cluster1 \
+        --set cainjector.image.repository=$(azureContainerRegistry)/cert-manager-cainjector \
+        --set cainjector.image.tag=$(CERTMANAGER_IMAGE_TAG) \
+        --set cainjector.nodeSelector."kubernetes\.io/os"=linux \
+        --set cainjector.nodeSelector."pods"=cluster1 \
+        --set startupapicheck.nodeSelector."kubernetes\.io/os"=linux \
+        --set startupapicheck.nodeSelector."pods"=cluster1 \
+        --set startupapicheck.image.repository=$(azureContainerRegistry)/cert-manager-ctl \
+        --set startupapicheck.image.tag=$(CERTMANAGER_IMAGE_TAG) \
+        --set podLabels."podDnsPolicy"=none \
+        --set ingressShim.defaultIssuerName=letsencrypt \
+        --set ingressShim.defaultIssuerKind=Issuer \
+        --set ingressShim.defaultIssuerGroup=cert-manager.io \
+        --namespace cert-manager

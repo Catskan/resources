@@ -1,0 +1,96 @@
+jobs:
+- job: job_delete_keyvault
+  pool:
+    vmImage: 'windows-2019'
+
+  steps:
+  #take variables to be used from the shared Keyvault
+  - task: AzureKeyVault@1
+    displayName: Shared Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(shared-keyvault)'
+      SecretsFilter: '*'
+      runAsPreJob: true
+
+  #Retrieve the name of the variable that contains the name of the tenant's keyvault
+  - task: AzureCLI@2
+    displayName: Getting Tenant Keyvault name
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        getvariable=$(az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| grep -w '$(CUSTOMERNAME)KVname')
+        kvname=$(az keyvault secret show --name $getvariable --vault-name $(vaultsNamesKeyvault) --query 'value' | tr -d \'\")
+        echo "##vso[task.setvariable variable=TENANTKV;]$kvname"
+
+  #soft delete tenant keyvault
+  - task: AzureCLI@2
+    displayName: Azure Keyvault Soft Deletion
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        $kvname='$(TENANTKV)'
+        if (![string]::IsNullOrEmpty($kvname)) {
+          Write-Host "Deleting the client keyvault..."
+          az keyvault delete --name $(TENANTKV) --resource-group $(keyvaultsResourceGroup)
+          start-sleep -Seconds 20
+        }else {
+          Write-Host "The keyvault is already deleted or doesn't exist"
+        }
+
+  #purge tenant keyvault (DEPENDS ON VARIABLE PURGE_KEYVAULT that it's on false by default and only can be changed in QA environment)
+  - task: AzureCLI@2
+    condition: and(succeeded(), eq(variables.PURGE_KEYVAULT, true))
+    displayName: Azure Keyvault Purge
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        $kvname='$(TENANTKV)'
+        if (![string]::IsNullOrEmpty($kvname)) {
+          Write-Host "Purging the client keyvault..."
+          start-sleep -Seconds 30
+          az keyvault purge -n $kvname
+        }else {
+          Write-Host "The keyvault is already purged or doesn't exist"
+        }
+  
+  #delete tenant name variable from names keyvault
+  - task: AzureCLI@2
+    displayName: Keyvault Name Variable Deletion
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        $tenantnamesecret = az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| Select-String -pattern '^$(CUSTOMERNAME)KVname$'
+        if (![string]::IsNullOrEmpty($tenantnamesecret)) {
+          Write-Host "Deleting the secret from the keyvault..."
+          az keyvault secret delete --name $tenantnamesecret --vault-name $(vaultsNamesKeyvault)
+          start-sleep -Seconds 15
+        }else {
+          Write-Host "The secret is already in soft-delete mode or doesn't exist"
+        }
+  
+  #purge tenant name variable from names keyvault
+  - task: AzureCLI@2
+    displayName: Keyvault Name Variable Purge
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        $tenantnamesecret = az keyvault secret list-deleted --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| Select-String -pattern '^$(CUSTOMERNAME)KVname$'
+        if (![string]::IsNullOrEmpty($tenantnamesecret)) {
+          Write-Host "Purging the secret from the keyvault..."
+          start-sleep -Seconds 15
+          az keyvault secret purge --name $tenantnamesecret --vault-name $(vaultsNamesKeyvault)
+        }else {
+          Write-Host "The secret is not in soft-deleted mode or doesn't exist"
+        }
+        

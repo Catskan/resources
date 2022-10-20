@@ -1,0 +1,98 @@
+jobs:  
+- job: Build
+  displayName: Build
+  pool:
+    name: $(BUILD_AGENT_POOLS)
+  workspace:
+    clean: all
+  steps:
+    - task: AzureCLI@2
+      name: fleetAgentVersionVariable
+      displayName: Split image tag to have agent version
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          #Split the full image name to keep only the image version
+          $ESTAG="$(ELASTICAGENT_IMAGE_NAME)"
+          $ES_VERSION=$ESTAG.Split(":") ; $ES_VERSION=$ES_VERSION.Split("-")
+          $ES_VERSION=$ES_VERSION[2]
+          echo "##vso[task.setvariable variable=FLEET_AGENT_VERSION;]$ES_VERSION"
+          echo $FLEET_AGENT_VERSION
+
+      #replace variables in dockerfile using the input variables and also from the two keyvaults
+    - task: replacetokens@5
+      displayName: Replace variables in kubernetes templates
+      inputs:
+        rootDirectory: '$(System.DefaultWorkingDirectory)/containers/Fleet-agent'
+        targetFiles: |
+          fleet-win.dockerfile
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'fail'
+        keepToken: false
+        tokenPrefix: '#{'
+        tokenSuffix: '}#'
+
+  #Build Windows fleet-agent Image
+    - task: Docker@2
+      displayName: Build Windows Fleet Agent image
+      inputs:
+        containerRegistry: '$(AZURE_CONTAINER_REGISTRY_SERVICE_CONNECTION)' #Container registry service connection
+        repository: '$(WIN_ELASTICAGENT_REPO_NAME)' #Name of the repository
+        command: 'build'
+        Dockerfile: '$(System.DefaultWorkingDirectory)/containers/Fleet-agent/fleet-win.dockerfile' #Path where is the dockerfile
+        buildContext: '$(System.DefaultWorkingDirectory)' #Used to the dockerfile know where it can locate and copy files downloaded previously
+        tags: $(FLEET_AGENT_VERSION)
+        addPipelineData: false
+
+    #Import the official elastic-agent images into our Azure Container Registry
+    - task: AzureCLI@2
+      displayName: Import Elastic Agent image to GSX
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          if (az acr repository show-tags --repository $(ELASTICAGENT_REPO_NAME) --name $(azureContainerRegistry) | Select-String $(FLEET_AGENT_VERSION)) { 
+            Write-Host "$(ELASTICAGENT_IMAGE_NAME):$(FLEET_AGENT_VERSION) exist. Continue ..."
+          } else{
+            az acr import --name $(azureContainerRegistry) --source $(ELASTICAGENT_IMAGE_NAME) --image $(ELASTICAGENT_REPO_NAME):$(FLEET_AGENT_VERSION)
+          }
+
+    #Import the official elastic-agent images into our Azure Container Registry
+    - task: AzureCLI@2
+      displayName: Import Elastic Agent image to Martello
+      inputs:
+        azureSubscription: '$(mtlo-azure-subscription)'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          if (az acr repository show-tags --repository $(ELASTICAGENT_REPO_NAME) --name $(cluster1ContainerRegistry) | Select-String $(FLEET_AGENT_VERSION)) { 
+            Write-Host "$(ELASTICAGENT_IMAGE_NAME):$(FLEET_AGENT_VERSION) exist. Continue ..."
+          } else{
+            az acr import --name $(cluster1ContainerRegistry) --source $(ELASTICAGENT_IMAGE_NAME) --image $(ELASTICAGENT_REPO_NAME):$(FLEET_AGENT_VERSION)
+          }
+
+#Push the image previously built to the GSX registry
+    - task: Docker@2
+      displayName: Push the Windows image to GSX Registry
+      inputs:
+        containerRegistry: '$(CR_SERVICE_CONNECTION)'
+        repository: '$(WIN_ELASTICAGENT_REPO_NAME)'
+        command: 'push'
+        tags: $(FLEET_AGENT_VERSION)
+
+    #Import the official elastic-agent images into our Azure Container Registry
+    - powershell: 
+          docker tag $(azureContainerRegistry)/$(WIN_ELASTICAGENT_REPO_NAME):$(FLEET_AGENT_VERSION) $(cluster1ContainerRegistry)/$(WIN_ELASTICAGENT_REPO_NAME):$(FLEET_AGENT_VERSION)
+
+#Push the image previously built to the Martello registry
+    - task: Docker@2
+      displayName: Push the Windows image to Martello Registry
+      inputs:
+        containerRegistry: '$(CR_MTLO_SERVICE_CONNECTION)'
+        repository: '$(WIN_ELASTICAGENT_REPO_NAME)'
+        command: 'push'
+        tags: $(FLEET_AGENT_VERSION)

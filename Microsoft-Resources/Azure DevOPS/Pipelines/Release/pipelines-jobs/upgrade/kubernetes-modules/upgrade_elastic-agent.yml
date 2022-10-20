@@ -1,0 +1,72 @@
+jobs:
+- job: Upgrade_ELASTIC_AGENT
+  pool:
+    name: $(agent-pool-name)
+    demands:
+    - agent.os -equals Linux
+  steps:
+  # Check if the image exist
+  - task: AzureCLI@2
+    displayName: Test if the image exist
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        if az acr repository show-tags --repository elastic-agent --name $(azureContainerRegistry) | grep $(ELASTIC_AGENT_IMAGE_TAG); 
+        then echo "$(ELASTIC_AGENT_IMAGE_TAG) exist. Continue ..."; 
+        else echo "$(ELASTIC_AGENT_IMAGE_TAG) not found inside $(azureContainerRegistry)/elastic-agent ."; exit 1; 
+        fi
+  # Display the current image version, the customername and if swo or not
+  - task: Bash@3
+    displayName: 'Update Build Title Name'
+    inputs:
+      targetType: 'inline'
+      script: | 
+        echo "##vso[build.updatebuildnumber]UPGRADETO-ELASTIC_AGENT-$(ELASTIC_AGENT_IMAGE_TAG)_ENV=$(ENVIRONMENT)"
+
+  - task: Bash@3
+    displayName: Get aks credentials
+    inputs:
+      targetType: 'inline'
+      Script: |
+        az login --identity
+        az account set --subscription $(azure-subscription-id)
+        az aks get-credentials --resource-group $(aks-resource-group) --name $(aks-cluster-name) --overwrite-existing --file /home/azureuser/.kube/config
+        export KUBECONFIG=/home/azureuser/.kube/config
+        kubelogin convert-kubeconfig -l msi
+
+#replace variables in kubernetes files using the input variables and also from the two keyvaults
+  - task: replacetokens@5
+    displayName: Replace variables in kubernetes templates
+    inputs:
+      rootDirectory: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/kubernetes-files/elastic-agent'
+      targetFiles: |
+        elastic-agent-daemonset.yaml
+        elastic-agent-win-daemonset.yaml
+      encoding: 'auto'
+      writeBOM: true
+      actionOnMissing: 'fail'
+      keepToken: false
+      tokenPrefix: '#{'
+      tokenSuffix: '}#'
+  
+  #Upgrade Linux Elastic Agent Daemonset
+  - task: Kubernetes@1
+    displayName: Upgrade Linux Elastic Agent daemonset in Kubernetes
+    inputs:
+      connectionType: 'None'
+      forceUpdate: true
+      command: apply
+      arguments: -f $(System.DefaultWorkingDirectory)/deployment/pipelines-files/kubernetes-files/elastic-agent/elastic-agent-daemonset.yaml
+      secretType: 'generic'
+
+  #Upgrade Windows Elastic Agent Daemonset
+  - task: Kubernetes@1
+    displayName: Upgrade Windows Elastic Agent daemonset in Kubernetes
+    inputs:
+      connectionType: 'None'
+      forceUpdate: true
+      command: apply
+      arguments: -f $(System.DefaultWorkingDirectory)/deployment/pipelines-files/kubernetes-files/elastic-agent/elastic-agent-win-daemonset.yaml
+      secretType: 'generic'

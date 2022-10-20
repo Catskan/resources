@@ -1,0 +1,29 @@
+##This file is to only have the template format used by the pipeline.
+##This file is not used to production.
+- type: http
+  schedule: '@every 300s'
+  urls: ["https://tenantname.dnszonename/"]
+  id: http-tenantname-kc
+  name: tenantname-keycloak
+  tags: ["clustername"]
+
+- type: http
+  schedule: '@every 300s'
+  urls: ["https://tenantname.dnszonename/ntwmonitor"]
+  id: http-tenantname-ntwmonitor
+  name: tenantname-ntwmonitor
+  tags: ["clustername"]
+
+- type: http
+  schedule: '@every 300s'
+  urls: ["https://tenantname.dnszonename/msmonitor"]
+  id: http-tenantname-msmonitor
+  name: tenantname-msmonitor
+  tags: ["clustername"]
+
+- type: http
+  schedule: '@every 300s'
+  urls: ["https://tenantname.dnszonename/npv"]
+  id: http-tenantname-npv
+  name: tenantname-npv
+  tags: ["clustername"]

@@ -1,0 +1,43 @@
+jobs:  
+- job: Build
+  displayName: Build
+  pool:
+    vmImage: Ubuntu 20.04
+    #name: '$(agent_pool)' #Name the agent_pool to use to build images
+  workspace:
+    clean: all
+  steps:
+  #Import the official Cert-Manager images into the GSX Container Registry
+  - task: AzureCLI@2
+    displayName: Push CertManager images to $(azureContainerRegistry) registry
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        if az acr repository show-tags --repository cert-manager-controller --name $(azureContainerRegistry) | grep $(CERTMANAGER_VERSION); 
+        then 
+          echo "$(CERTMANAGER_VERSION) exist. Continue ..."; 
+        else 
+          az acr import --name $(azureContainerRegistry) --source $(CERTMANAGER_CONTROLLER_URL):$(CERTMANAGER_VERSION) --image cert-manager-controller:$(CERTMANAGER_VERSION)
+          az acr import --name $(azureContainerRegistry) --source $(CERTMANAGER_WEBHOOK_URL):$(CERTMANAGER_VERSION) --image cert-manager-webhook:$(CERTMANAGER_VERSION)
+          az acr import --name $(azureContainerRegistry) --source $(CERTMANAGER_CAINJECTOR_URL):$(CERTMANAGER_VERSION) --image cert-manager-cainjector:$(CERTMANAGER_VERSION) 
+          az acr import --name $(azureContainerRegistry) --source $(CERTMANAGER_API_URL):$(CERTMANAGER_VERSION) --image cert-manager-ctl:$(CERTMANAGER_VERSION)
+        fi
+
+  - task: AzureCLI@2
+    displayName: Push CertManager images to $(cluster1ContainerRegistry) registry
+    inputs:
+      azureSubscription: '$(mtlo-azure-subscription)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        if az acr repository show-tags --repository cert-manager-controller --name $(cluster1ContainerRegistry) | grep $(CERTMANAGER_VERSION); 
+        then 
+          echo "$(CERTMANAGER_VERSION) exist. Continue ..."; 
+        else 
+          az acr import --name $(cluster1ContainerRegistry) --source $(CERTMANAGER_CONTROLLER_URL):$(CERTMANAGER_VERSION) --image cert-manager-controller:$(CERTMANAGER_VERSION)
+          az acr import --name $(cluster1ContainerRegistry) --source $(CERTMANAGER_WEBHOOK_URL):$(CERTMANAGER_VERSION) --image cert-manager-webhook:$(CERTMANAGER_VERSION)
+          az acr import --name $(cluster1ContainerRegistry) --source $(CERTMANAGER_CAINJECTOR_URL):$(CERTMANAGER_VERSION) --image cert-manager-cainjector:$(CERTMANAGER_VERSION) 
+          az acr import --name $(cluster1ContainerRegistry) --source $(CERTMANAGER_API_URL):$(CERTMANAGER_VERSION) --image cert-manager-ctl:$(CERTMANAGER_VERSION)
+        fi

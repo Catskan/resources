@@ -1,0 +1,54 @@
+jobs:
+  - job: CertManager_job
+    pool:
+      name: $(agent-pool-name)
+      demands:
+      - agent.os -equals Linux
+    
+    steps:
+    - task: Bash@3
+      displayName: Get aks credentials
+      inputs:
+        targetType: 'inline'
+        Script: |
+          az login --identity
+          az account set --subscription $(azure-subscription-id)
+          az aks get-credentials --resource-group $(aks-resource-group) --name $(aks-cluster-name) --overwrite-existing --file /home/azureuser/.kube/config
+          export KUBECONFIG=/home/azureuser/.kube/config
+          kubelogin convert-kubeconfig -l msi
+
+#Install Cert-Manager by helm
+    - task: Bash@3
+      displayName: Cert-Manager deployment
+      inputs:
+        targetType: 'inline'
+        script: |
+          kubectl create namespace cert-manager
+          kubectl label namespace cert-manager cert-manager.io/disable-validation=true
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm install \
+          cert-manager jetstack/cert-manager \
+          --version $(CERTMANAGER_IMAGE_TAG) \
+          --set installCRDs=true \
+          --set nodeSelector."kubernetes\.io/os"=linux \
+          --set nodeSelector."pods"=cluster1 \
+          --set image.repository=$(azureContainerRegistry)/cert-manager-controller \
+          --set image.tag=$(CERTMANAGER_IMAGE_TAG) \
+          --set webhook.image.repository=$(azureContainerRegistry)/cert-manager-webhook \
+          --set webhook.image.tag=$(CERTMANAGER_IMAGE_TAG) \
+          --set webhook.nodeSelector."kubernetes\.io/os"=linux \
+          --set webhook.nodeSelector."pods"=cluster1 \
+          --set cainjector.image.repository=$(azureContainerRegistry)/cert-manager-cainjector \
+          --set cainjector.image.tag=$(CERTMANAGER_IMAGE_TAG) \
+          --set cainjector.nodeSelector."kubernetes\.io/os"=linux \
+          --set cainjector.nodeSelector."pods"=cluster1 \
+          --set startupapicheck.nodeSelector."kubernetes\.io/os"=linux \
+          --set startupapicheck.nodeSelector."pods"=cluster1 \
+          --set startupapicheck.image.repository=$(azureContainerRegistry)/cert-manager-ctl \
+          --set startupapicheck.image.tag=$(CERTMANAGER_IMAGE_TAG) \
+          --set podLabels."podDnsPolicy"=none \
+          --set ingressShim.defaultIssuerName=letsencrypt \
+          --set ingressShim.defaultIssuerKind=Issuer \
+          --set ingressShim.defaultIssuerGroup=cert-manager.io \
+          --namespace cert-manager

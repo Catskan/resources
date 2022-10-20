@@ -1,0 +1,13 @@
+variables:
+  DEST_AZURE_SUBSCRIPTION: MSmonitor Hosted QA (6aa1df46-8bd3-446f-b779-f53420e889a3)
+  DEST_REGISTRY_NAME: cbmtqa
+  SRC_AZURE_SUBSCRIPTION: GSX Dev/Test
+  SRC_REGISTRY_NAME: cbmtdev
+  SHARED_KEYVAULT: cbmt-vault-qa
+  ##QA Variables##
+  subscription-id: 6aa1df46-8bd3-446f-b779-f53420e889a3
+  registry-resource-group: cbmtqa-shared
+  # registry-name: cbmtqa
+
+  
+

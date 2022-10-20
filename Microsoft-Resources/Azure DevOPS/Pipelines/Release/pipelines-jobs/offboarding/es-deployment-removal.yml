@@ -1,0 +1,46 @@
+jobs:
+- job: job_es_deployment_removal
+  pool:
+    name: $(agent-pool-name)
+    demands:
+    - agent.os -equals Linux
+
+  steps:
+  - task: AzureKeyVault@1
+    displayName: Shared Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(shared-keyvault)'
+      SecretsFilter: '*'
+      runAsPreJob: true
+
+  #Retrieve the name of the variable that contains the name of the tenant's keyvault
+  - task: AzureCLI@2
+    displayName: Getting Tenant Keyvault name
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        getCustomerNameVariable=$(az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| grep -w '$(CUSTOMERNAME)KVname')
+        kvname=$(az keyvault secret show --name $getCustomerNameVariable --vault-name $(vaultsNamesKeyvault) --query 'value' | tr -d \'\")
+        echo "##vso[task.setvariable variable=TENANTKV;]$kvname"
+
+  #take variables to be used from the tenant Keyvault
+  - task: AzureKeyVault@1
+    displayName: Tenant Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(TENANTKV)'
+      SecretsFilter: '*'
+      runAsPreJob: false
+
+#Shutdown the ElasticSearch deployment
+  - task: Bash@3
+    displayName: Shutdown ElasticSearch deployment $(CUSTOMERNAME)
+    inputs:
+      targetType: 'inline'
+      script: |
+        curl -XPOST -H "Authorization: Apikey $(elasticSearchApiKey)" "https://api.elastic-cloud.com/api/v1/deployments/$(elasticsearch-deployment-id)/_shutdown"
+
+

@@ -1,0 +1,263 @@
+jobs:
+- job: Create_Resources_Job
+  pool:
+    vmImage: 'windows-2019'
+
+  steps:
+#Versionning is version.IQbuildID.ContainerBuildID
+#We use this versionning convention to extract the IQbuildID used to download rights SQL Files
+  - task: PowerShell@2
+    displayName: Define iQ Build Definition ID from image version
+    inputs:
+      targetType: 'inline'
+      script: |
+        $KeepiQDefinitioniD = "$(IQ_IMAGE_VERSION)".split(".")
+        Write-Host "##vso[task.setvariable variable=BUILD_DEFINITION_ID_IQ;]"$KeepiQDefinitioniD[3]""
+
+  #Download iQ Databases
+  - task: DownloadPipelineArtifact@2
+    displayName: Download iQ Database files
+    inputs:
+      buildType: 'specific'
+      project: '$(CLUSTER1_PROJECT_ID)' #Azure DevOPS CLUSTER1 project
+      definition: '$(BUILD_PIPELINE_ID_IQ)' #Build number of the iQ Build pipeline
+      buildVersionToDownload: 'specific'
+      pipelineId: '$(BUILD_DEFINITION_ID_IQ)' #Build version of the iQ Build pipeline
+      artifactName: 'Database' #Download artifacts named "Databases"
+      targetPath: '$(Agent.BuildDirectory)/iQ_Database/Temp' #These folders are downloaded into iQ_Database directory.
+
+  - task: AzureCLI@2
+    displayName: Delete USE Statement
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: ps
+      scriptLocation: inlineScript
+      workingDirectory: $(Agent.BuildDirectory)
+      inlineScript: |
+        mkdir $(Agent.BuildDirectory) -Name iQ_DB
+        get-childitem "$(Agent.BuildDirectory)/iQ_Database/Temp" -file | foreach {
+        Get-Content $_.fullname | Select-String -Pattern ([regex]::escape('USE [Savision_iQ')) -NotMatch | Set-Content $(Agent.BuildDirectory)/iQ_DB/$_.
+        }
+
+  #take variables to be used from the shared Keyvault
+  - task: AzureKeyVault@1
+    displayName: Shared Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(shared-keyvault)'
+      SecretsFilter: '*'
+      runAsPreJob: true
+
+  #Retrieve the name of the variable that contains the name of the tenant's keyvault
+  - task: AzureCLI@2
+    displayName: Getting Tenant Keyvault name
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: ps
+      scriptLocation: inlineScript
+      inlineScript: |
+        $getvariable = az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| Select-String -pattern '^$(CUSTOMERNAME)KVname$'
+        $kvname = az keyvault secret show --name $getvariable --vault-name $(vaultsNamesKeyvault) --query 'value'
+        $kvname = $kvname.Trim('"','''')
+        Write-Host ("##vso[task.setvariable variable=TENANTKV;]$kvname")
+
+  #take variables to be used from the tenant Keyvault
+  - task: AzureKeyVault@1
+    displayName: Tenant Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(TENANTKV)'
+      SecretsFilter: '*'
+      runAsPreJob: false
+
+  #Create a random GUID for the license
+  - task: guid-generator@2
+    inputs:
+      VariableName: 'guid'
+      GuidToUpper: false
+
+  # replacement of variables in the scripts to create DB logins and RabbitMQ resources
+  - task: replacetokens@5
+    displayName: Values Replacements in script files
+    inputs:
+      rootDirectory: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/windows-files/scripts'
+      targetFiles: |
+        sql/create-db-logins.sql
+        sql/create-db-users.sql
+        $(Agent.BuildDirectory)/iQ_DB/Create-VantageDX-MSTeams-Boards-Trigger.sql
+      encoding: 'auto'
+      writeBOM: true
+      actionOnMissing: 'fail'
+      keepToken: false
+      tokenPrefix: '#{'
+      tokenSuffix: '}#'
+
+  #Create database inside the server of the SQL Elastic Pool
+  - task: AzureCLI@2
+    displayName: Creating database inside SQL Pool
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: ps
+      scriptLocation: inlineScript
+      inlineScript: |
+        az sql db create --resource-group '$(sqlResourceGroup)' `
+         --server '$(sqlServerName)' `
+         --name '$(db-name-ntwmonitor)' `
+         --elastic-pool '$(elasticPoolName)'
+
+ #create logins (admin and readonly) in master database
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Logins Creation
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: 'master'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/windows-files/scripts/sql/create-db-logins.sql'
+      IpDetectionMethod: 'AutoDetect'
+  
+  #create users (admin and readonly) in client database associated with the recently created logins
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Users Creation
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/windows-files/scripts/sql/create-db-users.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+  #Create Database Schema
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Schema Injection
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(Agent.BuildDirectory)/iQ_DB/02_CreateSchema.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+  #Inject default values
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Default Values Creation
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(Agent.BuildDirectory)/iQ_DB/03_CreateDefaultValues.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+    #Create Local Agent
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Create Local Agent
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(Agent.BuildDirectory)/iQ_DB/05_CreateLocalAgent.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+  #Create Snapshot Store
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Create Snapshot Store
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(Agent.BuildDirectory)/iQ_DB/06_CreateSnapshotStore.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+ #Create Quartz Store
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Create Quartz Store
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(Agent.BuildDirectory)/iQ_DB/07_CreateQuartzStore.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+ #Create Google Analytics Settings
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Create Google Analytics Settings
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(Agent.BuildDirectory)/iQ_DB/08_CreateGoogleAnalyticsSetting.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+  #Create MS Teams Board
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Create MS Teams Board
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(Agent.BuildDirectory)/iQ_DB/Create-VantageDX-MSTeams-Boards-Trigger.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+  #Create iQ Roles
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Create Default iQ Roles
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-ntwmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(Agent.BuildDirectory)/iQ_DB/11_CreateDefaultRoles.sql'
+      IpDetectionMethod: 'AutoDetect'
+
+
+  
+  #enabled logs in log analytics workspace for the DB and added the backup with Retention policies
+  - task: AzurePowerShell@5
+    displayName: SQL Diagnostic Settings Activation, DB Backups Short and Long Term Retention Configuration
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      ScriptType: 'InlineScript'
+      Inline: |
+        $db=Get-AzResource -ResourceType Microsoft.Sql/servers/databases -name $(db-name-ntwmonitor)
+        $workspace=Get-AzResource -ResourceType Microsoft.operationalinsights/workspaces -name $(logsWorkspaceName)
+        Set-AzDiagnosticSetting -ResourceId $db.ResourceId -WorkspaceId $workspace.ResourceId -Enabled $true
+        Set-AzSqlDatabaseBackupShortTermRetentionPolicy -ResourceGroupName $(sqlResourceGroup) -ServerName $(sqlServerName) -DatabaseName $(db-name-ntwmonitor) -RetentionDays 35
+        Set-AzSqlDatabaseBackupLongTermRetentionPolicy -ResourceGroupName $(sqlResourceGroup) -ServerName $(sqlServerName) -DatabaseName $(db-name-ntwmonitor) -WeeklyRetention P5W
+      FailOnStandardError: true
+      azurePowerShellVersion: 'LatestVersion'

@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cluster1-ingress
+  annotations:
+    cert-manager.io/issuer: "#{CUSTOMERNAME}#-issuer"
+    kubernetes.io/tls-acme: "true"
+    nginx.org/listen-ports: "80"
+    nginx.org/websocket-services: "service-ntwmonitor,npv"
+    nginx.org/server-tokens: 'false'
+    nginx.org/proxy-connect-timeout: '3s'
+    nginx.org/proxy-read-timeout: '1000s'
+    nginx.org/proxy-send-timeout: '1000s'
+    nginx.org/proxy-buffer-size: '128k'
+    nginx.org/proxy-buffers: '4 256k'
+    nginx.org/client-max-body-size: '30m'
+    nginx.org/server-snippets: |
+      client_body_buffer_size 30m;
+             
+      location / {
+          return 301 /msmonitor;
+      }
+spec:
+  ingressClassName: nginx-global
+  tls:
+    - hosts:
+        - "#{CUSTOMERNAME}#.#{CL1DnsZoneName}#"
+      secretName: tls-secret
+  rules:
+    - host: "#{CUSTOMERNAME}#.#{CL1DnsZoneName}#"
+      http:
+        paths:
+          - path: /ntwmonitor
+            pathType: Prefix
+            backend:
+              service:
+                name: service-ntwmonitor
+                port:
+                  number: 80
+          - path: /msmonitor
+            pathType: Prefix
+            backend:
+              service:
+                name: service-msmonitor
+                port:
+                  number: 80

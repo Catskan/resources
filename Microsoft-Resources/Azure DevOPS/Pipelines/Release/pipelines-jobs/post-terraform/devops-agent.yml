@@ -1,0 +1,38 @@
+jobs:
+- job: DevOps_Agent_Job
+  pool:
+    vmImage: 'Ubuntu 20.04'
+  
+  steps:
+    - task: replacetokens@5
+      displayName: Replace variables in kubernetes templates
+      inputs:
+        rootDirectory: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/linux-files/scripts'
+        targetFiles: |
+          configure-devops-agent.sh
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'fail'
+        keepToken: false
+        tokenPrefix: '#{'
+        tokenSuffix: '}#'
+
+    - task: AzureCLI@2
+      displayName: Install Dependencies Hosted Agent
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        scriptType: 'bash'
+        scriptLocation: inlineScript
+        inlineScript: |
+          scriptPath='$(System.DefaultWorkingDirectory)/deployment/pipelines-files/linux-files/scripts/install-agent-dependencies.sh'
+          az vm run-command invoke --name '$(AGENT_NAME)' -g '$(agentResourceGroup)' --command-id RunShellScript --scripts @$scriptPath --query value[0].message -o tsv
+
+    - task: AzureCLI@2
+      displayName: Configure AzureDevOps Agent
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        scriptType: 'bash'
+        scriptLocation: inlineScript
+        inlineScript: |
+          scriptPath='$(System.DefaultWorkingDirectory)/deployment/pipelines-files/linux-files/scripts/configure-devops-agent.sh'
+          az vm run-command invoke --name '$(AGENT_NAME)' -g '$(agentResourceGroup)' --command-id RunShellScript --scripts @$scriptPath --query value[0].message -o tsv

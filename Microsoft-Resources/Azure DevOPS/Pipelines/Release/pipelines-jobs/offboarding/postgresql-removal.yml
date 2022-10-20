@@ -1,0 +1,85 @@
+jobs:
+- job: Postgresql_Resources
+  pool:
+    name: $(agent-pool-name)
+    demands:
+    - agent.os -equals Linux
+
+  steps:
+  #take variables to be used from the shared Azure Keyvault
+  - task: AzureKeyVault@1
+    displayName: Shared Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(shared-keyvault)'
+      SecretsFilter: '*'
+      runAsPreJob: true
+  
+  #Retrieve the name of the variable that contains the name of the tenant's keyvault
+  - task: AzureCLI@2
+    displayName: Getting Tenant Keyvault name
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        getvariable=$(az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| grep -w '$(CUSTOMERNAME)KVname')
+        kvname=$(az keyvault secret show --name $getvariable --vault-name $(vaultsNamesKeyvault) --query 'value' | tr -d \'\")
+        echo "##vso[task.setvariable variable=TENANTKV;]$kvname"
+
+  #take variables to be used from the tenant Keyvault
+  - task: AzureKeyVault@1
+    displayName: Tenant Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(TENANTKV)'
+      SecretsFilter: '*'
+      runAsPreJob: false
+  
+  - task: AzureCLI@2
+    displayName: Delete Keycloak Postgres DB & Role
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az login --identity
+        while $(psql "host='$(kcPostgreSqlServerFQDN)' port=5432 dbname=$(kcDBname) user='$(kcPostgreSqlServerAdminLogin)' password='$(kcPostgreSqlServerAdminPwd)' sslmode=require" -c "\q" )
+        do
+          echo "kc database exists... deleting it"
+          psql "host='$(kcPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(kcPostgreSqlServerAdminLogin)' password='$(kcPostgreSqlServerAdminPwd)' sslmode=require" -c "DROP DATABASE $(kcDBname)"
+          sleep 15s
+        done
+        echo "kc database deleted"
+
+        if [ $(psql "host='$(kcPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(kcPostgreSqlServerAdminLogin)' password='$(kcPostgreSqlServerAdminPwd)' sslmode=require" -c "\du+" | cut -d \| -f 1| grep -w "$(kcDBadminUser)") ]
+        then
+          echo "kc role exists... deleting it"
+          psql "host='$(kcPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(kcPostgreSqlServerAdminLogin)' password='$(kcPostgreSqlServerAdminPwd)' sslmode=require" -c "DROP ROLE $(kcDBadminUser)"
+        else
+          echo "kc role doesn't exists... doing nothing"
+        fi
+  
+  - task: AzureCLI@2
+    displayName: Delete NPV Postgres DB & Role
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az login --identity
+        while $(psql "host='$(anpmPostgreSqlServerFQDN)' port=5432 dbname=npv$(CUSTOMERNAME) user='$(anpmPostgreSqlServerAdminLogin)' password='$(anpmPostgreSqlServerAdminPwd)' sslmode=require" -c "\q" )
+        do
+          echo "anpm database exists... deleting it"
+          psql "host='$(anpmPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(anpmPostgreSqlServerAdminLogin)' password='$(anpmPostgreSqlServerAdminPwd)' sslmode=require" -c "DROP DATABASE npv$(CUSTOMERNAME)"
+          sleep 15s
+        done
+        echo "anpm database deleted"
+
+        if [ $(psql "host='$(anpmPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(anpmPostgreSqlServerAdminLogin)' password='$(anpmPostgreSqlServerAdminPwd)' sslmode=require" -c "\du+" | cut -d \| -f 1| grep -w "npv$(CUSTOMERNAME)") ]
+        then
+          echo "anpm role exists... deleting it"
+          psql "host='$(anpmPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(anpmPostgreSqlServerAdminLogin)' password='$(anpmPostgreSqlServerAdminPwd)' sslmode=require" -c "DROP ROLE npv$(CUSTOMERNAME)"
+        else
+          echo "anpm role doesn't exists... doing nothing"
+        fi

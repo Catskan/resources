@@ -1,0 +1,62 @@
+variables:
+  #####################################
+  # PIPELINES SHARED STATIC VARIABLES #
+  #####################################
+  IMAGE_REPO_MSmonitor: 'msmonitor'
+  IMAGE_REPO_IQ: 'ntwmonitor'
+  IMAGE_REPO_KEYCLOAK: 'cluster1core-keycloak'
+  IMAGE_REPO_msm-agent: 'MSM-Agent-manager'
+  ####################################
+  # DEPLOY PIPELINE STATIC VARIABLES #
+  ####################################
+  BUILD_PIPELINE_ID_IQ: '16'
+  CLUSTER1_PROJECT_ID: 'c0fdc736-482f-4f9e-8915-34811c69d1f5'
+  CBMT: 'False'
+  DEPLOY_MSmonitor_msm-agent: 'false'
+  DEPLOY_IQ: 'true'
+  DEPLOY_NPV: 'true'
+  MSmonitor_LICENSE_CLIENT_CONTACT: 'contact@client.com'
+  MSmonitor_LICENSE_EXPIRATION_DATE: '2050-12-31'
+  MSmonitor_LICENSE_GSX_CONTACT: 'user@martellotech.com'
+  MSmonitor_LICENSE_LEVEL: '150'
+  MSmonitor_LICENSE_STATUS: 'Active'
+  MSmonitor_LICENSE_TYPE: 'Enterprise'
+  MSmonitor_LICENSE_USERS_NUMBER: '10'
+  msm-agent_IMAGE_VERSION:
+  SSO_CLIENT_DOMAIN: 'gsx.com'
+  SWO_TENANT: 'false'
+
+  #####################################
+  # UPGRADE PIPELINE STATIC VARIABLES #
+  #####################################
+  #Doesn't have static variables for the moment
+  #########################################
+  # OFFBOARDING PIPELINE STATIC VARIABLES #
+  #########################################
+  #Doesn't have static variables for the moment
+
+  #######################################################
+  # KUBERNETS MODULES BUILD PIPELINE STATIC VARIABLES   #
+  #######################################################
+  AZURE_CONTAINER_REGISTRY_SERVICE_CONNECTION: 'CR_mtlo_cluster1prod'
+  NGINX_PLUS_LICENSE_PRIVATE_KEY_NAME: 'nginx-repo-key'
+  NGINX_PLUS_LICENSE_CERT_NAME: 'nginx-repo-crt'
+  NGINX_PULL_POLICY: 'IfNotPresent' #Default : IfNotPresent
+  ELASTICAGENT_REPO_NAME: 'elastic-agent'
+  CERTMANAGER_CONTROLLER_URL: 'quay.io/jetstack/cert-manager-controller'
+  CERTMANAGER_WEBHOOK_URL: 'quay.io/jetstack/cert-manager-webhook'
+  CERTMANAGER_CAINJECTOR_URL: 'quay.io/jetstack/cert-manager-cainjector'
+  CERTMANAGER_API_URL: 'quay.io/jetstack/cert-manager-ctl'
+  #######################################################
+  # KUBERNETS MODULES DEPLOY PIPELINE STATIC VARIABLES  #
+  #######################################################
+  FLEET_ENROLL: 'True'
+  FLEET_INSECURE: 'True'
+  FLEET_URL: 'https://c46ab9ab3bde46ff809fc9266dddbc74.fleet.westeurope.azure.elastic-cloud.com:443'
+  FLEET_ENROLLMENT_TOKEN: 'NFNaSkpZSUJqVTZDZEdMVTFKUl86SS1mc1dLTHRSUjZVcmk1MjdGQmZrZw=='
+  LINUX_ELASTICAGENT_REPO_NAME: 'elastic-agent'
+  WIN_ELASTICAGENT_REPO_NAME: 'elastic-agent-win'
+  ###################################################
+  # ELASTICSEARCH PIPELINES SHARED STATIC VARIABLES #
+  ###################################################
+  ES_OBSERVABILITY_URL: 'https://observability.es.westeurope.azure.elastic-cloud.com:9243/version-management/_doc'

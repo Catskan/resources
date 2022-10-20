@@ -1,0 +1,89 @@
+jobs:
+- job: job_sql_db_removal
+  pool:
+    vmImage: 'windows-2019'
+
+  steps:
+  #take variables to be used from the shared Keyvault
+  - task: AzureKeyVault@1
+    displayName: Shared Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(shared-keyvault)'
+      SecretsFilter: '*'
+      runAsPreJob: true
+
+  #Retrieve the name of the variable that contains the name of the tenant's keyvault
+  - task: AzureCLI@2
+    displayName: Getting Tenant Keyvault name
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: ps
+      scriptLocation: inlineScript
+      inlineScript: |
+        $getvariable = az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| Select-String -pattern '^$(CUSTOMERNAME)KVname$'
+        $kvname = az keyvault secret show --name $getvariable --vault-name $(vaultsNamesKeyvault) --query 'value'
+        $kvname = $kvname.Trim('"','''')
+        Write-Host ("##vso[task.setvariable variable=TENANTKV;]$kvname")
+
+  #take variables to be used from the tenant Keyvault
+  - task: AzureKeyVault@1
+    displayName: Tenant Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(TENANTKV)'
+      SecretsFilter: '*'
+      runAsPreJob: false
+
+  #delete sql db from the server
+  - task: AzureCLI@2
+    displayName: Delete SQL Databases
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        if (az sql db list --resource-group '$(sqlResourceGroup)' --server '$(db-sql-server)' -o table | Select-string '$(db-name-msmonitor)')
+        {
+          "write-host 'MSmonitor DB exists... Deleting it"
+          az sql db delete --name $(db-name-msmonitor) --resource-group $(sqlResourceGroup) --server $(db-sql-server) --yes
+        }else
+        {
+          "write-host 'MSmonitor DB doesn't exist or has been deleted already"
+        }
+
+        if (az sql db list --resource-group '$(sqlResourceGroup)' --server '$(db-sql-server)' -o table | Select-string '$(db-name-ntwmonitor)')
+        {
+          "write-host 'iQ DB exists... Deleting it"
+          az sql db delete --name $(db-name-ntwmonitor) --resource-group $(sqlResourceGroup) --server $(db-sql-server) --yes
+        }else
+        {
+          "write-host 'iQ DB doesn't exist or has been deleted already"
+        }
+  
+  #replace variables in sql script
+  - task: replacetokens@5
+    displayName: Values Replacements in Windows Script
+    inputs:
+      targetFiles: |
+        deployment/pipelines-files/windows-files/scripts/sql/delete-db-logins.sql
+      encoding: 'auto'
+      writeBOM: true
+      actionOnMissing: 'fail'
+      keepToken: false
+      tokenPrefix: '#{'
+      tokenSuffix: '}#'
+  
+  #execute the sql script to delete the logins in the server
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Logins Deletion
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerName).database.windows.net'
+      DatabaseName: 'master'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: 'deployment/pipelines-files/windows-files/scripts/sql/delete-db-logins.sql'
+      IpDetectionMethod: 'AutoDetect'

@@ -1,0 +1,84 @@
+name: heartbeat # Name of the container group
+apiVersion: '2021-07-01'
+location: westeurope
+tags: {}
+properties: # Properties of container group
+  containers: # Array of container instances in the group
+  - name: heartbeat # Name of an instance
+    properties: # Properties of an instance
+      image: docker.elastic.co/beats/heartbeat:8.1.0 #Container image used to create the instance
+      command: #Override the image entrypoint to set another location for all configuration path
+       - /bin/bash
+       - -c
+       - heartbeat -e --path.config=$CONFIGFILE_LOCATION --path.data=$MONITORS_LOCATION --path.logs=$LOGS_LOCATION --path.home=/usr/share/heartbeat --strict.perms=false
+      ports: # External-facing ports exposed on the instance, must also be set in group ipAddress property 
+      - protocol: TCP
+        port: 80
+      environmentVariables:
+      - name: NODE_PATH
+        value: /usr/share/heartbeat/.node/node/bin:/usr/share/heartbeat:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      - name: ELASTIC_CONTAINER
+        value: true
+      - name: GODEBUG
+        value: madvdontneed=1
+      - name: ELASTIC_SYNTHETICS_CAPABLE
+        value: true
+      - name: SUITES_DIR
+        value: /usr/share/heartbeat/suites
+      - name: NODE_VERSION
+        value: 14.17.5
+      - name: LIBBEAT_MONITORING_CGROUPS_HIERARCHY_OVERRIDE
+        value: /
+      - name: CONFIGFILE_LOCATION
+        value: /home/heartbeat-config
+      - name: MONITORS_LOCATION
+        value: /home/heartbeat-monitors
+      - name: LOGS_LOCATION
+        value: /home/heartbeat-logs
+      - name: CLOUD_ID
+        value: #{ES_OBSERVABILITY_CLOUD_ID}#
+      - name: CLOUD_AUTH
+        value: #{ES_OBSERVABILITY_CLOUD_AUTH}#
+      resources: # Resource requirements of the instance
+        requests:
+          memoryInGB: 1
+          cpu: 1
+        limits:
+          memoryInGB: 1
+          cpu: 1
+      volumeMounts: # Array of volume mounts for the instance
+      - mountPath: /home/heartbeat-config
+        name: heartbeat-config
+        readOnly: false
+      - mountPath: /home/heartbeat-monitors
+        name: monitorsd
+        readOnly: false
+      - mountPath: /home/heartbeat-logs
+        name: heartbeat-logs
+        readOnly: false
+  restartPolicy: Always
+  ipAddress: # IP address configuration of container group
+    ports:
+    - protocol: TCP
+      port: 80
+    type: Public
+  osType: Linux
+  volumes: # Array of volumes available to the instances
+  - name: heartbeat-config
+    azureFile:
+      shareName: heartbeat-config
+      readOnly: true
+      storageAccountName: #{heartbeatStorageAccountName}#
+      storageAccountKey: #{heartbeatStorageAccountKey}#
+  - name: monitorsd
+    azureFile:
+      shareName: monitorsd
+      readOnly: false
+      storageAccountName: #{heartbeatStorageAccountName}#
+      storageAccountKey: #{heartbeatStorageAccountKey}#
+  - name: heartbeat-logs
+    azureFile:
+      shareName: heartbeat-logs
+      readOnly: false
+      storageAccountName: #{heartbeatStorageAccountName}#
+      storageAccountKey: #{heartbeatStorageAccountKey}#

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-msm-agent
+data:
+  MSM-AgentMgrInstall: '#{msmonitor-agentInstall}#'
+  msm-agent_Guid: "#{msmonitor-agentGUID}#"
+  msm-agent_Port: "#{msmonitor-agentPort}#"
+  msm-agent_Version: "#{msmmonitor-agentVersion}#"
+  

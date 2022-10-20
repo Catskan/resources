@@ -1,0 +1,134 @@
+2022-02-22T13:38:07.543012Z stdout F Transcript started, output file is C:\Logs\Startup\StartupFull.log 
+2022-02-22T13:38:08.7735993Z stdout F 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions' does not exist. Creating it ...
+2022-02-22T13:38:10.462455Z stdout F
+2022-02-22T13:38:10.5027386Z stdout F
+2022-02-22T13:38:10.5259001Z stdout F     Hive: HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node
+2022-02-22T13:38:10.539633Z stdout F
+2022-02-22T13:38:10.539633Z stdout F
+2022-02-22T13:38:10.5424028Z stdout F Name                           Property
+2022-02-22T13:38:10.5438438Z stdout F ----                           --------
+2022-02-22T13:38:10.9434443Z stdout F GSX Solutions
+2022-02-22T13:38:10.9465106Z stdout F Created key 'GSX Solutions' in 'HKLM:\SOFTWARE\WOW6432Node'
+2022-02-22T13:38:10.9732592Z stdout F 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager' does not exist. Creating it ...
+2022-02-22T13:38:10.9807765Z stdout F
+2022-02-22T13:38:10.9810681Z stdout F
+2022-02-22T13:38:10.9810681Z stdout F     Hive: HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\GSX Solutions
+2022-02-22T13:38:10.9818476Z stdout F
+2022-02-22T13:38:10.9818476Z stdout F
+2022-02-22T13:38:10.9822564Z stdout F Name                           Property
+2022-02-22T13:38:10.983237Z stdout F ----                           --------
+2022-02-22T13:38:10.9842425Z stdout F MSM-Agent Manager
+2022-02-22T13:38:10.9870249Z stdout F Created key 'MSM-Agent Manager' in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions'
+2022-02-22T13:38:11.6075259Z stdout F Key 'DecryptRMQMessages' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager'. Creating it ...
+2022-02-22T13:38:11.6254184Z stdout F Key 'DecryptRMQMessages' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager' with its values
+2022-02-22T13:38:11.6518151Z stdout F Key 'MSM-AgentServiceNamePrefix' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager'. Creating it ...
+2022-02-22T13:38:11.6625705Z stdout F Key 'MSM-AgentServiceNamePrefix' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager' with its values
+2022-02-22T13:38:11.6888288Z stdout F Key 'Path' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager'. Creating it ...
+2022-02-22T13:38:11.6983912Z stdout F Key 'Path' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager' with its values
+2022-02-22T13:38:11.7238144Z stdout F Key 'Version' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager'. Creating it ...
+2022-02-22T13:38:11.7339547Z stdout F Key 'Version' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager' with its values
+2022-02-22T13:38:11.7443178Z stdout F Key 'Port' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager'. Creating it ...
+2022-02-22T13:38:12.1538025Z stdout F Key 'Port' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager' with its values
+2022-02-22T13:38:12.1626851Z stdout F Key 'Guid' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager'. Creating it ...
+2022-02-22T13:38:12.1645792Z stdout F Key 'Guid' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager' with its values
+2022-02-22T13:38:12.1872726Z stdout F 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig' does not exist. Creating it ...
+2022-02-22T13:38:12.1994647Z stdout F
+2022-02-22T13:38:12.1994647Z stdout F
+2022-02-22T13:38:12.1994647Z stdout F     Hive: HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager
+2022-02-22T13:38:12.1999979Z stdout F  
+2022-02-22T13:38:12.2001708Z stdout F
+2022-02-22T13:38:12.2002817Z stdout F Name                           Property
+2022-02-22T13:38:12.2010113Z stdout F ----                           --------
+2022-02-22T13:38:12.2015406Z stdout F BusConfig
+2022-02-22T13:38:12.2023287Z stdout F Created key 'BusConfig' in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager'
+2022-02-22T13:38:12.2142449Z stdout F Key 'UseSsl' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig'. Creating it ...
+2022-02-22T13:38:12.2250716Z stdout F Key 'UseSsl' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig' with its values
+2022-02-22T13:38:12.2363277Z stdout F Key 'Password' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig'. Creating it ...
+2022-02-22T13:38:12.2477616Z stdout F Key 'Password' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig' with its values
+2022-02-22T13:38:12.2591969Z stdout F Key 'Hostname' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig'. Creating it ...
+2022-02-22T13:38:12.8052828Z stdout F Key 'Hostname' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig' with its values
+2022-02-22T13:38:12.8265946Z stdout F Key 'Port' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig'. Creating it ...
+2022-02-22T13:38:12.8476695Z stdout F Key 'Port' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig' with its values
+2022-02-22T13:38:12.8931216Z stdout F Key 'VirtualHostname' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig'. Creating it ...
+2022-02-22T13:38:12.9179578Z stdout F Key 'VirtualHostname' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig' with its values
+2022-02-22T13:38:12.9285554Z stdout F Key 'Username' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig'. Creating it ...
+2022-02-22T13:38:12.9399141Z stdout F Key 'Username' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\BusConfig' with its values
+2022-02-22T13:38:14.555642Z stdout F No certificate found. Creating a certificate for localhost...
+2022-02-22T13:38:24.0716595Z stdout F Certificate successfully created.
+2022-02-22T13:38:24.1150072Z stdout F Key 'CertificateThumbprint' does not exist in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\'. Creating it ...
+2022-02-22T13:38:24.1923225Z stdout F Key 'CertificateThumbprint' successfully created in 'HKLM:\SOFTWARE\WOW6432Node\GSX Solutions\MSM-Agent Manager\' with its values
+2022-02-22T13:38:54.3059593Z stdout F 2022-02-22 13:38:40.6344 +00:00|INFO|1|Program|-------------------------------------------------------------------
+2022-02-22T13:38:54.3060239Z stdout F 2022-02-22 13:38:40.7020 +00:00|INFO|1|Program|Gsx.msm-agent, Version=4.2.2.0, Culture=neutral, PublicKeyToken=null
+2022-02-22T13:38:54.3060239Z stdout F 2022-02-22 13:38:40.7095 +00:00|INFO|1|Program|Program.Main: Setting up Gsx.msm-agent Service...
+2022-02-22T13:38:54.3060239Z stdout F 2022-02-22 13:38:40.7095 +00:00|INFO|1|Program|Program.Main: Loading MSM-Agent Manager configurations from registry...
+2022-02-22T13:38:54.3060239Z stdout F 2022-02-22 13:38:40.7095 +00:00|INFO|1|Program|Program.Main: 'Gsx.msm-agent.Options.json' is not found, creating a new one.
+2022-02-22T13:38:54.3060239Z stdout F 2022-02-22 13:38:41.3495 +00:00|INFO|1|Program|Program.Main: Connecting to RMQ bus with the following configuration: Hostname: westeurmq.qa.ongsx.com, VirtualHostname: devtestcbmt, ExchangeName: MSM-Agent-manager, Port: 5671, UseSsl: True, Username: devtestcbmt
+2022-02-22T13:38:54.3060239Z stdout F 2022-02-22 13:38:41.8234 +00:00|INFO|1|msm-agentService|------------------------------------------------------------------- 
+2022-02-22T13:38:54.3060239Z stdout F 2022-02-22 13:38:41.8394 +00:00|INFO|1|msm-agentService|msm-agentService.Start: Starting Gsx.msm-agent Service...
+2022-02-22T13:38:54.3060239Z stdout F 2022-02-22 13:38:45.3842 +00:00|INFO|1|msm-agentStorage|msm-agentStorage.ApplyRevisions: Applying DB revisions...
+2022-02-22T13:38:59.6840525Z stdout F 2022-02-22 13:38:59.1938 +00:00|INFO|1|msm-agentStorage|msm-agentStorage.ApplyRevisions: Applying DB revision no. '1'...
+2022-02-22T13:39:01.464047Z stdout F 2022-02-22 13:39:01.4251 +00:00|INFO|1|msm-agentStorage|msm-agentStorage.ApplyRevisions: Applying DB revision no. '2'...
+2022-02-22T13:39:01.5947566Z stdout F 2022-02-22 13:39:01.5816 +00:00|INFO|1|msm-agentStorage|msm-agentStorage.ApplyRevisions: Applying DB revision no. '3'...
+2022-02-22T13:39:02.0811081Z stdout F 2022-02-22 13:39:02.0412 +00:00|INFO|1|msm-agentStorage|msm-agentStorage.ApplyRevisions: Applying DB revision no. '4'...
+2022-02-22T13:39:02.7061419Z stdout F 2022-02-22 13:39:02.6296 +00:00|INFO|1|msm-agentStorage|msm-agentStorage.ApplyRevisions: Applying DB revision no. '5'...
+2022-02-22T13:39:02.8559692Z stdout F 2022-02-22 13:39:02.8113 +00:00|INFO|1|msm-agentStorage|msm-agentStorage.ApplyRevisions: Applying DB revision no. '6'...
+2022-02-22T13:39:04.53136Z stdout F 2022-02-22 13:39:04.5184 +00:00|INFO|1|msm-agentService|msm-agentService.Start: Starting Web App at 'http://localhost:51000/'...
+2022-02-22T13:39:06.4041526Z stdout F 2022-02-22 13:39:06.2959 +00:00|INFO|1|OwinStartup|OwinStartup.ConfigureWebApi: Starting Swagger...
+2022-02-22T13:39:06.4041526Z stdout F 2022-02-22 13:39:06.3279 +00:00|INFO|1|OwinStartup|OwinStartup.Configuration: Swagger is properly started.
+2022-02-22T13:39:07.5361026Z stdout F 2022-02-22 13:39:07.5229 +00:00|INFO|1|msm-agentService|msm-agentService.Start: Web App is running at 'http://localhost:51000/'
+2022-02-22T13:39:08.1683458Z stdout F 2022-02-22 13:39:08.0000 +00:00|INFO|1|msm-agentService|msm-agentService.Start: Starting MSM-Agent Manager thread...
+2022-02-22T13:39:08.5633966Z stdout F 2022-02-22 13:39:08.0709 +00:00|INFO|1|msm-agentService|msm-agentService.Start: MSM-Agent Manager thread is started successfully.
+2022-02-22T13:39:08.5771039Z stdout F 2022-02-22 13:39:08.5664 +00:00|INFO|6|msm-agentThread|msm-agentThread.Run: Running MSM-Agent manager thread...
+2022-02-22T13:39:11.820321Z stdout F 2022-02-22 13:39:11.6427 +00:00|INFO|6|msm-agentThread|msm-agentThread.Run: Registering MSM-Agent manager...
+2022-02-22T13:39:13.3547133Z stdout F 2022-02-22 13:39:13.2910 +00:00|INFO|6|msm-agentThread|msm-agentThread.Registermsm-agent: Waiting for registration acknowledgement. Registration state 'Pending'
+2022-02-22T13:39:13.3930958Z stdout F 2022-02-22 13:39:13.3787 +00:00|INFO|6|msm-agentThread|msm-agentThread.Run: Starting heart beat timer...
+2022-02-22T13:39:13.3930958Z stdout F 2022-02-22 13:39:13.3787 +00:00|INFO|6|msm-agentThread|msm-agentThread.Run: Starting MSM-Agents health check timer...
+2022-02-22T13:39:18.0852429Z stdout F 2022-02-22 13:39:18.0626 +00:00|INFO|13|msm-agentThread|msm-agentThread.RegistrationReceived: Registration response is received. State is Success.
+2022-02-24T20:57:51.2846781Z stdout F 2022-02-24 20:57:51.2601 +00:00|ERROR|102|msm-agentRabbitmqListener|msm-agentRabbitmqListener.Start: Error starting to consume: RabbitMQ.Client.Exceptions.BrokerUnreachableException: None of the specified endpoints were reachable ---> RabbitMQ.Client.Exceptions.OperationInterruptedException: The AMQP operation was interrupted: AMQP close-reason, initiated by Peer, code=530, text="NOT_ALLOWED - vhost giztestcache not found", classId=10, methodId=40, cause=
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.Impl.SimpleBlockingRpcContinuation.GetReply(TimeSpan timeout) 
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.Impl.ModelBase.ConnectionOpen(String virtualHost, String capabilities, Boolean insist)
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.Framing.Impl.Connection.Open(Boolean insist)
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.Framing.Impl.Connection..ctor(IConnectionFactory factory, Boolean insist, IFrameHandler frameHandler, String clientProvidedName)
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.Framing.Impl.AutorecoveringConnection.Init(IFrameHandler fh)
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.Framing.Impl.AutorecoveringConnection.Init(IEndpointResolver endpoints)
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(IEndpointResolver endpointResolver, String clientProvidedName)
+2022-02-24T20:57:51.2846781Z stdout F    --- End of inner exception stack trace ---
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(IEndpointResolver endpointResolver, String clientProvidedName)
+2022-02-24T20:57:51.2846781Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(String clientProvidedName)
+2022-02-24T20:57:51.2846781Z stdout F    at Gsx.msm-agent.msm-agentRabbitmqListener.InitializeClient()
+2022-02-24T20:57:51.2846781Z stdout F    at Gsx.msm-agent.Model.RabbitMQClient.InternalInitializeClient()
+2022-02-24T20:57:51.2846781Z stdout F    at Gsx.msm-agent.Model.RabbitMQClient.get_Channel()
+2022-02-24T20:57:51.2846781Z stdout F    at Gsx.msm-agent.msm-agentRabbitmqListener.StartConsumer()
+2022-02-24T20:59:21.3013801Z stdout F 2022-02-24 20:58:51.2810 +00:00|ERROR|100|msm-agentRabbitmqListener|msm-agentRabbitmqListener.Start: Error starting to consume: RabbitMQ.Client.Exceptions.BrokerUnreachableException: None of the specified endpoints were reachable ---> RabbitMQ.Client.Exceptions.OperationInterruptedException: The AMQP operation was interrupted: AMQP close-reason, initiated by Peer, code=530, text="NOT_ALLOWED - vhost giztestcache not found", classId=10, methodId=40, cause=
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.Impl.SimpleBlockingRpcContinuation.GetReply(TimeSpan timeout)
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.Impl.ModelBase.ConnectionOpen(String virtualHost, String capabilities, Boolean insist)
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.Framing.Impl.Connection.Open(Boolean insist)
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.Framing.Impl.Connection..ctor(IConnectionFactory factory, Boolean insist, IFrameHandler frameHandler, String clientProvidedName)
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.Framing.Impl.AutorecoveringConnection.Init(IFrameHandler fh)
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.Framing.Impl.AutorecoveringConnection.Init(IEndpointResolver endpoints)
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(IEndpointResolver endpointResolver, String clientProvidedName)
+2022-02-24T20:59:21.3013801Z stdout F    --- End of inner exception stack trace ---
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(IEndpointResolver endpointResolver, String clientProvidedName)
+2022-02-24T20:59:21.3013801Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(String clientProvidedName)
+2022-02-24T20:59:21.3013801Z stdout F    at Gsx.msm-agent.msm-agentRabbitmqListener.InitializeClient()
+2022-02-24T20:59:21.3013801Z stdout F    at Gsx.msm-agent.Model.RabbitMQClient.InternalInitializeClient()
+2022-02-24T20:59:21.3013801Z stdout F    at Gsx.msm-agent.Model.RabbitMQClient.get_Channel()
+2022-02-24T20:59:21.3013801Z stdout F    at Gsx.msm-agent.msm-agentRabbitmqListener.StartConsumer()
+2022-02-24T20:59:34.2817973Z stdout F 2022-02-24 20:59:34.2674 +00:00|ERROR|39|msm-agentThread|msm-agentThread.Registermsm-agent: RabbitMQ.Client.Exceptions.BrokerUnreachableException: None of the 
+specified endpoints were reachable ---> RabbitMQ.Client.Exceptions.OperationInterruptedException: The AMQP operation was interrupted: AMQP close-reason, initiated by Peer, code=530, text="NOT_ALLOWED - vhost giztestcache not found", classId=10, methodId=40, cause=
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.Impl.SimpleBlockingRpcContinuation.GetReply(TimeSpan timeout)
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.Impl.ModelBase.ConnectionOpen(String virtualHost, String capabilities, Boolean insist)
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.Framing.Impl.Connection.Open(Boolean insist)
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.Framing.Impl.Connection..ctor(IConnectionFactory factory, Boolean insist, IFrameHandler frameHandler, String clientProvidedName)
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.Framing.Impl.AutorecoveringConnection.Init(IFrameHandler fh)
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.Framing.Impl.AutorecoveringConnection.Init(IEndpointResolver endpoints)
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(IEndpointResolver endpointResolver, String clientProvidedName)
+2022-02-24T20:59:34.2818755Z stdout F    --- End of inner exception stack trace ---
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(IEndpointResolver endpointResolver, String clientProvidedName)
+2022-02-24T20:59:34.2818755Z stdout F    at RabbitMQ.Client.ConnectionFactory.CreateConnection(String clientProvidedName)
+2022-02-24T20:59:34.2818755Z stdout F    at Gsx.msm-agent.msm-agentRabbitmqPublisher.InitializeClient() 
+2022-02-24T20:59:34.2818755Z stdout F    at Gsx.msm-agent.Model.RabbitMQClient.InternalInitializeClient()
+2022-02-24T20:59:34.2818755Z stdout F    at Gsx.msm-agent.Model.RabbitMQClient.get_Channel()
+2022-02-24T20:59:34.2818755Z stdout F    at Gsx.msm-agent.msm-agentRabbitmqPublisher.PublishRegistrationRequest(String serializedRegistrationRequest)
+2022-02-24T20:59:34.2818755Z stdout F    at Gsx.msm-agent.msm-agentThread.Registermsm-agent()
+

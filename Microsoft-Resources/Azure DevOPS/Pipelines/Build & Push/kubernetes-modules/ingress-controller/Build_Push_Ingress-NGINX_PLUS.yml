@@ -1,0 +1,55 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+jobs:  
+- job: Build
+  displayName: Build
+#Agent choice
+  pool:
+    vmImage: Ubuntu 20.04
+    #name: '$(AGENT_POOL)' #Self-hosted agent
+  steps:
+  - checkout : self 
+
+  #Login into the azure container registry
+  - task: "Docker@2"
+    displayName: Login into the registry to perform powershell commands
+    inputs:
+      containerRegistry: '$(CR_SERVICE_CONNECTION)'
+      command: 'login'
+
+  #Login into the azure container registry
+  - task: "Docker@2"
+    displayName: Login into the registry to perform powershell commands
+    inputs:
+      containerRegistry: '$(CR_MTLO_SERVICE_CONNECTION)'
+      command: 'login'
+  
+  #   #Login into the azure container registry
+  # - task: "Docker@2"
+  #   condition: eq($(environment), 'prod-east-us')
+  #   displayName: Login into the mtlo registry to perform powershell commands
+  #   inputs:
+  #     containerRegistry: '$(MTLO_AZURE_CONTAINER_REGISTRY_SERVICE_CONNECTION)'
+  #     command: 'login'
+
+  - task: AzureCLI@2
+    displayName: Download NGINX PLUS certificates from Keyvault
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az keyvault secret download --name '$(NGINX_PLUS_LICENSE_PRIVATE_KEY_NAME)' --vault-name '$(shared-keyvault)' -f $(System.DefaultWorkingDirectory)/containers/nginx-ingress/licenses/nginx-repo.key
+        az keyvault secret download --name '$(NGINX_PLUS_LICENSE_CERT_NAME)' --vault-name '$(shared-keyvault)' -f $(System.DefaultWorkingDirectory)/containers/nginx-ingress/licenses/nginx-repo.crt
+
+  - task: Bash@3
+    displayName: Build & Push Ingress Controller Image
+    inputs:
+      filePath: '$(System.DefaultWorkingDirectory)/containers/nginx-ingress/build-ingress-image.sh'
+    env:
+      AgentBuildDirectory: $(System.DefaultWorkingDirectory)
+      GsxContainerRegistryName: $(azureContainerRegistry)
+      MtloContainerRegistryName: $(cluster1ContainerRegistry)
+      IngressVersion: $(INGRESS_VERSION)

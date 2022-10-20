@@ -1,0 +1,178 @@
+---
+#runtime parameters
+parameters:
+- name: environment
+  displayName: Environment
+  type: string
+  default:
+    azTenant1-env1
+  values:
+    - azTenant1-env1
+    - azTenant2-env1
+
+- name: tenantname
+  displayName: Tenant Name to Update
+  type: string
+- name: keycloakImageVersion
+  displayName: Keycloak New Image Version
+  type: string
+  # blank-space to transform it to optional in the run pipeline interface
+  default:
+    ' '
+- name: msmonitorImageVersion
+  displayName: MSmonitor New Image Version
+  type: string
+  # blank-space to transform it to optional in the run pipeline interface
+  default:
+    ' '
+- name: ntwmonitorImageVersion
+  displayName: iQ New Image Version
+  type: string
+  # blank-space to transform it to optional in the run pipeline interface
+  default:
+    ' '
+- name: npvImageVersion
+  displayName: NPV New Image Version
+  type: string
+  # blank-space to transform it to optional in the run pipeline interface
+  default:
+    ' '
+- name: elasticSearchVersion
+  displayName: Elastic Search Version
+  type: string
+  # blank-space to transform it to optional in the run pipeline interface
+  default:
+    ' '
+- name: upgradeSharedConfig
+  displayName: Update Tenant's Shared Configuration
+  type: string
+  default:
+    'true'
+  values:
+    - 'false'
+    - 'true'
+
+trigger: none
+pr: none
+
+variables:
+- template: variables/environments/env-vars-${{ parameters.environment }}.yaml
+- template: variables/pipelines/static/pipelines-vars-${{ parameters.environment }}.yaml
+- template: variables/pipelines/runtime/upgrade-input-vars.yaml
+  parameters:
+    tenantname: ${{ parameters.tenantname }}
+    # the replace() allows to trim the blank space and transform it into '' (null in Azure pipelines) in the case of default
+    # and validate the condition execution in each stage of the pipeline
+    msmonitorImageVersion: ${{ replace(parameters.msmonitorImageVersion,' ','') }}
+    ntwmonitorImageVersion: ${{ replace(parameters.ntwmonitorImageVersion,' ','') }}
+    keycloakImageVersion: ${{ replace(parameters.keycloakImageVersion,' ','') }}
+    npvImageVersion: ${{ replace(parameters.npvImageVersion,' ','') }}
+    elasticSearchVersion: ${{ replace(parameters.elasticSearchVersion,' ','') }}
+    upgradeSharedConfig: ${{ parameters.upgradeSharedConfig }}
+    environment: ${{ parameters.environment }}
+
+stages:
+- stage: tenant_validation
+  jobs:
+    - template: pipelines-jobs/upgrade/aks-tenant-validation.yaml
+
+### UPGRADE SHARED CONFIG (ingress, configmap, secret)
+- stage: job_shared_config_upgrade
+  dependsOn: tenant_validation
+  condition: and(succeeded('tenant_validation'), eq(variables.UPGRADE_SHARED_CONFIG, True))
+  jobs:
+    - template: pipelines-jobs/upgrade/aks-shared-config-upgrade.yaml
+
+
+### UPGRADE Keycloak ###
+- stage: job_keycloak_upgrade
+  dependsOn:
+  - tenant_validation
+  - job_shared_config_upgrade
+  #if the version variable is not null, the stage is executed
+  condition: and(succeeded('tenant_validation'), ne(variables.KEYCLOAK_IMAGE_VERSION, ''))
+  jobs:
+    - template: pipelines-jobs/upgrade/aks-keycloak-upgrade.yml
+
+### UPGRADE iQ/Analytics ###
+#Upgrade the ElasticSearch deployment
+- stage: job_upgrade_elasticSearch
+  dependsOn:
+  - tenant_validation
+  - job_shared_config_upgrade
+  #if the versions variables is not null, the stage is executed
+  condition: and(succeeded('tenant_validation'), ne(variables.ES_VERSION, ''))
+  jobs:
+    - template: pipelines-jobs/upgrade/es-upgrade.yml
+
+#Update the database's schema
+- stage: job_ntwmonitor_db_upgrade
+  dependsOn:
+  - tenant_validation
+  - job_shared_config_upgrade
+  #if the version variable is not null, the stage is executed
+  condition: and(succeeded('tenant_validation'), ne(variables.IQ_IMAGE_VERSION, ''))
+  jobs:
+    - template: pipelines-jobs/upgrade/db-ntwmonitor-upgrade.yml
+
+### Upgrade iQ KUBERNETES DEPLOYMENT ###
+- stage: job_upgrade_ntwmonitor
+  dependsOn: job_ntwmonitor_db_upgrade
+  #if the version variable is not null, the stage is executed
+  condition: and(succeeded('job_ntwmonitor_db_upgrade'), ne(variables.IQ_IMAGE_VERSION, ''))
+  jobs:
+    - template: pipelines-jobs/upgrade/aks-ntwmonitor-upgrade.yml
+
+### UPGRADE MSmonitor KUBERNETES DEPLOYMENT ###
+- stage: job_upgrade_msmonitor
+  dependsOn: 
+  - tenant_validation
+  - job_shared_config_upgrade
+  #if the version variable is not null, the stage is executed
+  condition: and(succeeded('tenant_validation'), ne(variables.MSmonitor_IMAGE_VERSION, ''))
+  jobs:
+    - template: pipelines-jobs/upgrade/aks-msmonitor-upgrade.yml
+
+### UPGRADE msm-agent KUBERNETES DEPLOYMENT ###
+#the condition in this stage allows to determine if a msm-agent will be updated by using the pipeline UPGRADE_MSM-Agent input variable
+# - stage: job_upgrade_msm-agent
+#   dependsOn: job_upgrade_msmonitor
+#   condition: and(succeeded(), ne(variables.UPGRADE_MSM-Agent, true))
+#   jobs:
+#     - template: pipelines-jobs/upgrade/aks-msm-agent-upgrade.yml
+
+### UPGRADE NPV kubernetes deployment ###
+- stage: job_upgrade_npv
+  dependsOn:
+  - tenant_validation
+  - job_shared_config_upgrade
+  #if the version variable is not null, the stage is executed
+  condition: and(succeeded('tenant_validation'), ne(variables.NPV_IMAGE_VERSION, ''))
+  jobs:
+    - template: pipelines-jobs/upgrade/aks-npv-upgrade.yml
+
+### get version variables value and send it to elasticsearch ###
+- stage: job_version_management_variables
+  dependsOn: 
+  - tenant_validation
+  - job_shared_config_upgrade
+  - job_keycloak_upgrade
+  - job_upgrade_elasticSearch
+  - job_upgrade_ntwmonitor
+  - job_upgrade_msmonitor
+  - job_upgrade_npv
+  condition: |
+      and
+      (
+        eq(dependencies.tenant_validation.result, 'Succeeded'),
+        in(dependencies.job_keycloak_upgrade.result, 'Succeeded', 'Skipped'),
+        in(dependencies.job_ntwmonitor_upgrade_elasticSearch.result, 'Succeeded', 'Skipped', 'Failed'),
+        in(dependencies.job_upgrade_ntwmonitor.result, 'Succeeded', 'Skipped'),
+        in(dependencies.job_upgrade_msmonitor.result, 'Succeeded', 'Skipped'),
+        in(dependencies.job_upgrade_npv.result, 'Succeeded', 'Skipped')
+      )
+  variables:
+    ESupdatedVersion: $[ stageDependencies.job_ntwmonitor_upgrade_elasticSearch.ES_iQ_Resources_Job.outputs['upgradeES.versionUpgraded'] ]
+  jobs:
+    - template: pipelines-jobs/upgrade/versionvariables-upgrade.yml
+

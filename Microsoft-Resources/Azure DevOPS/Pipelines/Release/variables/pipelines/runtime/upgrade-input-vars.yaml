@@ -1,0 +1,18 @@
+variables:
+  #####################################
+  #          TENANT VARIABLES         #
+  #####################################
+  CUSTOMERNAME: ${{ parameters.tenantname }}
+  MSmonitor_IMAGE_VERSION: ${{ parameters.msmonitorImageVersion }}
+  IQ_IMAGE_VERSION: ${{ parameters.ntwmonitorImageVersion }}
+  KEYCLOAK_IMAGE_VERSION: ${{ parameters.keycloakImageVersion }}
+  NPV_IMAGE_VERSION: ${{ parameters.npvImageVersion }}
+  ES_VERSION: ${{ parameters.elasticSearchVersion }}
+  UPGRADE_SHARED_CONFIG: ${{ parameters.upgradeSharedConfig }}
+  ENVIRONMENT: ${{ parameters.environment }}
+  #####################################
+  #    KUBERNETES MODULES VARIABLES   #
+  #####################################
+  INGRESS_IMAGE_TAG: ${{ parameters.IngressControllerImageTag }}
+  CERTMANAGER_IMAGE_TAG: ${{ parameters.CertManagerImageTag }}
+  ELASTIC_AGENT_IMAGE_TAG: ${{ parameters.ElasticAgentImageTag }}

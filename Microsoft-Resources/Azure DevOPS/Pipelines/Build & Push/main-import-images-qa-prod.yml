@@ -1,0 +1,124 @@
+---
+parameters:
+- name: ImageName
+  displayName: Image to import
+  type: string
+  default: 'repo:tag'
+
+trigger: 
+- none
+
+variables:
+- template: variables/pipelines/runtime/import-images-vars-qa-prod.yaml  
+  parameters:
+    IMAGENAME: ${{ parameters.ImageName }}
+pool:
+  vmImage: 'windows-2019'
+
+steps:
+#Display at the pipeline run title what image is importing
+  - task: PowerShell@2
+    displayName: 'Update Build Number'
+    inputs:
+      targetType: 'inline'
+    # Display the current image builded and set the version into the "BuildedImageVersion" variable
+      script: | 
+        $ManageVersion = ("${{ parameters.IMAGENAME }}").split(":")
+        Write-Host "##vso[build.updatebuildnumber]Import "$ManageVersion[0]""$ManageVersion[1]" to $(DEST_REGISTRY_NAME) registry"
+
+  #take variables to be used from the shared Keyvault
+  - task: AzureKeyVault@1
+    displayName: Shared Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(DEST_MTLO_AZURE_SUBSCRIPTION)'
+      KeyVaultName: '$(SHARED_KEYVAULT)'
+      SecretsFilter: '*'
+      runAsPreJob: true
+
+#This task check what is the container registry source and get all details to az acr import cmd line
+  - task: AzureCLI@2
+    displayName: Getting  GSX registry informations
+    inputs:
+      azureSubscription: '$(SRC_AZURE_SUBSCRIPTION)'
+      scriptType: ps
+      scriptLocation: inlineScript
+      inlineScript: |
+        $digest = (az acr repository show --name ${env:SRC_REGISTRY_NAME} --image ${{ parameters.IMAGENAME }} | ConvertFrom-Json).digest
+        $imagename = (az acr repository show --name $(SRC_REGISTRY_NAME) --image ${{ parameters.IMAGENAME }} | ConvertFrom-Json).name
+        $repoName = "${{ parameters.IMAGENAME }}"
+        $RepoNameSplitted = $repoName.Split(":")[0]
+        $registry = (az acr repository show --name $(SRC_REGISTRY_NAME) --repository $RepoNameSplitted  | ConvertFrom-Json).registry
+        write-host $registry
+        switch ($registry)
+        {
+        cbmtdev.azurecr.io
+          {
+            $SubscriptionId = "a548cb3d-0887-4b87-8460-6bf34967538b"
+            $RegistryResourceGroup = "cbmtdev-shared"
+            $RegistryShortName = "cbmtdev"
+          }
+        cbmtqa.azurecr.io
+          {
+            $SubscriptionId = "6aa1df46-8bd3-446f-b779-f53420e889a3"
+            $RegistryResourceGroup = "cbmtqa-shared"
+            $RegistryShortName = "cbmtqa"
+          }
+        cbmtprod.azurecr.io
+          {
+            $SubscriptionId = "efcfb0fe-d308-4c80-9615-57eddb9b2d2a"
+            $RegistryResourceGroup = "cbmtprod-shared"
+            $RegistryShortName = "cbmtprod"
+          }
+        cluster1prod.azurecr.io
+          {
+            $SubscriptionId = "da92482f-938b-4830-8f02-efc30658d436"
+            $RegistryResourceGroup = "cluster1prod-global"
+            $RegistryShortName = "cluster1prod"
+          }
+        }
+        Write-Host "##vso[task.setvariable variable=src_image_manifest;]$registry/$RepoNameSplitted@$digest"
+        Write-Host "##vso[task.setvariable variable=SubscriptionId;]$SubscriptionId"
+        Write-Host "##vso[task.setvariable variable=RegisryResourceGroup;]$RegistryResourceGroup"
+        Write-Host "##vso[task.setvariable variable=RegistryShortName;]$RegistryShortName"
+
+
+#Generate the right parameters to import the image to the registry what we want
+  - task: AzureCLI@2
+    displayName: Importing image to $(DEST_REGISTRY_NAME)
+    inputs:
+      azureSubscription: '$(DEST_AZURE_SUBSCRIPTION)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        repo=$(echo ${{ parameters.IMAGENAME }} | cut -d ':' -f1) && tag=$(echo ${{ parameters.IMAGENAME }} | cut -d ':' -f2)
+        if az acr repository show-tags --repository $repo --name $(DEST_REGISTRY_NAME) | grep $tag; 
+        then 
+          echo "Image $repo:$tag exist. Continue ..."; 
+        else 
+          echo "$repo:$tag not found. Importing ..."
+          az acr import --name "$(DEST_REGISTRY_NAME)" --source "$(src_image_manifest)" --image "${{ parameters.IMAGENAME }}" --username $(SRC_REGISTRY_NAME) --password $(cbmtqaRegistryPassword) 
+          echo "Image ${{ parameters.IMAGENAME }} was imported successfully to $(RegistryShortName) registry"
+        fi
+
+#Import the image from cbmtqa to cluster1prod.
+#I duplicate the task with the same split, to can be deleted easier when we will have done the Azure migration
+  - task: AzureCLI@2
+    displayName: Importing image to $(DEST_MTLO_REGISTRY_NAME)
+    inputs:
+      azureSubscription: '$(DEST_MTLO_AZURE_SUBSCRIPTION)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        repo=$(echo ${{ parameters.IMAGENAME }} | cut -d ':' -f1) && tag=$(echo ${{ parameters.IMAGENAME }} | cut -d ':' -f2)
+        if az acr repository show-tags --repository $repo --name $(DEST_MTLO_REGISTRY_NAME) | grep $tag; 
+        then 
+          echo "Image $repo:$tag exist. Continue ..."; 
+        else 
+          echo "$repo:$tag not found. Importing ..."
+          az acr import --name "$(DEST_MTLO_REGISTRY_NAME)" --source "$(src_image_manifest)" --image "${{ parameters.IMAGENAME }}" --username $(SRC_REGISTRY_NAME) --password $(cbmtqaRegistryPassword)
+          echo "Image ${{ parameters.IMAGENAME }} was imported successfully to $(DEST_MTLO_REGISTRY_NAME) registry"
+        fi  
+        
+
+
+    

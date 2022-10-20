@@ -1,0 +1,102 @@
+jobs:
+- job: Shared_Keyvault_Job
+  pool:
+    vmImage: 'Ubuntu 20.04'
+  
+  steps:
+  #create access policy in the shared keyvault
+    - task: AzureCLI@2
+      displayName: Create Keyvault Access Policy
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            az keyvault set-policy -n '$(shared-keyvault)' \
+            --key-permissions \
+            --certificate-permissions \
+            --secret-permissions get list set delete \
+            --spn '$(AZDEVOPS_SVC_CONNECTION_SP_CLIENTID)'
+
+    #publish secrets to the shared keyvault
+    - task: publish-secrets-to-kv@1
+      displayName: Publish of secrets to the shared keyvault
+      inputs:
+        azureSubscription: '$(azure-subscription)'
+        keyVaultName: '$(shared-keyvault)'
+        secrets: |
+          aks-cluster-name=$(AKS_CLUSTER)
+          aks-resource-group=$(AKS_RG)
+          appGwPublicIp=$(APPGW_PUBLICIP)
+          cluster1IngressPublicIP=$(CLUSTER1_LB_PUBLIC_IP)
+          cbmtIngressPrivateIP=$(CBMT_LB_PRIVATE_IP)
+          azureContainerRegistry=$(CONTAINER_REGISTRY)
+          sqlResourceGroup=$(SQL_RESOURCE_GROUP)
+          dnsZoneName=$(DNS_ZONE_NAME)
+          cluster1CL1DnsZoneName=$(CLUSTER1_DNS_ZONE_NAME)
+          dnsZoneRG=$(DNS_RG)
+          downloadURI=$(DOWNLOAD_URI)
+          elasticPoolName=$(ELASTIC_POOL_NAME)
+          msmonitorInstallFolderPath=$(MSmonitor_INSTALL_PATH)
+          keyvaultsResourceGroup=$(KEYVAULTS_RG)
+          msmonitorLicenseClientid=$(MSmonitor_LICENSE_CLIENTID)
+          msmonitorLicenseClientSecret=$(MSmonitor_LICENSE_CLIENTSECRET)
+          msmonitorLicenseResource=$(MSmonitor_LICENSE_RESOURCE)
+          msmonitorLicenseTenant=$(MSmonitor_LICENSE_TENANT)
+          msmonitorLicensetokenpwd=$(MSmonitor_LICENSE_TOKEN_PWD)
+          msmonitorLicensetokenusername=$(MSmonitor_LICENSE_TOKEN_USER)
+          msmonitorLicenseUri=$(MSmonitor_LICENSE_URI)
+          location=$(LOCATION)
+          logsWorkspaceName=$(LOGS_WORKSPACE_NAME)
+          rmqCluster=$(RMQ_CLUSTER)
+          rmqHostnameMSmonitor=$(RMQ_HOSTNAME_MSmonitor)
+          rmqInstanceAdminPwd=$(RMQ_INSTANCE_ADMIN_PWD)
+          rmqInstanceAdminUser=$(RMQ_INSTANCE_ADMIN_USER)
+          rmqPort=$(RMQ_PORT)
+          rmqSSL=$(RMQ_SSL)
+          msm-agentInstall=$(MSmonitor_MSM-Agent_MANAGER_INSTALL)
+          msm-agentPort=$(MSmonitor_MSM-Agent_MANAGER_PORT)
+          msm-agentVersion=$(MSmonitor_MSM-Agent_MANAGER_VERSION)
+          msmonitorScanconfigPackPath=$(MSmonitor_SCANCONFIG_PACK_PATH)
+          msmonitorScriptDBRevFolder=$(MSmonitor_SCRIPT_DBREV_FOLDER)
+          msmonitorScriptDBRevName=$(MSmonitor_SCRIPT_DBREV_NAME)
+          msmonitorScriptsPath=$(MSmonitor_SCRIPTS_PATH)
+          anpmPostgreSqlServerName=$(ANPM_POSTGRESQL_SERVER_NAME)
+          anpmPostgreSqlServerFQDN=$(ANPM_POSTGRESQL_SERVER_FQDN)
+          anpmPostgreSqlServerAdminLogin=$(ANPM_POSTGRESQL_SERVER_ADMIN_LOGIN)
+          anpmPostgreSqlServerAdminPwd=$(ANPM_POSTGRESQL_SERVER_ADMIN_PWD)
+          kcPostgreSqlServerName=$(KC_POSTGRESQL_SERVER_NAME)
+          kcPostgreSqlServerFQDN=$(KC_POSTGRESQL_SERVER_FQDN)
+          kcPostgreSqlServerAdminLogin=$(KC_POSTGRESQL_SERVER_ADMIN_LOGIN)
+          kcPostgreSqlServerAdminPwd=$(KC_POSTGRESQL_SERVER_ADMIN_PWD)
+          kc-theme-name=$(KC_THEME_NAME)
+          kc-db-vendor=$(KC_DB_VENDOR)
+          kc-db-port=$(KC_POSTGRES_DB_PORT)
+          kc-cluster1-smtp-hostname=$(KC_CLUSTER1_SMTP_HOSTNAME)
+          kc-cluster1-smtp-port=$(KC_CLUSTER1_SMTP_PORT)
+          kc-cluster1-smtp-from-addr=$(KC_CLUSTER1_SMTP_FROM_ADDR)
+          kc-cluster1-smtp-ssl-enabled=$(KC_CLUSTER1_SMTP_SSL_ENABLED)
+          kc-cluster1-smtp-starttls-enabled=$(KC_CLUSTER1_SMTP_STARTTLS_ENABLED)
+          kc-cluster1-smtp-auth-enabled=$(KC_CLUSTER1_SMTP_AUTH_ENABLED)
+          kc-cluster1-smtp-user=$(KC_CLUSTER1_SMTP_USER)
+          kc-cluster1-smtp-password=$(KC_CLUSTER1_SMTP_PASSWORD)
+          sqlServerAdminLogin=$(SQL_SERVER_ADMIN_LOGIN)
+          sqlServerAdminPwd=$(SQL_SERVER_ADMIN_PWD)
+          sqlServerFQDN=$(SQL_SERVER_FQDN)
+          sqlServerName=$(SQL_SERVER_NAME)
+          msmonitorSQLuseWindowsCreds=$(MSmonitor_SQL_USE_WINDOWS_CREDS)
+          msmonitorValidatorFolderName=$(MSmonitor_VALIDATOR_FOLDER_NAME)
+          msmonitorValidatorParametersName=$(MSmonitor_VALIDATOR_PARAMETERS_NAME)
+          msmonitorValidatorScriptName=$(MSmonitor_VALIDATOR_SCRIPT_NAME)
+          azDevops-svc-connection-sp-clientId=$(AZDEVOPS_SVC_CONNECTION_SP_CLIENTID)
+          vaultsNamesKeyvault=$(VAULTS_NAMES_KEYVAULT)
+          msmonitorWebClientId=$(MSmonitor_WEB_CLIENT_ID)
+          msmonitorWebTenantId=$(MSmonitor_WEB_TENANT_ID)
+          cert-manager-sp-name=$(CERT_MANAGER_SP_NAME)
+          cert-manager-sp-appId=$(CERT_MANAGER_SP_APP_ID)
+          cert-manager-sp-password=$(CERT_MANAGER_SP_PASSWORD)
+          cert-manager-sp-tenantId=$(CERT_MANAGER_SP_TENANTID)
+          elasticSearchApiKey=$(ES_APIKEY)
+          cluster1AppRegistrationClientSecret=$(CLUSTER1_APP_REGISTRATION_CLIENT_SECRET)
+        tags: 
+        contentType: 'string'

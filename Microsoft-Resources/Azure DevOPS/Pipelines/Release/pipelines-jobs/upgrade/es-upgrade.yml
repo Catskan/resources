@@ -1,0 +1,148 @@
+jobs:
+#JOB TO DEPLOY KUBERNETES RESOURCES USING THE CONFIGURED AGENT IN HUB VNET
+#the agent name is devops-agent by default in every environment
+- job: ES_Resources_Job
+  pool:
+    name: $(agent-pool-name)
+    demands:
+    - agent.os -equals Linux
+  
+  steps:
+  # Display the component new image version, the customername and the environment
+  - task: Bash@3
+    displayName: 'Update Build Title Name'
+    inputs:
+      targetType: 'inline'
+      script: | 
+        echo "##vso[build.updatebuildnumber]UPGRADETO-CLUSTER1-A-ES-$(ES_VERSION)_CLIENT=$(CUSTOMERNAME)_ENV=$(ENVIRONMENT)"
+
+  - task: AzureKeyVault@1
+    displayName: Shared Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(shared-keyvault)'
+      SecretsFilter: '*'
+      runAsPreJob: true
+
+#Retrieve the name of the variable that contains the name of the tenant's keyvault
+  - task: AzureCLI@2
+    displayName: Getting Tenant Keyvault name
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        getvariable=$(az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| grep -w '$(CUSTOMERNAME)KVname')
+        kvname=$(az keyvault secret show --name $getvariable --vault-name $(vaultsNamesKeyvault) --query 'value' | tr -d \'\")
+        echo "##vso[task.setvariable variable=TENANTKV;]$kvname"
+
+#take variables to be used from the tenant Keyvault
+  - task: AzureKeyVault@1
+    displayName: Tenant Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(TENANTKV)'
+      SecretsFilter: '*'
+      runAsPreJob: false
+
+#Install jq tool to parse JSON in linux
+  - task: Bash@3
+    displayName: Install jq 
+    inputs:
+      targetType: 'inline'
+      script: |
+        sudo apt update && sudo apt install jq -y
+
+#Get the ElasticCloud deployment informations to write into the json template
+  - task: Bash@3
+    displayName: Get the ElasticCloud deployment informations
+    inputs:
+      targetType: 'inline'
+      script: |
+        GetDeployment=$(curl -XGET -H 'Content-Type: application/json' -H "Authorization: Apikey $(elasticSearchApiKey)" "https://api.elastic-cloud.com/api/v1/deployments/$(elasticsearch-deployment-id)")
+        echo $GetDeployment
+        echo "##vso[task.setvariable variable=es_azure_region]$(jq -r '.resources.elasticsearch[].region'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_template_id]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.deployment_template.id'  <<< ${GetDeployment})"
+        
+        echo "##vso[task.setvariable variable=es_coordinating_memory_size]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[0].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_coordinating_instance_id]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[0].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_coordinating_zone_count]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[0].zone_count'  <<< ${GetDeployment})"
+                         
+        echo "##vso[task.setvariable variable=es_hot_content_memory_size]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[1].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_hot_content_instance_id]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[1].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_hot_content_zone_count]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[1].zone_count'  <<< ${GetDeployment})"
+                
+        echo "##vso[task.setvariable variable=es_warm_memory_size]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[2].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_warm_instance_id]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[2].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_warm_zone_count]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[2].zone_count'  <<< ${GetDeployment})"
+    
+        echo "##vso[task.setvariable variable=es_cold_memory_size]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[3].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_cold_instance_id]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[3].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_cold_zone_count]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[3].zone_count'  <<< ${GetDeployment})"
+                
+        echo "##vso[task.setvariable variable=es_frozen_memory_size]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[4].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_frozen_instance_id]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[4].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_frozen_zone_count]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[4].zone_count'  <<< ${GetDeployment})"
+                
+        echo "##vso[task.setvariable variable=es_master_memory_size]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[5].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_master_instance_id]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[5].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_master_zone_count]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[5].zone_count'  <<< ${GetDeployment})"
+                
+        echo "##vso[task.setvariable variable=es_ml_memory_size]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[6].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_ml_instance_id]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[6].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=es_ml_zone_count]$(jq -r '.resources.elasticsearch[].info.plan_info.current.plan.cluster_topology[6].zone_count'  <<< ${GetDeployment})"
+                
+        echo "##vso[task.setvariable variable=kibana_memory_size]$(jq -r '.resources.kibana[].info.plan_info.current.plan.cluster_topology[].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=kibana_instance_id]$(jq -r '.resources.kibana[].info.plan_info.current.plan.cluster_topology[].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=kibana_zone_count]$(jq -r '.resources.kibana[].info.plan_info.current.plan.cluster_topology[].zone_count'  <<< ${GetDeployment})"
+                       
+        echo "##vso[task.setvariable variable=apm_memory_size]$(jq -r '.resources.apm[].info.plan_info.current.plan.cluster_topology[].size.value'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=apm_instance_id]$(jq -r '.resources.apm[].info.plan_info.current.plan.cluster_topology[].instance_configuration_id'  <<< ${GetDeployment})"
+        echo "##vso[task.setvariable variable=apm_zone_count]$(jq -r '.resources.apm[].info.plan_info.current.plan.cluster_topology[].zone_count'  <<< ${GetDeployment})"
+
+
+#Replace values with elasticSearchAzureRegion and elasticSearchTemplateID created at the previous step
+  - task: replacetokens@5
+    displayName: Replace variables in ElasticSearch templates
+    inputs:
+      rootDirectory: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/elasticsearch-files'
+      targetFiles: |
+        upgrade-schema.json
+      encoding: 'auto'
+      writeBOM: true
+      actionOnMissing: 'fail'
+      keepToken: false
+      tokenPrefix: '#{'
+      tokenSuffix: '}#'
+
+#Upgrade ElasticSearch deployment version by the $ES_VERSION value
+  - task: Bash@3
+    name: upgradeES
+    displayName: Upgrade ElasticSearch deployment $(CUSTOMERNAME) with $(ES_VERSION) version
+    inputs:
+      targetType: 'inline'
+      script: |
+        rawActualVersion=$(curl -H "Authorization: ApiKey $(elasticSearchApiKey)" https://api.elastic-cloud.com/api/v1/deployments/$(elasticsearch-deployment-id) | jq .resources.elasticsearch[].info.plan_info.current.plan.elasticsearch.version)
+        actualVersion=$(echo $rawActualVersion | cut -c2- | rev | cut -c2- | rev)
+        if [ $actualVersion != $(ES_VERSION) ]; then
+          reponsecode=$(curl -o upgrade.json -w '\n%{http_code}\n' -XPUT -H 'Content-Type: application/json' -H "Authorization: Apikey $(elasticSearchApiKey)" "https://api.elastic-cloud.com/api/v1/deployments/$(elasticsearch-deployment-id)" --data-binary "@/$(System.DefaultWorkingDirectory)/deploy/elasticsearch-files/upgrade-schema.json")
+          if (( $(echo $reponsecode) >= 400  )); then
+            "##vso[task.logissue type=error]THERE WAS AND ERROR WITH THE ELASTICSEARCH UPGRADE, PLEASE CHECK ERROR MESSAGE";
+            cat upgrade.json
+            echo "##vso[task.setvariable variable=versionUpgraded;isOutput=true]$actualVersion"
+            exit 1
+          else
+            echo 'UPGRADE IN PROGRESS';
+            cat upgrade.json
+            echo "##vso[task.setvariable variable=versionUpgraded;isOutput=true]$(curl -H "Authorization: ApiKey $(elasticSearchApiKey)" https://api.elastic-cloud.com/api/v1/deployments/$(elasticsearch-deployment-id) | jq .resources.elasticsearch[].info.plan_info.current.plan.elasticsearch.version)"
+          fi
+        else
+          echo "The deployment $(elasticsearch-deployment-id) have already the latest version. Nothing to update"
+          echo "##vso[task.setvariable variable=versionUpgraded;isOutput=true]$actualVersion"
+          exit 1
+        fi
+
+        
+
+
+

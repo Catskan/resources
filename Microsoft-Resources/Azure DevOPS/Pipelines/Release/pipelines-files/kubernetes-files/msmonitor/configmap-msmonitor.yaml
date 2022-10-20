@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-msmonitor
+data:
+  InstallFolderPath: '#{msmonitorInstallFolderPath}#'
+  DownloadURI: "#{downloadURI}#"
+  SQL_Server: "#{sqlServerFQDN}#"
+  SQL_UseWindowsCredentials: "#{msmonitorSQLuseWindowsCreds}#"
+  SQL_Database: "#{db-name-msmonitor}#"
+  RMQ_Hostname: "#{rmqHostnameMSmonitor}#"
+  RMQ_Vhost: "#{rmqVhost}#"
+  RMQ_Port: "#{rmqPort}#"
+  RMQ_SSL: "#{rmqSSL}#"
+  TenantID: "#{msmonitorWebTenantId}#"
+  ClientID: "#{msmonitorWebClientId}#"
+  ScanConfig_Pkg_Path: '#{msmonitorScanconfigPackPath}#'
+  Scripts_Path: '#{msmonitorScriptsPath}#'
+  ValidatorFolderName: "#{msmonitorValidatorFolderName}#"
+  ValidatorScriptName: "#{msmonitorValidatorScriptName}#"
+  Validator_Param_Name: "#{msmonitorValidatorParametersName}#"
+  Script_DBRev_Folder: "#{msmonitorScriptDBRevFolder}#"
+  Script_DBRev_Name: "#{msmonitorScriptDBRevName}#"
+  SWO: "#{swo-tenant}#"
+  SSO_ClientDomain: "#{sso-client-domain}#"

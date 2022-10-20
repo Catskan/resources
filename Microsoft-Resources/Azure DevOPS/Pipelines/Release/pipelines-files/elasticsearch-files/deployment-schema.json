@@ -1,0 +1,240 @@
+{
+    "name": "#{CUSTOMERNAME}#.#{CL1DnsZoneName}#",
+    "settings": {
+      "observability": {
+        "metrics": {
+          "destination": {
+            "deployment_id": "#{elasticObservabilityID}#",
+            "ref_id": "main-elasticsearch"
+          }
+        },
+        "logging": {
+          "destination": {
+            "deployment_id": "#{elasticObservabilityID}#",
+            "ref_id": "main-elasticsearch"
+          }
+        }
+      }
+    },
+    "resources": {
+      "elasticsearch": [
+        {
+          "region": "#{elasticSearchAzureRegion}#",
+          "settings": {
+            "dedicated_masters_threshold": 6
+          },
+          "plan": {
+            "autoscaling_enabled": false,
+            "cluster_topology": [
+              {
+                "zone_count": 2,
+                "instance_configuration_id": "azure.coordinating.d64sv3",
+                "node_roles": [
+                  "ingest",
+                  "remote_cluster_client"
+                ],
+                "id": "coordinating",
+                "size": {
+                  "resource": "memory",
+                  "value": 0
+                },
+                "elasticsearch": {
+                  "enabled_built_in_plugins": []
+                }
+              },
+              {
+                "zone_count": 1,
+                "elasticsearch": {
+                  "node_attributes": {
+                    "data": "hot"
+                  },
+                  "enabled_built_in_plugins": []
+                },
+                "instance_configuration_id": "azure.data.highio.l32sv2",
+                "node_roles": [
+                  "master",
+                  "ingest",
+                  "transform",
+                  "data_hot",
+                  "remote_cluster_client",
+                  "data_content"
+                ],
+                "id": "hot_content",
+                "size": {
+                  "resource": "memory",
+                  "value": 8192
+                }
+              },
+              {
+                "zone_count": 2,
+                "elasticsearch": {
+                  "node_attributes": {
+                    "data": "warm"
+                  },
+                  "enabled_built_in_plugins": []
+                },
+                "instance_configuration_id": "azure.data.highstorage.e16sv3",
+                "node_roles": [
+                  "data_warm",
+                  "remote_cluster_client"
+                ],
+                "id": "warm",
+                "size": {
+                  "resource": "memory",
+                  "value": 0
+                }
+              },
+              {
+                "zone_count": 1,
+                "elasticsearch": {
+                  "node_attributes": {
+                    "data": "cold"
+                  },
+                  "enabled_built_in_plugins": []
+                },
+                "instance_configuration_id": "azure.data.highstorage.e16sv3",
+                "node_roles": [
+                  "data_cold",
+                  "remote_cluster_client"
+                ],
+                "id": "cold",
+                "size": {
+                  "resource": "memory",
+                  "value": 0
+                }
+              },
+              {
+                "zone_count": 1,
+                "elasticsearch": {
+                  "node_attributes": {
+                    "data": "frozen"
+                  },
+                  "enabled_built_in_plugins": []
+                },
+                "instance_configuration_id": "azure.es.datafrozen.lsv2",
+                "node_roles": [
+                  "data_frozen"
+                ],
+                "id": "frozen",
+                "size": {
+                  "resource": "memory",
+                  "value": 0
+                }
+              },
+              {
+                "zone_count": 3,
+                "instance_configuration_id": "azure.master.e32sv3",
+                "node_roles": [
+                  "master",
+                  "remote_cluster_client"
+                ],
+                "id": "master",
+                "size": {
+                  "resource": "memory",
+                  "value": 0
+                },
+                "elasticsearch": {
+                  "enabled_built_in_plugins": []
+                }
+              },
+              {
+                "zone_count": 1,
+                "instance_configuration_id": "azure.ml.d64sv3",
+                "node_roles": [
+                  "ml",
+                  "remote_cluster_client"
+                ],
+                "id": "ml",
+                "size": {
+                  "resource": "memory",
+                  "value": 0
+                },
+                "elasticsearch": {
+                  "enabled_built_in_plugins": []
+                }
+              }
+            ],
+            "elasticsearch": {
+              "version": "#{ES_VERSION}#"
+            },
+            "deployment_template": {
+              "id": "#{elasticSearchTemplateID}#"
+            }
+          },
+          "ref_id": "main-elasticsearch"
+        }
+      ],
+      "enterprise_search": [
+        {
+          "elasticsearch_cluster_ref_id": "main-elasticsearch",
+          "region": "#{elasticSearchAzureRegion}#",
+          "plan": {
+            "cluster_topology": [
+              {
+                "node_type": {
+                  "connector": true,
+                  "appserver": true,
+                  "worker": true
+                },
+                "instance_configuration_id": "azure.enterprisesearch.d64sv3",
+                "zone_count": 1,
+                "size": {
+                  "resource": "memory",
+                  "value": 2048
+                }
+              }
+            ],
+            "enterprise_search": {
+              "version": "#{ES_VERSION}#"
+            }
+          },
+          "ref_id": "main-enterprise_search"
+        }
+      ],
+      "kibana": [
+        {
+          "elasticsearch_cluster_ref_id": "main-elasticsearch",
+          "region": "#{elasticSearchAzureRegion}#",
+          "plan": {
+            "cluster_topology": [
+              {
+                "instance_configuration_id": "azure.kibana.e32sv3",
+                "zone_count": 1,
+                "size": {
+                  "resource": "memory",
+                  "value": 1024
+                }
+              }
+            ],
+            "kibana": {
+              "version": "#{ES_VERSION}#"
+            }
+          },
+          "ref_id": "main-kibana"
+        }
+      ],
+      "apm": [
+        {
+          "elasticsearch_cluster_ref_id": "main-elasticsearch",
+          "region": "#{elasticSearchAzureRegion}#",
+          "plan": {
+            "cluster_topology": [
+              {
+                "instance_configuration_id": "azure.apm.e32sv3",
+                "zone_count": 1,
+                "size": {
+                  "resource": "memory",
+                  "value": 1024
+                }
+              }
+            ],
+            "apm": {
+              "version": "#{ES_VERSION}#"
+            }
+          },
+          "ref_id": "main-apm"
+        }
+      ]
+    }
+  }
+  

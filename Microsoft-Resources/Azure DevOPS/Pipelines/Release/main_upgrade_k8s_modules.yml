@@ -1,0 +1,71 @@
+---
+parameters:
+- name: environment
+  displayName: Environment
+  type: string
+  default:
+    azTenant1-env1
+  values:
+    - azTenant1-env1
+    - azTenant2-env1
+- name: IngressControllerImageTag
+  displayName: Ingress Controller Image Tag
+  type: string
+  default: ' '
+- name: CertManagerImageTag
+  displayName: Cert-Manager Image Tag (Name)
+  type: string
+  default: ' '
+- name: ElasticAgentImageTag
+  displayName: Elastic Agent Image Tag
+  type: string
+  default: ' '
+- name: UpgradeIngressControllerImageCluster1
+  displayName: Upgrade NGINX PLUS Ingress Controller for CLUSTER1
+  type: string
+  default: 'True'
+- name: UpgradeIngressControllerImageCbmt
+  displayName: Upgrade NGINX PLUS Ingress Controller for CBMT
+  type: string
+  default: 'False'
+- name: UpgradeCertManagerImages
+  displayName: Upgrade Cert-Manager Images
+  type: string
+  default: 'True'
+- name: UpgradeElasticAgentImages
+  displayName: Upgrade Elastic-Agent Image
+  type: string
+  default: 'True'
+  
+trigger: none
+pr: none
+
+variables:
+- template: deployment/variables/environments/env-vars-${{ parameters.environment }}.yaml
+- template: deployment/variables/pipelines/static/pipelines-vars-${{ parameters.environment }}.yaml
+- template: deployment/variables/pipelines/runtime/upgrade-input-vars.yaml  
+  parameters:
+    IngressControllerImageTag: ${{ parameters.IngressControllerImageTag }}
+    CertManagerImageTag: ${{ parameters.CertManagerImageTag }}
+    ElasticAgentImageTag: ${{ parameters.ElasticAgentImageTag }}
+#Different steps to run (We can choose a only one step)
+stages:
+- stage: Upgrade_IngressController_Image_CLUSTER1
+  condition: eq(${{ parameters.UpgradeIngressControllerImageCluster1 }}, 'True')
+  jobs:
+    - template: deployment/pipelines-jobs\upgrade\kubernetes-modules\upgrade_nginx_ingress_controller.yml
+- stage: Upgrade_IngressController_Image_CBMT
+  condition: eq(${{ parameters.UpgradeIngressControllerImageCbmt }}, 'True')
+  jobs:
+    - template: deployment/pipelines-jobs\upgrade\kubernetes-modules\upgrade_nginx_ingress_controller-cbmt.yml
+- stage: Upgrade_CertManager_Images
+  condition: eq(${{ parameters.UpgradeCertManagerImages }}, 'True')
+  jobs:
+    - template: deployment/pipelines-jobs\upgrade\kubernetes-modules\upgrade_cert-manager.yml
+- stage: Upgrade_ElasticAgent_Image
+  condition: eq(${{ parameters.UpgradeElasticAgentImages }}, 'True')
+  jobs:
+    - template: deployment/pipelines-jobs\upgrade\kubernetes-modules\upgrade_elastic-agent.yml
+
+
+

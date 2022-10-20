@@ -1,0 +1,135 @@
+jobs:
+- job: Create_Resources_Job
+  pool:
+    vmImage: 'windows-2019'
+  
+  steps:
+  #take variables to be used from the shared Keyvault
+  - task: AzureKeyVault@1
+    displayName: Shared Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(shared-keyvault)'
+      SecretsFilter: '*'
+      runAsPreJob: true
+
+  #Retrieve the name of the variable that contains the name of the tenant's keyvault
+  - task: AzureCLI@2
+    displayName: Getting Tenant Keyvault name
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: ps
+      scriptLocation: inlineScript
+      inlineScript: |
+        $getvariable = az keyvault secret list --vault-name $(vaultsNamesKeyvault) --output table --query [].'name'| Select-String -pattern '^$(CUSTOMERNAME)KVname$'
+        $kvname = az keyvault secret show --name $getvariable --vault-name $(vaultsNamesKeyvault) --query 'value'
+        $kvname = $kvname.Trim('"','''')
+        Write-Host ("##vso[task.setvariable variable=TENANTKV;]$kvname")
+
+  #take variables to be used from the tenant Keyvault
+  - task: AzureKeyVault@1
+    displayName: Tenant Azurekeyvault Variables Import
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      KeyVaultName: '$(TENANTKV)'
+      SecretsFilter: '*'
+      runAsPreJob: false
+
+  # replacement of variables in the scripts to create DB logins and RabbitMQ resources
+  - task: replacetokens@5
+    displayName: Values Replacements in script files
+    inputs:
+      rootDirectory: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/windows-files/scripts'
+      targetFiles: |
+        sql/create-db-logins.sql
+        sql/create-db-users.sql
+        powershell/create-rabbitmq-resources.ps1
+      encoding: 'auto'
+      writeBOM: true
+      actionOnMissing: 'fail'
+      keepToken: false
+      tokenPrefix: '#{'
+      tokenSuffix: '}#'
+      
+  #Create database inside the server of the SQL Elastic Pool
+  - task: AzureCLI@2
+    displayName: Creating database inside SQL Pool
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      scriptType: ps
+      scriptLocation: inlineScript
+      inlineScript: |
+        az sql db create --resource-group '$(sqlResourceGroup)' `
+         --server '$(sqlServerName)' `
+         --name '$(db-name-msmonitor)' `
+         --elastic-pool '$(elasticPoolName)'
+
+  #create logins (admin and readonly) in master database
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Logins Creation
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: 'master'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/windows-files/scripts/sql/create-db-logins.sql'
+      IpDetectionMethod: 'AutoDetect'
+  
+  #create users (admin and readonly) in client database associated with the recently created logins
+  - task: SqlAzureDacpacDeployment@1
+    displayName: SQL Users Creation
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      AuthenticationType: 'server'
+      ServerName: '$(sqlServerFQDN)'
+      DatabaseName: '$(db-name-msmonitor)'
+      SqlUsername: '$(sqlServerAdminLogin)'
+      SqlPassword: '$(sqlServerAdminPwd)'
+      deployType: 'SqlTask'
+      SqlFile: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/windows-files/scripts/sql/create-db-users.sql'
+      IpDetectionMethod: 'AutoDetect'
+  
+  #enabled logs in log analytics workspace for the DB and added the backup with Retention policies
+  - task: AzurePowerShell@5
+    displayName: SQL Diagnostic Settings Activation, DB Backups Short and Long Term Retention Configuration
+    inputs:
+      azureSubscription: '$(azure-subscription)'
+      ScriptType: 'InlineScript'
+      Inline: |
+        $db=Get-AzResource -ResourceType Microsoft.Sql/servers/databases -name $(db-name-msmonitor)
+        $workspace=Get-AzResource -ResourceType Microsoft.operationalinsights/workspaces -name $(logsWorkspaceName)
+        Set-AzDiagnosticSetting -ResourceId $db.ResourceId -WorkspaceId $workspace.ResourceId -Enabled $true
+        Set-AzSqlDatabaseBackupShortTermRetentionPolicy -ResourceGroupName $(sqlResourceGroup) -ServerName $(sqlServerName) -DatabaseName $(db-name-msmonitor) -RetentionDays 35
+        Set-AzSqlDatabaseBackupLongTermRetentionPolicy -ResourceGroupName $(sqlResourceGroup) -ServerName $(sqlServerName) -DatabaseName $(db-name-msmonitor) -WeeklyRetention P5W
+      FailOnStandardError: true
+      azurePowerShellVersion: 'LatestVersion'
+
+  # #Create DNS record for the client FQDN
+  # - task: AzureCLI@2
+  #   displayName: Creating A Record in DNS Zone
+  #   condition: and(succeeded(), eq(variables.CBMT, True))
+  #   inputs:
+  #     azureSubscription: '$(azure-subscription)'
+  #     scriptType: ps
+  #     scriptLocation: inlineScript
+  #     inlineScript: |
+  #       $recordExists=$(az network dns record-set a list -g $(dnsZoneRG) -z $(dnsZoneName) | select-string $(CUSTOMERNAME))
+  #       if (![string]::IsNullOrEmpty($recordExists)) {
+  #         Write-Host "Record exists... Deleting it"
+  #         az network dns record-set a delete -g $(dnsZoneRG) -z $(dnsZoneName) -n $(CUSTOMERNAME) --yes
+  #         Write-Host "Creating the new one"
+  #         az network dns record-set a add-record -g $(dnsZoneRG) -z $(dnsZoneName) -n $(CUSTOMERNAME) -a $(appGwPublicIp) --ttl 300
+  #       }else {
+  #         Write-Host "Record doesn't exist... Creating it"
+  #         az network dns record-set a add-record -g $(dnsZoneRG) -z $(dnsZoneName) -n $(CUSTOMERNAME) -a $(appGwPublicIp) --ttl 300
+  #       }
+
+  # create rabbitMQ vhost and credentials for the tenant in CloudAMQP
+  - task: PowerShell@2
+    displayName: Create RabbitMQ Vhost and User
+    inputs:
+      targetType: 'filePath'
+      filePath: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/windows-files/scripts/powershell/create-rabbitmq-resources.ps1'

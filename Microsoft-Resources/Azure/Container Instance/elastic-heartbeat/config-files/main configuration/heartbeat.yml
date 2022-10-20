@@ -1,0 +1,10 @@
+# heartbeat.yml
+heartbeat.config.monitors:
+  # Directory + glob pattern to search for configuration files
+  path: ${MONITORS_LOCATION}/*.yml
+  # If enabled, heartbeat will periodically check the config.monitors path for changes
+  reload.enabled: true
+  # How often to check for changes
+  reload.period: 60s
+cloud.id: ${CLOUD_ID}
+cloud.auth: ${CLOUD_AUTH}

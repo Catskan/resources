@@ -1,0 +1,39 @@
+jobs:
+  - job: Fluentbit_job
+    pool:
+      name: $(agent-pool-name)
+      demands:
+      - agent.os -equals Linux
+  
+    steps:
+    - task: replacetokens@5
+      displayName: Replace variables in kubernetes templates
+      inputs:
+        rootDirectory: '$(System.DefaultWorkingDirectory)/deployment/pipelines-files/kubernetes-files/fluentbit'
+        targetFiles: |
+          fluent-bit-all.yaml
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'fail'
+        keepToken: false
+        tokenPrefix: '#{'
+        tokenSuffix: '}#'
+    
+    - task: Bash@3
+      displayName: Get aks credentials
+      inputs:
+        targetType: 'inline'
+        Script: |
+          az login --identity
+          az account set --subscription $(azure-subscription-id)
+          az aks get-credentials --resource-group $(AKS_RG) --name $(AKS_CLUSTER) --overwrite-existing --file /home/azureuser/.kube/config
+          export KUBECONFIG=/home/azureuser/.kube/config
+          kubelogin convert-kubeconfig -l msi
+    
+    - task: Kubernetes@1
+      displayName: Fluentbit Deployment
+      inputs:
+        connectionType: 'None'
+        command: 'apply'
+        arguments: '-f $(System.DefaultWorkingDirectory)/deployment/pipelines-files/kubernetes-files/fluentbit/fluent-bit-all.yaml'
+        secretType: 'generic'
