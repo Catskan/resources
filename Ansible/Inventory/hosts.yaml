@@ -1,0 +1,22 @@
+all:
+  hosts: 
+    aurelien.it:
+  children:
+    linux:
+      hosts:
+        ubuntu-aurelien
+    windows:
+      hosts:
+        gaming-aurelien
+        vm-aurelien
+    nas:
+      hosts:
+        nas.mapn.fr:3434:
+          ssh-user: a.peruchon
+    gaming:
+      hosts:
+        aurelien-gaming
+    laptops:
+      hosts:
+        macbookair-aurelien
+        ubuntu-aurelien
