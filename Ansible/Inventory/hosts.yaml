@@ -8,11 +8,11 @@ all:
     windows:
       hosts:
         gaming-aurelien
-        vm-aurelien
     nas:
       hosts:
         nas.mapn.fr:3434:
-          ssh-user: a.peruchon
+          host_ip: 192.168.2.114
+          ssh_user: a.peruchon
     gaming:
       hosts:
         aurelien-gaming
@@ -20,3 +20,7 @@ all:
       hosts:
         macbookair-aurelien
         ubuntu-aurelien
+    docker:
+      hosts:
+        macbookair-aurelien:
+          host_ip: 127.0.0.1
