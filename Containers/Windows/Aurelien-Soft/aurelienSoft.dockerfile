@@ -23,11 +23,10 @@ COPY ${srcProgramData} ${dstProgramData}
 COPY ./resouces/Containers/Aurelien-Soft/Scripts C:/Scripts
 
 #Copy the logmonitor configuration file
-COPY ./resouces/Containers/Aurelien-Soft/LogMonitorConfig.json C:/LogMonitor/
+COPY ./resouces/Containers/Aurelien-Soft/Modules/LogMonitorConfig.json C:/LogMonitor/
 
 #Set ports to listen inside the docker network
 EXPOSE 80
-EXPOSE 8080
 
 #Enable Powershell Shell
 SHELL ["powershell", "-command"]

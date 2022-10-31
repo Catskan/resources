@@ -1,0 +1,121 @@
+{
+  "LogConfig": {
+    "sources": [
+      {
+        "type": "EventLog",
+        "startAtOldestRecord": true,
+        "eventFormatMultiLine": false,
+        "channels": [
+          {
+            "name": "system",
+            "level": "Information"
+          },
+          {
+            "name": "system",
+            "level": "Warning"
+          },
+          {
+            "name": "system",
+            "level": "Error"
+          },
+          {
+            "name": "application",
+            "level": "Error"
+          },
+          {
+            "name": "application",
+            "level": "Information"
+          },
+          {
+            "name": "application",
+            "level": "Warning"
+          }
+        ]
+      },
+      {
+        "type": "File",
+        "directory": "c:\\inetpub\\logs",
+        "filter": "*.log",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Alert",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Data Tier",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Preprocessing",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Scan Configuration",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Status Calculation",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\WebUI",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\Logs\\Startup\\",
+        "filter": "Startup-Full.log",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "ETW",
+        "eventFormatMultiLine": false,
+        "providers": [
+          {
+            "providerName": "IIS: WWW Server",
+            "providerGuid": "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83",
+            "level": "Information"
+          },
+          {
+            "providerName": "IIS: WWW Server",
+            "providerGuid": "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83",
+            "level": "Warning"
+          },
+          {
+            "providerName": "IIS: WWW Server",
+            "providerGuid": "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83",
+            "level": "Error"
+          },
+          {
+            "providerName": "Microsoft-Windows-IIS-Logging",
+            "providerGuid": "7E8AD27F-B271-4EA2-A783-A47BDE29143B",
+            "level": "Information"
+          },
+          {
+            "providerName": "Microsoft-Windows-IIS-Logging",
+            "providerGuid": "7E8AD27F-B271-4EA2-A783-A47BDE29143B",
+            "level": "Warning"
+          },
+          {
+            "providerName": "Microsoft-Windows-IIS-Logging",
+            "providerGuid": "7E8AD27F-B271-4EA2-A783-A47BDE29143B",
+            "level": "Error"
+          }
+        ]
+      }
+    ]
+  }
+}

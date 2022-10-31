@@ -1,0 +1,54 @@
+{
+  "LogConfig": {
+    "sources": [
+      {
+        "type": "File",
+        "directory": "c:\\inetpub\\logs",
+        "filter": "*.log",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Alert",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Data Tier",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Preprocessing",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Scan Configuration",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\Status Calculation",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\ProgramData\\GSX Solutions\\WebUI",
+        "filter": "*.txt",
+        "includeSubdirectories": true
+      },
+      {
+        "type": "File",
+        "directory": "C:\\Logs\\Startup\\",
+        "filter": "Startup-Full.log",
+        "includeSubdirectories": true
+      }
+    ]
+  }
+}
