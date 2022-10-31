@@ -1,26 +1,13 @@
 all:
   hosts: 
-    aurelien.it:
-  children:
-    linux:
-      hosts:
-        ubuntu-aurelien
-    windows:
-      hosts:
-        gaming-aurelien
-    nas:
-      hosts:
-        nas.mapn.fr:3434:
-          host_ip: 192.168.2.114
-          ssh_user: a.peruchon
-    gaming:
-      hosts:
-        aurelien-gaming
-    laptops:
-      hosts:
-        macbookair-aurelien
-        ubuntu-aurelien
-    docker:
-      hosts:
-        macbookair-aurelien:
-          host_ip: 127.0.0.1
+    nas.mapn.fr:
+      ansible_connection: ssh
+      ansible_host: 192.168.2.114
+      ansible_port: 3434
+      ansible_user: a.peruchon
+    macbookair-aurelien:
+      ansible_connection: ssh
+      ansible_host: localhost
+      ansible_user: aurelien
+
+    
