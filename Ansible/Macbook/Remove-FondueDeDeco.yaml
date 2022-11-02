@@ -1,0 +1,21 @@
+---
+- name: Deploy Blog maman
+  hosts: macbookair-aurelien
+  vars_files:
+    - ../Variables/macbookair-aurelien.yml
+
+  tasks:
+  - name: Check Python requests is installed
+    ansible.builtin.pip:
+      name: requests
+      state: present
+
+  - name: Stop the container
+    community.docker.docker_container:
+      name: '{{ container_name_fonduededeco }}'
+      state: stopped
+
+  - name: Remove the container
+    community.docker.docker_container:
+      name: '{{ container_name_fonduededeco }}'
+      state: absent

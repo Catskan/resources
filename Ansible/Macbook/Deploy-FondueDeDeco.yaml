@@ -1,0 +1,23 @@
+---
+- name: Deploy Blog maman
+  hosts: macbookair-aurelien
+  vars_files:
+    - ../Variables/macbookair-aurelien.yml
+
+  tasks:
+  - name: Check Python requests is installed
+    ansible.builtin.pip:
+      name: requests
+      state: present
+
+  - name: Log into DockerHub
+    community.docker.docker_login:
+      username: catskan
+      password: zR3!$3cnUdb$xB
+
+  - name: Deploy fonduededeco container
+    community.docker.docker_container:
+      name: '{{ container_name_fonduededeco }}'
+      image: '{{ image_name_fonduededeco }}'
+      state: started
+      published_ports: 8080:80

@@ -9,5 +9,6 @@ all:
       ansible_connection: ssh
       ansible_host: localhost
       ansible_user: aurelien
-
+      ansible_python_interpreter: /usr/bin/python3
+      
     

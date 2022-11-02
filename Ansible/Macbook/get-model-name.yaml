@@ -1,9 +1,0 @@
----
-- name: Get Macbook Informations
-  hosts: macbookair-aurelien
-
-  tasks:
-  - name: Get Model name
-    ansible.builtin.command: system_profiler | grep 'Model Name'
-    register: Macbook
-    value: 

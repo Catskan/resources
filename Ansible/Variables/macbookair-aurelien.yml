@@ -1,0 +1,3 @@
+---
+container_name_fonduededeco: fonduededeco
+image_name_fonduededeco: catskan/fonduededeco:v1
