@@ -1,8 +1,9 @@
 ---
 - name: Deploy Blog maman
-  hosts: macbookair-aurelien
+  hosts: macbookair-aurelien.local
   vars_files:
     - ../Variables/macbookair-aurelien.yml
+    - ../Variables/macbookair-aurelien-secrets.yml
 
   tasks:
   - name: Check Python requests is installed
@@ -10,10 +11,20 @@
       name: requests
       state: present
 
+  - name: Install docker python package
+    ansible.builtin.pip:
+      name: docker
+
+  - name: Replace credsStore by credStore (fix docker-credential-desktop issue)
+    ansible.builtin.replace:
+      path: /Users/{{ user_name }}/.docker/config.json
+      regexp: 'credsStore'
+      replace: "credStore"
+
   - name: Log into DockerHub
     community.docker.docker_login:
-      username: catskan
-      password: zR3!$3cnUdb$xB
+      username: '{{ dockerHub_username }}'
+      password: '{{ dockerHub_password }}'
 
   - name: Deploy fonduededeco container
     community.docker.docker_container:

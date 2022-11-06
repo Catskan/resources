@@ -1,6 +1,6 @@
 ---
 - name: Deploy Blog maman
-  hosts: macbookair-aurelien
+  hosts: macbookair-aurelien.local
   vars_files:
     - ../Variables/macbookair-aurelien.yml
 
