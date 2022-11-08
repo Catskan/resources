@@ -11,7 +11,7 @@ ADD https://www.python.org/ftp/python/3.11.0/Python-$python_version.tgz /tmp/Pyt
 ENV PATH="${PATH}:/home/aurelien/.local/bin"
 
 #Copy the public key of the destination SSH server
-COPY ./Containers/Linux/id_rsa /home/aurelien/.ssh/id_rsa
+COPY ./Containers/Linux/Debian-Ansible/id_rsa /home/aurelien/.ssh/id_rsa
 
 #Create a user with home directory to install ansible inside it
 RUN useradd aurelien && chown -R aurelien:aurelien /home/aurelien/
@@ -27,6 +27,7 @@ USER aurelien
 
 #Install Ansible and Ansible's modules inside the user's home
 RUN python3 -m pip install --user ansible && python3 -m pip install argcomplete && python3 -m pip install docker \
+    && python3 -m pip install pywinrm \
     && activate-global-python-argcomplete --user
     
 

@@ -10,5 +10,8 @@ all:
       ansible_host: 192.168.1.81
       ansible_user: aurelien
       ansible_python_interpreter: /usr/bin/python3
+    w11-mac-vm:
+      ansible_connection:
+
 
     
