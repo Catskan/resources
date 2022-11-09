@@ -4,6 +4,7 @@ FROM debian:stable-slim
 #Declare all arguments (variables) will used by dockerfile layers
 ARG python_version=3.11.0
 
+ARG OS
 #Download Python archive from official URL
 ADD https://www.python.org/ftp/python/3.11.0/Python-$python_version.tgz /tmp/Python-$python_version.tgz
 
@@ -12,6 +13,9 @@ ENV PATH="${PATH}:/home/aurelien/.local/bin"
 
 #Copy the public key of the destination SSH server
 COPY ./Containers/Linux/Debian-Ansible/id_rsa /home/aurelien/.ssh/id_rsa
+
+#COPY ./home/aurelien/repo/catskan/resources/Containers/Linux/Debian-Ansible/id_rsa /home/aurelien/.ssh/id_rsa
+
 
 #Create a user with home directory to install ansible inside it
 RUN useradd aurelien && chown -R aurelien:aurelien /home/aurelien/
@@ -31,4 +35,4 @@ RUN python3 -m pip install --user ansible && python3 -m pip install argcomplete 
     && activate-global-python-argcomplete --user
     
 
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+ENTRYPOINT ["/bin/bash", "-c", "tail", "-f", "/dev/null"]
