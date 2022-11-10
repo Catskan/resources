@@ -14,9 +14,6 @@ ENV PATH="${PATH}:/home/aurelien/.local/bin"
 #Copy the public key of the destination SSH server
 COPY ./Containers/Linux/Debian-Ansible/id_rsa /home/aurelien/.ssh/id_rsa
 
-#COPY ./home/aurelien/repo/catskan/resources/Containers/Linux/Debian-Ansible/id_rsa /home/aurelien/.ssh/id_rsa
-
-
 #Create a user with home directory to install ansible inside it
 RUN useradd aurelien && chown -R aurelien:aurelien /home/aurelien/
 
@@ -34,5 +31,4 @@ RUN python3 -m pip install --user ansible && python3 -m pip install argcomplete 
     && python3 -m pip install pywinrm \
     && activate-global-python-argcomplete --user
     
-
-ENTRYPOINT ["/bin/bash", "-c", "tail", "-f", "/dev/null"]
+CMD ["tail", "-f", "/dev/null"]
