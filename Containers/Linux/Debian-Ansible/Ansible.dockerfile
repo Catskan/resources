@@ -18,7 +18,7 @@ COPY ./Containers/Linux/Debian-Ansible/id_rsa /home/aurelien/.ssh/id_rsa
 RUN useradd aurelien && chown -R aurelien:aurelien /home/aurelien/
 
 #Build & Install Python 3.11 from sources
-RUN apt update && apt dist-upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client \
+RUN apt update && apt dist-upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client iputils-ping netcat \
     libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl -y \
     && tar xzf /tmp/Python-$python_version.tgz -C /tmp/ && cd /tmp/Python-$python_version \ 
     && ./configure --enable-optimizations && make && make install
@@ -29,6 +29,6 @@ USER aurelien
 #Install Ansible and Ansible's modules inside the user's home
 RUN python3 -m pip install --user ansible && python3 -m pip install argcomplete && python3 -m pip install docker \
     && python3 -m pip install pywinrm \
-    && activate-global-python-argcomplete --user
+    && activate-global-python-argcomplete --user && ansible-galaxy collection install ansible.windows
     
 CMD ["tail", "-f", "/dev/null"]

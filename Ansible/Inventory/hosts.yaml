@@ -10,8 +10,14 @@ all:
       ansible_host: 192.168.1.81
       ansible_user: aurelien
       ansible_python_interpreter: /usr/bin/python3
-    w11-mac-vm:
-      ansible_connection:
+    aurelien-gaming:
+      ansible_connection: winrm
+      ansible_host: 192.168.1.4
+      ansible_user: ansible
+      ansible_password: 'test'
+      ansible_winrm_transport: basic
+      ansible_port: 5985
+      ansible_winrm_scheme: http
 
 
     
