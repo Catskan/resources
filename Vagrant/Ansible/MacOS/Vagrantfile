@@ -15,8 +15,8 @@ Vagrant.configure("2") do |config|
     config.vm.provision "docker" do |d|
       #d.post_install_provision "shell", path: "./prepare_ansible_env.sh"
     end
-    docker.vm.network :private_network, type: "dhcp", ip: "192.168.3.0", netmask: "24"
-    docker.vm.network :public_network, type: "dhcp", bridge: ["wlp59s0"]
+    docker.vm.network :private_network, type: "dhcp", docker_network__internal: true
+    #docker.vm.network :public_network, type: "dhcp", bridge: "eth0", docker_network__ip_range: "192.168.1.100/30"
   end
 
  
@@ -57,7 +57,7 @@ Vagrant.configure("2") do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   #config.vm.synced_folder ".", "/vagrant", type: "smb", smb_host: "127.0.0.1"
-  #config.vm.synced_folder "/Users/aurelien/git/resources/Ansible", "/share/Ansible", docker_consistency: "cached"
+  config.vm.synced_folder "/Users/aurelien/git/resources/Ansible", "/share/Ansible", docker_consistency: "cached"
   
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.

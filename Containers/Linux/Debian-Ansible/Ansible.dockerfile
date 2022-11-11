@@ -18,10 +18,11 @@ COPY ./Containers/Linux/Debian-Ansible/id_rsa /home/aurelien/.ssh/id_rsa
 RUN useradd aurelien && chown -R aurelien:aurelien /home/aurelien/
 
 #Build & Install Python 3.11 from sources
-RUN apt update && apt dist-upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client iputils-ping netcat \
-    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl -y \
+RUN apt update && apt dist-upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client \
+    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl iputils-ping netcat iproute2 -y \
     && tar xzf /tmp/Python-$python_version.tgz -C /tmp/ && cd /tmp/Python-$python_version \ 
-    && ./configure --enable-optimizations && make && make install
+    && ./configure --enable-optimizations && make && make install \
+    && rm * /tmp
 
 #Run the next dockerfiles layers as aurelien user
 USER aurelien

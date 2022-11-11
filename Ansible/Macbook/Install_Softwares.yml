@@ -3,13 +3,23 @@
   hosts: aurelien-gaming
 
   tasks:
+  - name: Get the SID for all user accounts as a filter
+    community.windows.win_domain_object_info:
+      filter: ObjectClass -eq 'aurel'
+      properties:
+      - objectSid
+    
   # Install/uninstall with win_package
   - name: Download the 7-Zip package
     win_get_url:
-      url: https://www.7-zip.org/a/7z1701-x64.msi
+      url: https://www.7-zip.org/a/7z2201-x64.msi
       dest: C:\temp\7z.msi
 
-  - name: Ensure 7-Zip is installed via win_package
-    win_package:
-      path: C:\temp\7z.msi
-      state: present
+  - name: Check if 7-Zip is already installed
+    win_reg_stat:
+      name: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-1701-000001000000}
+    register: Sevenzip_installed
+
+  - name: Ensure 7-Zip is installed via win_command
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
+    when: Sevenzip_installed.exists == false
