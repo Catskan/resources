@@ -1,9 +1,0 @@
----
-- name: Test
-  hosts: aurelien-gaming
-
-  tasks:
-  - name: Get WinRM Config
-    win_shell: winrm get winrm/config/service
-    register: output
-  - debug: var=output.stdout_lines
