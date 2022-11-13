@@ -10,6 +10,8 @@
 ansible-playbook -i /share/Ansible/Inventory/hosts.yaml /share/Ansible/Gaming/main_playbook.yml
 ansible-playbook -i /share/Ansible/Inventory/hosts.yaml /share/Ansible/Gaming/User.yaml
 
+ansible-playbook -i /share/Ansible/Inventory/hosts.yaml /share/Ansible/Gaming/main_remove_softwares.yml
+
 
 *Encrypt a secret file:*
 
