@@ -1,0 +1,55 @@
+---
+  ##########################################Set auto logon##########################################
+  - name: Set autologon for Aurel
+    community.windows.win_auto_logon:
+      username: Aurel
+      password: '{{ ansible_w11_utm_password }}'
+  
+  - name: Install PSCX
+    win_psmodule:
+      name: Pscx
+      state: present
+  # #Download Captvty
+  # - name: Download CaptvTY
+  #   win_get_url:
+  #     url: https://releases.captvty.fr/151836a79873f8f6e6313205bf7f7cbfd0c1655a/captvty-2.9.9.zip
+  #     dest: C:\Users\Aurel\Downloads\captvty.zip
+  #   when: ansible_host_name == "utm-w11" 
+
+  - name: Unzip Captvty zip
+    win_unzip:
+      src: C:\Users\Aurel\Downloads\captvty-2.9.9.zip
+      dest: C:\Captvty
+
+  ##########################################Mount WebDAV##########################################
+  - name: Create mapped drive with credentials and save the username and password
+    block:
+    - name: Save the network credentials required for the mapped drive
+      win_credential:
+        name: nas.mapn.fr
+        type: domain_password
+        username: '{{ webdav_username }}'
+        secret: '{{ webdav_password }}'
+        state: present
+
+    - name: Create a mapped drive that requires authentication
+      win_mapped_drive:
+          letter: N
+          path: https://nas.mapn.fr:8171/Aurelien
+          state: present
+    vars:
+        # become is required to save and retrieve the credentials in the tasks
+        ansible_become: yes
+        ansible_become_method: runas
+        ansible_become_user: '{{ ansible_user }}'
+        ansible_become_pass: '{{ ansible_password }}'
+
+
+
+
+    
+# -defaultgamedir E:\Games\SteamLibrary -language french -nosteamcontroller
+
+
+
+      

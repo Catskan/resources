@@ -1,8 +1,11 @@
 ---
 - name: Main Aurelien Gaming Playbook
-  hosts: aurelien-gaming
+  hosts: 
+    - aurelien-gaming
+    - w11-utm-macbook-air
   vars:
     ansible_password: '{{ remote_local_user_name_password }}'
+    ansible_w11_utm_password: "@7^yB45!!s33*&"
   vars_files:
     - ../Variables/gaming/aurelien-gaming-vars.yml
     - ../Variables/gaming/aurelien-gaming-vars-secrets.yml
@@ -10,15 +13,24 @@
   tasks:
     - name: Include user_location.yml
       ansible.builtin.include: user_location.yml
-    
+      when: ansible_host_name == "aurelien-gaming"
+
     - name: Include windows_settings.yml
       ansible.builtin.include: windows_settings.yml
+      when: ansible_host_name == "aurelien-gaming"
+
+    - name: Include install_Software-utm.yml
+      ansible.builtin.include: install_Software-utm.yml
+      when: ansible_host_name == "utm-w11"
 
     - name: Include check_softwares_installed.yml
       ansible.builtin.include: check_softwares_installed.yml
-      
+      when: ansible_host_name == "aurelien-gaming"
+
     - name: Include download_Softwares.yml
       ansible.builtin.include: download_Softwares.yml
+      when: ansible_host_name == "aurelien-gaming"
 
     - name: Include install_Softwares.yml
       ansible.builtin.include: install_Softwares.yml
+      when: ansible_host_name == "aurelien-gaming"

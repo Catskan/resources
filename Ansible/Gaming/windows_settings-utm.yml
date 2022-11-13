@@ -18,30 +18,30 @@
     - name: Set autologon for Aurel
       community.windows.win_auto_logon:
         username: Aurel
-        password: '{{ remote_local_user_name_password }}'
+        password: '{{ user_name_password}}'
 
-  ##########################################Mount WebDAV##########################################
-    - name: Create mapped drive with credentials and save the username and password
-      block:
-      - name: Save the network credentials required for the mapped drive
-        win_credential:
-          name: nas.mapn.fr
-          type: domain_password
-          username: '{{ webdav_username }}'
-          secret: '{{ webdav_password }}'
-          state: present
+  # ##########################################Mount WebDAV##########################################
+  #   - name: Create mapped drive with credentials and save the username and password
+  #     block:
+  #     - name: Save the network credentials required for the mapped drive
+  #       win_credential:
+  #         name: nas.mapn.fr
+  #         type: domain_password
+  #         username: '{{ webdav_username }}'
+  #         secret: '{{ webdav_password }}'
+  #         state: present
 
-      - name: Create a mapped drive that requires authentication
-        win_mapped_drive:
-          letter: N
-          path: 'https://nas.mapn.fr:8171/Aurelien'
-          state: present
-      vars:
-        # become is required to save and retrieve the credentials in the tasks
-        ansible_become: yes
-        ansible_become_method: runas
-        ansible_become_user: '{{ ansible_user }}'
-        ansible_become_pass: '{{ ansible_password }}'
+  #     - name: Create a mapped drive that requires authentication
+  #       win_mapped_drive:
+  #         letter: N
+  #         path: \\nas.mapn.fr@SSL\Aurelien
+  #         state: present
+  #     vars:
+  #       # become is required to save and retrieve the credentials in the tasks
+  #       ansible_become: yes
+  #       ansible_become_method: runas
+  #       ansible_become_user: '{{ ansible_user }}'
+  #       ansible_become_pass: '{{ ansible_password }}'
 
 
 

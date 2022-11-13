@@ -70,3 +70,12 @@
       url: https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe
       dest: C:\temp\Steam.exe
     when: Steam_installed.exists == false
+
+
+  #Download Captvty
+  - name: Download CaptvTY
+    win_get_url:
+      url: https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe
+      dest: C:\temp\Steam.exe
+    when: ansible_host_name == "utm-w11" 
+
