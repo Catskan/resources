@@ -13,8 +13,8 @@ all:
     aurelien-gaming:
       ansible_connection: winrm
       ansible_host: 192.168.1.4
-      ansible_user: ansible
-      ansible_password: 'test'
+      ansible_user: Aurel
+      ansible_password: 
       ansible_winrm_transport: basic
       ansible_port: 5985
       ansible_winrm_scheme: http

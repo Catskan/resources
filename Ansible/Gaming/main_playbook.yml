@@ -1,0 +1,22 @@
+---
+- name: Main Aurelien Gaming Playbook
+  hosts: aurelien-gaming
+  vars_files:
+    - ../Variables/gaming/aurelien-gaming-vars.yml
+    - ../Variables/gaming/aurelien-gaming-vars-secrets.yml
+
+  tasks:
+    - name: Include user_location.yml
+      ansible.builtin.include: user_location.yml
+    
+    - name: Include windows_settings.yml
+      ansible.builtin.include: windows_settings.yml
+
+    - name: Include check_softwares_installed.yml
+      ansible.builtin.include: check_softwares_installed.yml
+      
+    - name: Include download_Softwares.yml
+      ansible.builtin.include: download_Softwares.yml
+
+    - name: Include install_Softwares.yml
+      ansible.builtin.include: install_Softwares.yml

@@ -1,0 +1,56 @@
+---
+  #Check in Registry if 7-Zip is already installed
+  - name: Check if 7-Zip is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-1701-000001000000}
+    register: Sevenzip_installed
+
+  #Check in Registry if Firefox is already installed
+  - name: Check if Firefox is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Mozilla Firefox 106.0.5 (x64 en-US)
+    register: Firefox_installed
+
+  #Check in Registry if Nvidia Display Driver is already installed
+  - name: Check if Nvidia Display Driver is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}_Display.Driver
+    register: Nvidia_installed
+
+  #Check in Registry if Ubisoft Connect is already installed
+  - name: Check if Ubisoft Connect is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Uplay
+    register: UbisoftConnect_installed
+    
+
+  #Check in Registry if EA App is already installed
+  - name: Check if EA App is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{C2622085-ABD2-49E5-8AB9-D3D6A642C091}
+    register: EAApp_installed
+
+  #Check in Registry if Epic Launcher is already installed
+  - name: Check if Epic Launcher is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{20235E2B-1E9F-473D-A215-B2467F1F06E3}
+    register: Epic_installed
+
+  #Check in Registry if Bitwarden is already installed
+  - name: Check if Bitwarden is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\173a9bac-6f0d-50c4-8202-4744c69d091a
+    register: Bitwarden_installed
+
+  #Check in Registry if TightVNC is already installed
+  - name: Check if TightVNC is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{361FB9AD-9238-4E87-8CFB-4126752A79F8}
+    register: TightVNC_installed
+
+  #Check in Registry if Steam is already installed
+  - name: Check if Steam is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam
+    register: Steam_installed
+

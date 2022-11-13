@@ -1,0 +1,72 @@
+---
+  # Install/uninstall with win_package
+  - name: Download the 7-Zip
+    win_get_url:
+      url: https://www.7-zip.org/a/7z2201-x64.msi
+      dest: C:\temp\7z.msi
+      force: no
+    when: Sevenzip_installed.exists == false
+  
+  # Download Firefox with win_package
+  - name: Download the Firefox 
+    win_get_url:
+      url: https://download.mozilla.org/?product=firefox-msi-latest-ssl&os=win64&lang=en-US&_gl=1*re3fn1*_ga*MjI3NDc1NTQ0LjE2NjgyNjk0MDc.*_ga_MQ7767QQQW*MTY2ODI2OTQxNy4xLjAuMTY2ODI2OTQxNy4wLjAuMA..
+      dest: C:\temp\Firefox.msi
+      force: no
+    when: Firefox_installed.exists == false
+
+  # IDownload Nvidia Drivers with win_package
+  - name: Download the Nvidia
+    win_get_url:
+      url: https://us.download.nvidia.com/Windows/526.86/526.86-desktop-win10-win11-64bit-international-dch-whql.exe
+      dest: C:\temp\Nvidia.exe
+      force: no
+    when: Nvidia_installed.exists == false
+
+  # Download Ubisoft Connect with win_package
+  - name: Download the Ubisoft Connect 
+    win_get_url:
+      url: https://ubi.li/4vxt9
+      dest: C:\temp\UbisoftConnect.exe
+    when: UbisoftConnect_installed.exists == false
+
+  #Download EA App (Origin)
+  - name: Download the EA App
+    win_get_url:
+      url: https://origin-a.akamaihd.net/EA-Desktop-Client-Download/installer-releases/EAappInstaller.exe
+      dest: C:\temp\EaApp.exe
+    when: EAApp_installed.exists == false
+
+  #Download Epic Launcher
+  - name: Download the Epic Launcher
+    win_get_url:
+      url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi
+      dest: C:\temp\Epic.msi
+    when: Epic_installed.exists == false
+
+  #Download Bitwarden 
+  - name: Download the Bitwarden
+    win_get_url:
+      url: https://vault.bitwarden.com/download/?app=desktop&platform=windows
+      dest: C:\temp\bitwarden.exe
+    when: Bitwarden_installed.exists == false
+
+  #Download Synology Drive Client 
+  - name: Download the Synology Drive Client
+    win_get_url:
+      url: https://global.download.synology.com/download/Utility/SynologyDriveClient/3.2.0-13238/Windows/Installer/Synology%20Drive%20Client-3.2.0-13238.msi?model=DS716%2BII&bays=2&dsm_version=7.1.1&build_number=42962
+      dest: C:\temp\SynologyDrive.msi
+
+  #Download TightVNC
+  - name: Download TightVNC
+    win_get_url:
+      url: https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi
+      dest: C:\temp\tightvnc.msi
+    when: TightVNC_installed.exists == false
+
+  #Download Steam
+  - name: Download Steam
+    win_get_url:
+      url: https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe
+      dest: C:\temp\Steam.exe
+    when: Steam_installed.exists == false

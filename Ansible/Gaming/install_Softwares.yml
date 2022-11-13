@@ -1,0 +1,57 @@
+---
+  - name: Ensure 7-Zip is installed via win_command
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
+    when: Sevenzip_installed.exists == false
+
+  - name: Ensure Firefox is installed via win_command
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\Firefox.msi /qb /norestart
+    when: Firefox_installed.exists == false
+
+  - name: Ensure Nvidia Drivers are installed via win_command
+    win_command: C:\temp\Nvidia.exe /s
+    when: Nvidia_installed.exists == false
+
+  #Reboot the PC after Nvidia drivers installed
+  - name: Validate that the netlogon service has started, before running the next task
+    win_reboot:
+      test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+    when: Nvidia_installed.exists == false
+
+#Install Ubisoft Connect
+  - name: Install Ubisoft Connect via win_command
+    win_command: C:\temp\UbisoftConnect.exe /S
+    when: UbisoftConnect_installed.exists == false
+
+#Install EA App
+  - name: Install EA App via win_command
+    win_command: C:\temp\EaApp.exe /SILENT
+    when: EAApp_installed.exists == false
+
+#Install Epic Launcher
+  - name: Ensure Epic is installed via win_command
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\Epic.msi /qb /norestart
+    when: Epic_installed.exists == false
+
+#Install Bitwarden
+  - name: Install Bitwarden
+    win_command: C:\temp\bitwarden.exe /allusers /S
+    when: Bitwarden_installed.exists == false
+
+#Install Synology Drive Client
+  - name: Install Synology Drive Client
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\SynologyDrive.msi /qb /norestart
+
+#Install TightVNC
+  - name: Install TightVNC
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\tightvnc.msi /quiet /norestart ADDLOCAL=Server SERVER_REGISTER_AS_SERVICE=1 SERVER_ADD_FIREWALL_EXCEPTION=1 SERVER_ALLOW_SAS=1 SET_ACCEPTRFBCONNECTIONS=1 VALUE_OF_ACCEPTRFBCONNECTIONS=1 SET_USECONTROLAUTHENTICATION=1 VALUE_OF_USECONTROLAUTHENTICATION='{{ vnc_user_control_password }}' SET_USEVNCAUTHENTICATION=1 VALUE_OF_USEVNCAUTHENTICATION=1 SET_PASSWORD=1 VALUE_OF_PASSWORD='{{ vnc_auth_password }}'
+    when: TightVNC_installed.exists == false
+#Install Steam
+  - name: Install Steam
+    win_command: C:\temp\Steam.exe /S
+    when: Steam_installed.exists == false
+    
+# -defaultgamedir E:\Games\SteamLibrary -language french -nosteamcontroller
+
+
+
+      
