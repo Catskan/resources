@@ -8,7 +8,7 @@
     when: Firefox_installed.exists == false
 
   - name: Ensure Nvidia Drivers are installed via win_command
-    win_command: C:\temp\Nvidia.exe /s
+    win_command: C:\temp\Nvidia.exe /s /norestart
     register: result
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
 
@@ -51,7 +51,7 @@
 #Install GoG
   - name: Install GoG Galaxy 2
     win_command: C:\temp\GoG.exe /verysilent
-#    when: Steam_installed.exists == false
+    when: GoG_installed.exists == false
 ##################################W11-VM-Aurel Softwares##################################
 #Unzip Captvty
   - name: Unzip Captvty zip
@@ -59,7 +59,8 @@
       src: C:\Users\Aurel\Downloads\captvty-2.9.9.zip
       dest: C:\Captvty
     when: ansible_hostname == "W11-VM-Aurel"
-    
-# -defaultgamedir E:\Games\SteamLibrary -language french -nosteamcontroller
 
-  - debug: var=result.stdout_lines
+#Install GoG
+  - name: Install Windows ADK
+    win_command: C:\temp\adk.exe /quiet /installpath c:\ADK /features OptionId.DeploymentTools
+    when: ansible_hostname != "Aurel-Gaming"

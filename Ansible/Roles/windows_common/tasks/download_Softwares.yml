@@ -75,7 +75,7 @@
     win_get_url:
       url: https://cdn.gog.com/open/galaxy/client/2.0.55.99/setup_galaxy_2.0.55.99.exe
       dest: C:\temp\GoG.exe
-    #when: GoG_installed.exists == false
+    when: GoG_installed.exists == false
 
   #Download Captvty
   - name: Download CaptvTY
@@ -85,3 +85,10 @@
       follow_redirects: yes
     when: ansible_hostname == "W11-VM-Aurel" and Captvty_downloaded.exists == true
 
+  #Download Captvty
+  - name: Download Windows ADK
+    win_get_url:
+      url: https://download.microsoft.com/download/6/7/4/674ec7db-7c89-4f2b-8363-689055c2b430/adk/adksetup.exe
+      dest: C:\temp\adk.exe
+      #follow_redirects: yes
+    when: ansible_hostname != "Aurel-Gaming"

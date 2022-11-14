@@ -1,8 +1,7 @@
 ---
 - name: Main Aurelien Gaming Playbook
   hosts: 
-    - aurelien-gaming
-    - w11-vm-aurel
+    - windows_hosts
   vars_files:
     - Roles/windows_common/vars/aurelien-gaming-vars-secrets.yml
     - Roles/windows_common/vars/aurelien-gaming-vars.yml

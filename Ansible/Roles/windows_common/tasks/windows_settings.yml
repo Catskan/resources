@@ -26,16 +26,25 @@
             path: HKLM:\System\CurrentControlSet\Control\Terminal Server
             name: fDenyTSConnections
             data: 0
+            type: dword
     - name: Allow UserAuthentication
       ansible.windows.win_regedit:
             path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
             name: UserAuthentication
             data: 1
+            type: dword
     - name: Allow Client Drives
       ansible.windows.win_regedit:
             path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
             name: fAutoClientDrives
             data: 1
+            type: dword
+    - name: Change RDP Port
+      ansible.windows.win_regedit:
+            path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+            name: PortNumber
+            data: 3390
+            type: dword
     - name: Add user to Remote Desktop Group
       ansible.windows.win_group_membership:
         name: Remote Desktop Users
@@ -45,7 +54,7 @@
     - name: Enable RDP inside the Firewall
       community.windows.win_firewall_rule:
         name: Remote Desktop
-        localport: 3389
+        localport: 3390
         action: allow
         direction: in
         protocol: tcp
@@ -62,26 +71,58 @@
 ##########################################Change hostname##########################################
     - name: Change W11 VM Aurel hostname
       ansible.windows.win_hostname:
-        name: '{{ w11_vm_computer_name }}'
-      register: restart
-      when: inventory_hostname == "W11-VM-Aurel"
+        name: "{{ w11_vm_computer_hostname }}"
+      register: old_hostname
+      when: inventory_hostname == "w11-vm-aurel"
 
     - name: Reboot W11-VM-Aurel
       ansible.windows.win_reboot:
           test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
-      when: inventory_hostname == "W11-VM-Aurel" and old_hostname.name == true
+      when: inventory_hostname == "w11-vm-aurel" and old_hostname.changed == true
 
 
-  # ##########################################Mount WebDAV##########################################
-  #   - name: Create mapped drive with credentials and save the username and password
-  #     block:
-  #     - name: Save the network credentials required for the mapped drive
-  #       win_credential:
-  #         name: nas.mapn.fr
-  #         type: domain_password
-  #         username: '{{ webdav_username }}'
-  #         secret: '{{ webdav_password }}'
-  #         state: present
+  ##########################################Mount WebDAV##########################################
+    - name: Create mapped drive with credentials and save the username and password
+      block:
+      - name: Save the network credentials required for the mapped drive
+        community.windows.win_credential:
+          name: nas.mapn.com
+          type: generic_password
+          username: '{{ webdav_username }}'
+          secret: '{{ webdav_password }}'
+          state: present
+          persistence: enterprise
+      # - name: Create a mapped drive that requires authentication
+      #   win_mapped_drive:
+      #     letter: M
+      #     path: 'https://nas.mapn.fr:8171/Aurelien'
+      #     state: present
+      vars:
+        # become is required to save and retrieve the credentials in the tasks
+        ansible_become: yes
+        ansible_become_method: runas
+        ansible_become_user: '{{ ansible_user }}'
+        ansible_become_pass: '{{ ansible_password }}'
+
+    # - name: Create mapped drive with credentials and save the username and password
+    #   block:
+    #   - name: Save the network credentials required for the mapped drive
+    #     community.windows.win_credential:
+    #       name: MicrosoftAccount:user="{{ microsoft_account_email }}"
+    #       type: domain_password
+    #       username: "{{ microsoft_account_email }}"
+    #       secret: "{{ microsoft_accoount_password }}"
+    #       state: present
+    #       persistence: local
+    #   vars:
+    #     # become is required to save and retrieve the credentials in the tasks
+    #     ansible_become: yes
+    #     ansible_become_method: runas
+    #     ansible_become_user: '{{ ansible_user }}'
+    #     ansible_become_pass: '{{ ansible_password }}'
+    #     microsoft_account_email: '{{ microsoft_account_email}}'
+    #     microsoft_accoount_password: '{{ microsoft_accoount_password }}'
+    
 
   #     - name: Create a mapped drive that requires authentication
   #       win_mapped_drive:

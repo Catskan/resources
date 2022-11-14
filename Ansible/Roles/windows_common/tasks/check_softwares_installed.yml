@@ -55,6 +55,12 @@
       path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam
     register: Steam_installed
 
+  #Check in Registry if GoG is already installed
+  - name: Check if GoG is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{7258BA11-600C-430E-A759-27E2C691A335}_is1
+    register: GoG_installed
+    
   - name: Check if Captvty exists
     ansible.windows.win_stat:
       path: C:\temp\Captvty.zip

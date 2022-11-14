@@ -1,0 +1,4 @@
+ansible_connection: ssh
+ansible_host: 192.168.2.114
+ansible_port: 3434
+ansible_user: Auel
