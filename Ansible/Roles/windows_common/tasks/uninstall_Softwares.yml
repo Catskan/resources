@@ -1,8 +1,8 @@
 ---
   - name: Remove TightVNC as a Service
     win_shell: |
-      tvnserver.exe -remove ; Remove-Item -Type Directory %PROGRAMFILES%\TightVNC
-    when: TightVNC_installed.exists == true
+        Remove-Item -Type Directory "C:\Program Files\TightVNC"
+
 
   - name: Remove registry path MyCompany (including all entries it contains)
     ansible.windows.win_regedit:

@@ -1,0 +1,8 @@
+---
+  - name: Settings Steam
+    win_command:
+      argv:
+        - C:\Program Files (x86)\Steam\steam.exe
+        - -login "{{ steam_login }}" "{{ steam_password }}"
+        - -defaultgamedir E:\Games\SteamLibrary
+        - -nosteamcontroller

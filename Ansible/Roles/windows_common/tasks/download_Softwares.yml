@@ -1,4 +1,9 @@
 ---
+  - name: Create C:\Temp directory
+    ansible.windows.win_file:
+      path: C:\Temp
+      state: directory
+
   # Install/uninstall with win_package
   - name: Download the 7-Zip
     win_get_url:
@@ -21,7 +26,7 @@
       url: https://us.download.nvidia.com/Windows/526.86/526.86-desktop-win10-win11-64bit-international-dch-whql.exe
       dest: C:\temp\Nvidia.exe
       force: no
-    when: Nvidia_installed.exists == false
+    when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
 
   # Download Ubisoft Connect with win_package
   - name: Download the Ubisoft Connect 
@@ -56,13 +61,7 @@
     win_get_url:
       url: https://global.download.synology.com/download/Utility/SynologyDriveClient/3.2.0-13238/Windows/Installer/Synology%20Drive%20Client-3.2.0-13238.msi?model=DS716%2BII&bays=2&dsm_version=7.1.1&build_number=42962
       dest: C:\temp\SynologyDrive.msi
-
-  #Download TightVNC
-  - name: Download TightVNC
-    win_get_url:
-      url: https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi
-      dest: C:\temp\tightvnc.msi
-    when: TightVNC_installed.exists == false
+    when: SynoDriveClient_installed.exists == false
 
   #Download Steam
   - name: Download Steam
@@ -71,11 +70,18 @@
       dest: C:\temp\Steam.exe
     when: Steam_installed.exists == false
 
+  #Download GoG
+  - name: Download Galaxy
+    win_get_url:
+      url: https://cdn.gog.com/open/galaxy/client/2.0.55.99/setup_galaxy_2.0.55.99.exe
+      dest: C:\temp\GoG.exe
+    #when: GoG_installed.exists == false
 
   #Download Captvty
   - name: Download CaptvTY
     win_get_url:
-      url: https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe
-      dest: C:\temp\Steam.exe
-    when: ansible_host_name == "utm-w11" 
+      url: https://releases.captvty.fr/151836a79873f8f6e6313205bf7f7cbfd0c1655a/captvty-2.9.9.zip
+      dest: C:\temp\Captvty.zip
+      follow_redirects: yes
+    when: ansible_hostname == "W11-VM-Aurel" and Captvty_downloaded.exists == true
 

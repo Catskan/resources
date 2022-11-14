@@ -1,0 +1,112 @@
+---
+  ##########################################Aurel-Gaming##########################################
+#Change hostname
+    - name: Change Gaming computer hostname
+      ansible.windows.win_hostname:
+        name: "{{ aurel_gaming_computer_hostname }}"
+      register: old_hostname
+      when: inventory_hostname == "aurelien-gaming"
+
+#Change power plan
+    - name: Change power plan to high performance
+      community.windows.win_power_plan:
+        name: high performance
+      when: inventory_hostname == "aurelien-gaming"
+
+#Set auto logon
+    - name: Set autologon for Aurel
+      community.windows.win_auto_logon:
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+      when: inventory_hostname == "aurelien-gaming"
+
+#Set RDP
+    - name: Allow RDP TSConnection
+      ansible.windows.win_regedit:
+            path: HKLM:\System\CurrentControlSet\Control\Terminal Server
+            name: fDenyTSConnections
+            data: 0
+    - name: Allow UserAuthentication
+      ansible.windows.win_regedit:
+            path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+            name: UserAuthentication
+            data: 1
+    - name: Allow Client Drives
+      ansible.windows.win_regedit:
+            path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+            name: fAutoClientDrives
+            data: 1
+    - name: Add user to Remote Desktop Group
+      ansible.windows.win_group_membership:
+        name: Remote Desktop Users
+        members:
+          - "{{ user_name }}"
+        state: present
+    - name: Enable RDP inside the Firewall
+      community.windows.win_firewall_rule:
+        name: Remote Desktop
+        localport: 3389
+        action: allow
+        direction: in
+        protocol: tcp
+        profiles: private
+        state: present
+        enabled: yes
+
+#Reboot computer
+    - name: Reboot Gaming
+      ansible.windows.win_reboot:
+          test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+      when: inventory_hostname == "aurelien-gaming" and old_hostname.changed == true
+
+##########################################Change hostname##########################################
+    - name: Change W11 VM Aurel hostname
+      ansible.windows.win_hostname:
+        name: '{{ w11_vm_computer_name }}'
+      register: restart
+      when: inventory_hostname == "W11-VM-Aurel"
+
+    - name: Reboot W11-VM-Aurel
+      ansible.windows.win_reboot:
+          test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+      when: inventory_hostname == "W11-VM-Aurel" and old_hostname.name == true
+
+
+  # ##########################################Mount WebDAV##########################################
+  #   - name: Create mapped drive with credentials and save the username and password
+  #     block:
+  #     - name: Save the network credentials required for the mapped drive
+  #       win_credential:
+  #         name: nas.mapn.fr
+  #         type: domain_password
+  #         username: '{{ webdav_username }}'
+  #         secret: '{{ webdav_password }}'
+  #         state: present
+
+  #     - name: Create a mapped drive that requires authentication
+  #       win_mapped_drive:
+  #         letter: N
+  #         path: 'https://nas.mapn.fr:8171/Aurelien'
+  #         state: present
+  #     vars:
+  #       # become is required to save and retrieve the credentials in the tasks
+  #       ansible_become: yes
+  #       ansible_become_method: runas
+  #       ansible_become_user: '{{ ansible_user }}'
+  #       ansible_become_pass: '{{ ansible_password }}'
+
+
+
+  ##########################################Install all Windows Updates##########################################
+    # - name: Unregister Scheduled job if one exists
+    #   win_shell: 'Start-Process powershell.exe -ArgumentList "-Command  `"&{`Unregister-ScheduledJob  -name ansible-win-updates;}`"" -Wait -verb RunAs'
+
+    # - name: Install all updates and reboot as many times as needed
+    #   ansible.windows.win_updates:
+    #     category_names: '*'
+    #     reboot: yes
+    #     reboot_timeout: 3600
+
+
+
+

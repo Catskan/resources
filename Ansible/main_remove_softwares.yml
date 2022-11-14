@@ -1,0 +1,15 @@
+---
+- name: Main Aurelien Gaming Playbook
+  hosts: aurelien-gaming
+  vars_files:
+    - Roles/windows_common/vars/aurelien-gaming-vars-secrets.yml
+    - Roles/windows_common/vars/aurelien-gaming-vars.yml
+    - Roles/windows_common/vars/w11-vm-vars-secrets.yml
+    - Roles/windows_common/vars/w11-vm-vars.yml
+
+  tasks:
+    # - name: Include check_softwares_installed.yml
+    #   ansible.builtin.include: Roles/windows_common/tasks/check_softwares_installed.yml
+
+    - name: Include uninstall_Softwares.yml
+      ansible.builtin.include: Roles/windows_common/tasks/uninstall_Softwares.yml

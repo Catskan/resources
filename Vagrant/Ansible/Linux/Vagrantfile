@@ -12,13 +12,12 @@ Vagrant.configure("2") do |config|
   config.vm.define "ansible" do
   config.vm.provider "docker" do |d, docker|
     d.image = "catskan/debian-ansible:v1"
-    d.has_ssh = true
-    config.ssh.insert_key = true
+    #d.has_ssh = true
+    #config.ssh.insert_key = true
     config.vm.provision "docker" do |d|
       #d.post_install_provision "shell", path: "./prepare_ansible_env.sh"
     end
     docker.vm.network :private_network, type: "dhcp", docker_network__internal: true
-    
   end
 
  

@@ -16,6 +16,7 @@
     win_reg_stat:
       path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}_Display.Driver
     register: Nvidia_installed
+  #  when: ansible_hostname == "Aurel-Gaming"
 
   #Check in Registry if Ubisoft Connect is already installed
   - name: Check if Ubisoft Connect is already installed
@@ -42,11 +43,11 @@
       path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\173a9bac-6f0d-50c4-8202-4744c69d091a
     register: Bitwarden_installed
 
-  #Check in Registry if TightVNC is already installed
-  - name: Check if TightVNC is already installed
+  #Check in Registry if Synology Drive Client is already installed
+  - name: Check if Synology Drive Client is already installed
     win_reg_stat:
-      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{361FB9AD-9238-4E87-8CFB-4126752A79F8}
-    register: TightVNC_installed
+      path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{45DD252D-E74D-41C3-8944-26706874CACD}
+    register: SynoDriveClient_installed
 
   #Check in Registry if Steam is already installed
   - name: Check if Steam is already installed
@@ -54,3 +55,7 @@
       path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam
     register: Steam_installed
 
+  - name: Check if Captvty exists
+    ansible.windows.win_stat:
+      path: C:\temp\Captvty.zip
+    register: Captvty_downloaded

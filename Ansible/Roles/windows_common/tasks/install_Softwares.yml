@@ -9,13 +9,14 @@
 
   - name: Ensure Nvidia Drivers are installed via win_command
     win_command: C:\temp\Nvidia.exe /s
-    when: Nvidia_installed.exists == false
+    register: result
+    when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
 
-  #Reboot the PC after Nvidia drivers installed
-  - name: Validate that the netlogon service has started, before running the next task
-    win_reboot:
-      test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
-    when: Nvidia_installed.exists == false
+# #Reboot computer
+#   - name: Reboot Gaming
+#     ansible.windows.win_reboot:
+#           test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+#     when: ansible_hostname == "Aurel-Gaming" and result.stdoutlines
 
 #Install Ubisoft Connect
   - name: Install Ubisoft Connect via win_command
@@ -40,18 +41,25 @@
 #Install Synology Drive Client
   - name: Install Synology Drive Client
     win_command: C:\Windows\System32\msiexec.exe /i C:\temp\SynologyDrive.msi /qb /norestart
+    when: SynoDriveClient_installed.exists == false
 
-#Install TightVNC
-  - name: Install TightVNC
-    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\tightvnc.msi /quiet /norestart ADDLOCAL=Server SERVER_REGISTER_AS_SERVICE=1 SERVER_ADD_FIREWALL_EXCEPTION=1 SERVER_ALLOW_SAS=1 SET_ACCEPTRFBCONNECTIONS=1 VALUE_OF_ACCEPTRFBCONNECTIONS=1 SET_USECONTROLAUTHENTICATION=1 VALUE_OF_USECONTROLAUTHENTICATION='{{ vnc_user_control_password }}' SET_USEVNCAUTHENTICATION=1 VALUE_OF_USEVNCAUTHENTICATION=1 SET_PASSWORD=1 VALUE_OF_PASSWORD='{{ vnc_auth_password }}'
-    when: TightVNC_installed.exists == false
 #Install Steam
   - name: Install Steam
     win_command: C:\temp\Steam.exe /S
     when: Steam_installed.exists == false
+
+#Install GoG
+  - name: Install GoG Galaxy 2
+    win_command: C:\temp\GoG.exe /verysilent
+#    when: Steam_installed.exists == false
+##################################W11-VM-Aurel Softwares##################################
+#Unzip Captvty
+  - name: Unzip Captvty zip
+    win_unzip:
+      src: C:\Users\Aurel\Downloads\captvty-2.9.9.zip
+      dest: C:\Captvty
+    when: ansible_hostname == "W11-VM-Aurel"
     
 # -defaultgamedir E:\Games\SteamLibrary -language french -nosteamcontroller
 
-
-
-      
+  - debug: var=result.stdout_lines

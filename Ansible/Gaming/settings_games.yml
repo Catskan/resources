@@ -1,5 +1,0 @@
----
-  - name: Settings Steam
-        win_shell: |
-          %PROGRAMFILES%\Steam\Steam.exe -defaultgamedir E:\Games\SteamLibrary -language french -nosteamcontroller
-        
