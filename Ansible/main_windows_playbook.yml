@@ -26,5 +26,5 @@
     - name: Include install_Softwares.yml
       ansible.builtin.include: Roles/windows_common/tasks/install_Softwares.yml
 
-    # - name: Include install_Softwares.yml
-    #   ansible.builtin.include: Roles/windows_common/tasks/settings_games.yml
+    - name: Include install_Softwares.yml
+      ansible.builtin.include: Roles/windows_common/tasks/settings_softwares.yml
