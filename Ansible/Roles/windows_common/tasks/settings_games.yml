@@ -1,8 +1,9 @@
 ---
-  - name: Settings Steam
-    win_command:
-      argv:
-        - C:\Program Files (x86)\Steam\steam.exe
-        - -login "{{ steam_login }}" "{{ steam_password }}"
-        - -defaultgamedir E:\Games\SteamLibrary
-        - -nosteamcontroller
+  - name: Settings Bitwarden 
+    win_shell: |
+      FileParsed = Get-Content -Raw -Path "C:\Users\Aurel\AppData\Roaming\Bitwarden\data.json" | ConvertFrom-Json
+
+      $FileParsed.global.environmentUrls.base = "{{ bitwarden_server_url }}"
+      $FileParsed.global.rememberedEmail = "{{ bitwarden_email }}"
+      
+      $FileParsed | ConvertTo-Json | Out-File "C:\Users\Aurel\AppData\Roaming\Bitwarden\data.json" -Force
