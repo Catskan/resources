@@ -1,9 +1,16 @@
 ---
-  - name: Settings Bitwarden 
-    win_shell: |
-      FileParsed = Get-Content -Raw -Path "C:\Users\Aurel\AppData\Roaming\Bitwarden\data.json" | ConvertFrom-Json
+  - name: Import Bitwarden conf
+    ansible.builtin.template:
+        src: ../config-files/bitwarden/data.json
+        dest: C:\Users\Aurel\AppData\Roaming\Bitwarden
 
-      $FileParsed.global.environmentUrls.base = "{{ bitwarden_server_url }}"
-      $FileParsed.global.rememberedEmail = "{{ bitwarden_email }}"
+
+  # - name: Settings Bitwarden 
+  #   win_shell: |
+  #     FileParsed = Get-Content -Raw -Path "C:\Users\Aurel\AppData\Roaming\Bitwarden\data.json" | ConvertFrom-Json
+
+  #     $FileParsed.global.environmentUrls.base = "{{ bitwarden_server_url }}"
+  #     $FileParsed.global.rememberedEmail = "{{ bitwarden_email }}"
       
-      $FileParsed | ConvertTo-Json | Out-File "C:\Users\Aurel\AppData\Roaming\Bitwarden\data.json" -Force
+  #     $FileParsed | ConvertTo-Json | Out-File "C:\Users\Aurel\AppData\Roaming\Bitwarden\data.json" -Force
+

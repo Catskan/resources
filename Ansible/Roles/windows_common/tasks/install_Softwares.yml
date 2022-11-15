@@ -1,13 +1,13 @@
 ---
-  - name: Ensure 7-Zip is installed via win_command
+  - name: Install 7Zip
     win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
     when: Sevenzip_installed.exists == false
 
-  - name: Ensure Firefox is installed via win_command
+  - name: Install Firefox
     win_command: C:\Windows\System32\msiexec.exe /i C:\temp\Firefox.msi /qb /norestart
     when: Firefox_installed.exists == false
 
-  - name: Ensure Nvidia Drivers are installed via win_command
+  - name: Install Nvidia Drivers
     win_command: C:\temp\Nvidia.exe /s /norestart
     register: result
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
@@ -25,7 +25,7 @@
 
 #Install EA App
   - name: Install EA App via win_command
-    win_command: C:\temp\EaApp.exe /SILENT
+    win_command: C:\temp\EaApp.exe /SILENT /NORESTART
     when: EAApp_installed.exists == false
 
 #Install Epic Launcher
