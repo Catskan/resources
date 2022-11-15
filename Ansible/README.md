@@ -20,3 +20,6 @@ ansible-vault decrypt /share/Ansible/Roles/windows_common/vars/aurelien-gaming-v
 
 *Encrypt only one String*
 `ansible-vault encrypt_string --vault-password-file /share/Ansible/Variables/w11-VM/W11-VM-secrets.yml 'password-value' --name 'ansible_w11_utm_password'`
+
+ansible-vault encrypt /share/Ansible/Roles/windows_common/vars/common_secrets.yml
+ansible-vault decrypt /share/Ansible/Roles/windows_common/vars/aurelien-gaming-vars-secrets.yml
