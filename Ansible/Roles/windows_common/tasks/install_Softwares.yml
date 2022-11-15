@@ -52,6 +52,7 @@
   - name: Install GoG Galaxy 2
     win_command: C:\temp\GoG.exe /verysilent
     when: GoG_installed.exists == false
+
 ##################################W11-VM-Aurel Softwares##################################
 #Unzip Captvty
   - name: Unzip Captvty zip
@@ -60,7 +61,12 @@
       dest: C:\Captvty
     when: ansible_hostname == "W11-VM-Aurel"
 
-#Install GoG
+#Install Windows ADK  
   - name: Install Windows ADK
-    win_command: C:\temp\adk.exe /quiet /installpath c:\ADK /features OptionId.DeploymentTools
-    when: ansible_hostname != "Aurel-Gaming"
+    win_command: C:\temp\adk.exe /quiet /installpath c:\ADK /features OptionId.ImagingAndConfigurationDesigner
+    when: ansible_facts['netbios_name'] == "W11-Aurel-VM"
+
+#Install Notepad++  
+  - name: Install Notepad++
+    win_command: C:\temp\Notepad++.exe /S
+

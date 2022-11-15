@@ -2,11 +2,15 @@
 - name: Main Aurelien Gaming Playbook
   hosts: 
     - windows_hosts
+  gather_facts: yes  
   vars_files:
     - Roles/windows_common/vars/aurelien-gaming-vars-secrets.yml
     - Roles/windows_common/vars/aurelien-gaming-vars.yml
     - Roles/windows_common/vars/w11-vm-vars-secrets.yml
     - Roles/windows_common/vars/w11-vm-vars.yml
+    - Roles/windows_common/vars/common_secrets.yml
+    - Roles/windows_common/vars/common_vars.yml
+
 
 
   tasks:

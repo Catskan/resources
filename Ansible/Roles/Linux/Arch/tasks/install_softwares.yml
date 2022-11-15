@@ -1,0 +1,31 @@
+---
+  - name: Install package Unzip from pacman
+    community.general.pacman:
+      name: unzip
+      state: present
+
+  - name: Install package Virtualbox from pacman
+    community.general.pacman:
+      name: virtualbox
+      state: present
+      become: yes
+
+  - name: Download VideoDownloadHelper Companion
+    ansible.builtin.get_url:
+      url: https://github.com/mi-g/vdhcoapp/releases/download/v1.6.3/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz
+      dest: /home/aurel/Downloads
+
+  # - name: Extract foo.tgz into /var/lib/foo
+  #   ansible.builtin.unarchive:
+  #     src: /home/aurel/Downloads/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz
+  #     dest: /usr/local
+  #     remote_src: yes
+  #     extra_opts:
+  #       - xf
+
+  - name: Run command if /path/to/database does not exist (without 'args')
+    ansible.builtin.command: /bin/tar -xf /home/aurel/Downloads/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz 
+    
+
+  - name: Run command if /path/to/database does not exist (without 'args')
+    ansible.builtin.command: net.downloadhelper.coapp-1.6.3/bin/net.downloadhelper.coapp-linux-64 install --user

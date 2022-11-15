@@ -9,7 +9,10 @@
 
 ansible-playbook -i /share/Ansible/Inventory/hosts.yaml /share/Ansible/main_windows_playbook.yml --ask-vault-password
 
+ansible-playbook -i /share/Ansible/Inventory/hosts.yaml /share/Ansible/main_linux-arch_playbook.yml --ask-vault-password
+
 ansible-playbook -i /share/Ansible/Inventory/hosts.yaml /share/Ansible/main_remove_softwares.yml
+
 
 
 *Encrypt a secret file:*
@@ -23,3 +26,5 @@ ansible-vault decrypt /share/Ansible/Roles/windows_common/vars/aurelien-gaming-v
 
 ansible-vault encrypt /share/Ansible/Roles/windows_common/vars/common_secrets.yml
 ansible-vault decrypt /share/Ansible/Roles/windows_common/vars/aurelien-gaming-vars-secrets.yml
+
+ansible-vault encrypt_string -- '=£Abgbabgb06£="' --name ‘ansible_password’

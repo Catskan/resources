@@ -1,5 +1,9 @@
 ---
   ##########################################Aurel-Gaming##########################################
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: ansible_facts
+
 #Change hostname
     - name: Change Gaming computer hostname
       ansible.windows.win_hostname:
@@ -18,7 +22,7 @@
       community.windows.win_auto_logon:
         username: "{{ ansible_user }}"
         password: "{{ ansible_password }}"
-      when: inventory_hostname == "aurelien-gaming"
+      #when: inventory_hostname == "aurelien-gaming"
 
 #Set RDP
     - name: Allow RDP TSConnection
@@ -86,7 +90,7 @@
       block:
       - name: Save the network credentials required for the mapped drive
         community.windows.win_credential:
-          name: nas.mapn.com
+          name: nas.mapn.fr
           type: generic_password
           username: '{{ webdav_username }}'
           secret: '{{ webdav_password }}'
@@ -95,7 +99,7 @@
       # - name: Create a mapped drive that requires authentication
       #   win_mapped_drive:
       #     letter: M
-      #     path: 'https://nas.mapn.fr:8171/Aurelien'
+      #     path: '\\nas.mapn.fr@SSL@8171\Aurelien'
       #     state: present
       vars:
         # become is required to save and retrieve the credentials in the tasks
@@ -104,24 +108,22 @@
         ansible_become_user: '{{ ansible_user }}'
         ansible_become_pass: '{{ ansible_password }}'
 
-    # - name: Create mapped drive with credentials and save the username and password
-    #   block:
-    #   - name: Save the network credentials required for the mapped drive
-    #     community.windows.win_credential:
-    #       name: MicrosoftAccount:user="{{ microsoft_account_email }}"
-    #       type: domain_password
-    #       username: "{{ microsoft_account_email }}"
-    #       secret: "{{ microsoft_accoount_password }}"
-    #       state: present
-    #       persistence: local
-    #   vars:
-    #     # become is required to save and retrieve the credentials in the tasks
-    #     ansible_become: yes
-    #     ansible_become_method: runas
-    #     ansible_become_user: '{{ ansible_user }}'
-    #     ansible_become_pass: '{{ ansible_password }}'
-    #     microsoft_account_email: '{{ microsoft_account_email}}'
-    #     microsoft_accoount_password: '{{ microsoft_accoount_password }}'
+    - name: Create mapped drive with credentials and save the username and password
+      block:
+      - name: Save the network credentials required for the mapped drive
+        community.windows.win_credential:
+          name: 'MicrosoftAccount:user=aurel130492@gmail.com'
+          type: generic_password
+          username: aurel130492@gmail.com
+          secret: "{{ microsoft_account_password }}"
+          state: present
+          persistence: local
+      vars:
+        # become is required to save and retrieve the credentials in the tasks
+        ansible_become: yes
+        ansible_become_method: runas
+        ansible_become_user: '{{ ansible_user }}'
+        ansible_become_pass: '{{ ansible_password }}'
     
 
   #     - name: Create a mapped drive that requires authentication

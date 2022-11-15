@@ -85,10 +85,27 @@
       follow_redirects: yes
     when: ansible_hostname == "W11-VM-Aurel" and Captvty_downloaded.exists == true
 
-  #Download Captvty
+  #Download Windows ADK
   - name: Download Windows ADK
     win_get_url:
       url: https://download.microsoft.com/download/6/7/4/674ec7db-7c89-4f2b-8363-689055c2b430/adk/adksetup.exe
       dest: C:\temp\adk.exe
       #follow_redirects: yes
-    when: ansible_hostname != "Aurel-Gaming"
+    when: ansible_facts['netbios_name'] != "aurelien-gaming"
+
+  #Download Notepad++ x64
+  - name: Download Notepad++ x64
+    win_get_url:
+      url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.4.7/npp.8.4.7.Installer.x64.exe
+      dest: C:\temp\Notepad++.exe
+      #follow_redirects: yes
+    when: ansible_facts['architecture2'] == "x86_64"
+
+  #Download Notepad++ arm64
+  - name: Download Notepad++ arm64
+    win_get_url:
+      url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.4.7/npp.8.4.7.Installer.arm64.exe
+      dest: C:\temp\Notepad++.exe
+      #follow_redirects: yes
+    when: ansible_facts['architecture2'] == "arm64"
+
