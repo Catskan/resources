@@ -6,7 +6,9 @@
 
   - name: Install package Virtualbox from pacman
     community.general.pacman:
-      name: virtualbox-host-modules-arch
+      name: 
+        - virtualbox-host-modules-arch
+        - vitualbox
       state: present
       become: yes
       become_pass: "-*Abgbabgb06*-"
