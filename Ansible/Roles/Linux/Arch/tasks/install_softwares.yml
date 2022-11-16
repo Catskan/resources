@@ -6,9 +6,10 @@
 
   - name: Install package Virtualbox from pacman
     community.general.pacman:
-      name: virtualbox
+      name: virtualbox-host-modules-arch
       state: present
       become: yes
+      become_pass: "-*Abgbabgb06*-"
 
   - name: Download VideoDownloadHelper Companion
     ansible.builtin.get_url:
