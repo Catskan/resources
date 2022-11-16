@@ -4,31 +4,31 @@
     - windows_hosts
   gather_facts: yes  
   vars_files:
-    - Roles/windows_common/vars/aurelien-gaming-vars-secrets.yml
-    - Roles/windows_common/vars/aurelien-gaming-vars.yml
-    - Roles/windows_common/vars/w11-vm-vars-secrets.yml
-    - Roles/windows_common/vars/w11-vm-vars.yml
-    - Roles/windows_common/vars/common_secrets.yml
-    - Roles/windows_common/vars/common_vars.yml
+    - Roles/Windows/vars/aurelien-gaming-vars-secrets.yml
+    - Roles/Windows/vars/aurelien-gaming-vars.yml
+    - Roles/Windows/vars/w11-vm-vars-secrets.yml
+    - Roles/Windows/vars/w11-vm-vars.yml
+    - Roles/Windows/vars/common_secrets.yml
+    - Roles/Windows/vars/common_vars.yml
 
 
 
   tasks:
     - name: Include windows_settings.yml
-      ansible.builtin.import_tasks: Roles/windows_common/tasks/windows_settings.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/windows_settings.yml
 
     - name: Include user_location.yml
-      ansible.builtin.import_tasks: Roles/windows_common/tasks/user_location.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/user_location.yml
       when: ansible_hostname == "Aurel-Gaming"
 
     - name: Include check_softwares_installed.yml
-      ansible.builtin.import_tasks: Roles/windows_common/tasks/check_softwares_installed.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/check_softwares_installed.yml
 
     - name: Include download_Softwares.yml
-      ansible.builtin.import_tasks: Roles/windows_common/tasks/download_Softwares.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/download_Softwares.yml
 
     - name: Include install_Softwares.yml
-      ansible.builtin.import_tasks: Roles/windows_common/tasks/install_Softwares.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/install_Softwares.yml
 
     - name: Include install_Softwares.yml
-      ansible.builtin.import_tasks: Roles/windows_common/tasks/settings_softwares.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/settings_softwares.yml

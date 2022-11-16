@@ -54,34 +54,47 @@
   #     ansible_become: yes
   #     ansible_become_pass: "{{ sudo_pwd }}"
     
-  - name: Install trizen using makepkg if it isn't installed already
-    kewlfft.aur.aur:
-      name: i8kutils
-      use: makepkg
-      state: present
-    vars:
-      ansible_become: yes
-      ansible_user: aur_builder
-      ansible_become_password: "test"
-
   - name: Download VideoDownloadHelper Companion
     ansible.builtin.get_url:
       url: https://github.com/mi-g/vdhcoapp/releases/download/v1.6.3/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz
       dest: /home/aurel/Downloads
 
   - name: Untar VideoDownloadHelper Companion
-    ansible.builtin.command: |
-        /bin/tar -xf /home/aurel/Downloads/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz
-        /usr/local/net.downloadhelper.coapp-1.6.3/bin/net.downloadhelper.coapp-linux-64 install --system
-    vars:
-      ansible_become: yes
-      ansible_become_password: "{{ sudo_pwd }}"
-  
-  - name: Upgrade packages by Gnome Software installer
-    ansible.builtin.dnf:
-      name: "*"
-      state: latest
+    ansible.builtin.command:
+        /bin/tar -xf /home/aurel/Downloads/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz -C /usr/local
     vars:
       ansible_become: yes
       ansible_become_password: "{{ sudo_pwd }}"
 
+  - name: Install VideoDownloadHelper Companion
+    ansible.builtin.command:
+         /usr/local/net.downloadhelper.coapp-1.6.3/bin/net.downloadhelper.coapp-linux-64 install --system
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  # - name: Upgrade packages by Gnome Software installer
+  #   ansible.builtin.dnf:
+  #     name: "*"
+  #     state: latest
+  #   vars:
+  #     ansible_become: yes
+  #     ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Install Firefox & Thunderbird
+    community.general.pacman:
+      name: 
+        - firefox
+        - thunderbird
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Install Bitwarden
+    community.general.pacman:
+      name: bitwarden
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
