@@ -1,0 +1,62 @@
+---
+  - name: Copy /boot/loader/entries/arch.conf to home
+    ansible.builtin.copy:
+      src: /boot/loader/entries/arch.conf
+      dest: /home/aurel
+      mode: preserve
+      remote_src: yes
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
+  - name: Add mem_sleep_default=deep at the end of boot entry (for XPS 7590)
+    ansible.builtin.replace:
+      path: /home/aurel/arch.conf
+      regexp: '(options.+)'
+      replace: '\1 mem_sleep_default=deep'
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"  
+
+  - name: Copy new arch.conf to /boot/loader/entries
+    ansible.builtin.copy:
+      src: /home/aurel/arch.conf
+      dest: /boot/loader/entries
+      mode: preserve
+      remote_src: yes
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
+  - name: Create the `aur_builder` user
+    ansible.builtin.user:
+      name: aur_builder
+      create_home: yes
+      group: wheel
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Allow the `aur_builder` user to run `sudo pacman` without a password
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers.d/11-install-aur_builder
+      line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
+      create: yes
+      validate: 'visudo -cf %s'
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Copy /boot/loader/entries/arch.conf to home
+    ansible.builtin.copy:
+      src: /boot/loader/entries/arch.conf
+      dest: /home/aurel
+      mode: preserve
+      remote_src: yes
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
+
+
+

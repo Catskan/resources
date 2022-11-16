@@ -124,8 +124,20 @@
         ansible_become_method: runas
         ansible_become_user: '{{ ansible_user }}'
         ansible_become_pass: '{{ ansible_password }}'
-    
 
+    - name: Enable WakeOnMagic Packet
+      win_shell:
+        $iid = (Get-NetConnectionProfile).InterfaceIndex 
+        Write-Host $iid
+        #Enable-NetAdapterPowerManagement -InterfaceID $iid -WakeOnMagicPacket True 
+      register: interfaceIndex
+      vars:
+        # become is required to save and retrieve the credentials in the tasks
+        ansible_become: yes
+        ansible_become_user: '{{ ansible_user }}'
+        ansible_become_pass: '{{ ansible_password }}'
+    - debug:
+        var: interfaceIndex.stdout
   #     - name: Create a mapped drive that requires authentication
   #       win_mapped_drive:
   #         letter: N

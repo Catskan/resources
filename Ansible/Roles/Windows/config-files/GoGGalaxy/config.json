@@ -42,17 +42,14 @@
     "notifSoundVolume" : 50,
     "overlayNotificationsPosition" : "bottom_right",
     "pauseDownloadsWhenPlaying" : true,
-    "preferredGameLanguageCode" : "en-US",
+    "preferredGameLanguageCode" : "fr-FR",
     "scheduleBandwidthLimit" : false,
     "showFriendsSidebar" : true,
     "showedTrayBubble" : false,
     "skinId" : "galaxyDark",
     "startingPage" : "library",
-    "userId" : "50090268071273208",
     "username" : "catskan",
     "window.height" : 720,
-    "window.maximized" : true,
-    "window.width" : 1170,
-    "window.x" : -233,
-    "window.y" : 29
+    "window.maximized" : false,
+    "window.width" : 1170
 }

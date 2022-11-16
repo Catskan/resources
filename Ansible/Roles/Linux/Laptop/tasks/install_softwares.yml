@@ -1,0 +1,87 @@
+---
+  - name: Install package Unzip from pacman
+    community.general.pacman:
+      name: unzip
+      state: present
+
+  - name: Install package Virtualbox from pacman
+    community.general.pacman:
+      name: 
+        - virtualbox-host-modules-arch
+        - virtualbox
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
+  # - name: Untar i8ksutils
+  #   ansible.builtin.command:
+  #     argv:
+  #       - /bin/tar 
+  #       - xzf 
+  #       - /home/aurel/Download_temp/i8kutils.tar.gz
+  #       - -C
+  #       - /home/aurel/Download_temp
+  #   register: extract
+  # - debug: 
+  #     var: extract.stdout 
+
+  # - name: makePKG i8ksutils
+  #   ansible.builtin.command:
+  #     argv:
+  #       - /usr/bin/makepkg 
+  #       - -s
+  #       - -f
+  #     chdir: /home/aurel/Download_temp/i8kutils
+  #   register: makepkg
+  # - debug:
+  #     var: makepkg.stdout_lines
+
+  # - name: Install i8kutils
+  #   community.general.pacman:
+  #     name: i8kutils_1.43.tar.xz
+  #     state: present
+  #   vars:
+  #     ansible_become: yes
+  #     ansible_become_pass: "{{ sudo_pwd }}"
+
+
+  # - name: Install package i8kutils from pacman
+  #   community.general.pacman:
+  #     name: /home/aurel/Download_temp/i8kutils
+  #     state: present
+  #   vars:
+  #     ansible_become: yes
+  #     ansible_become_pass: "{{ sudo_pwd }}"
+    
+  - name: Install trizen using makepkg if it isn't installed already
+    kewlfft.aur.aur:
+      name: i8kutils
+      use: makepkg
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_user: aur_builder
+      ansible_become_password: "test"
+
+  - name: Download VideoDownloadHelper Companion
+    ansible.builtin.get_url:
+      url: https://github.com/mi-g/vdhcoapp/releases/download/v1.6.3/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz
+      dest: /home/aurel/Downloads
+
+  - name: Untar VideoDownloadHelper Companion
+    ansible.builtin.command: |
+        /bin/tar -xf /home/aurel/Downloads/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz
+        /usr/local/net.downloadhelper.coapp-1.6.3/bin/net.downloadhelper.coapp-linux-64 install --system
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+  
+  - name: Upgrade packages by Gnome Software installer
+    ansible.builtin.dnf:
+      name: "*"
+      state: latest
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+

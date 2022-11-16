@@ -1,0 +1,19 @@
+---
+  - name: Import Bitwarden conf
+    ansible.builtin.template:
+        src: ../config-files/bitwarden/data.json
+        dest: C:\Users\{{ ansible_user }}\AppData\Roaming\Bitwarden
+        force: false
+
+  - name: Import GoG conf
+    ansible.builtin.template:
+        src: ../config-files/GoGGalaxy/config.json
+        dest: C:\Users\{{ ansible_user }}\AppData\Local\GOG.com\Galaxy\Configuration
+        force: false
+        when: ansible_facts['netbios_name'] == aurel_gaming_computer_hostname
+    
+  - name: Import Ubisoft Connect Config
+    ansible.builtin.template:
+        src: ../config-files/UbisoftConnect/settings.yaml
+        dest: 'C:\Users\{{ ansible_user }}\AppData\Local\Ubisoft Game Launcher'
+        force: false

@@ -1,6 +1,0 @@
----
-  - name: Import Bitwarden conf
-    ansible.builtin.template:
-        src: ../config-files/bitwarden/data.json
-        dest: C:\Users\{{ ansible_user }}\AppData\Roaming\Bitwarden
-        force: "{{ bitwarden_overwrite_file }}"

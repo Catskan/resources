@@ -15,20 +15,20 @@
 
   tasks:
     - name: Include windows_settings.yml
-      ansible.builtin.include: Roles/windows_common/tasks/windows_settings.yml
+      ansible.builtin.import_tasks: Roles/windows_common/tasks/windows_settings.yml
 
     - name: Include user_location.yml
-      ansible.builtin.include: Roles/windows_common/tasks/user_location.yml
+      ansible.builtin.import_tasks: Roles/windows_common/tasks/user_location.yml
       when: ansible_hostname == "Aurel-Gaming"
 
     - name: Include check_softwares_installed.yml
-      ansible.builtin.include: Roles/windows_common/tasks/check_softwares_installed.yml
+      ansible.builtin.import_tasks: Roles/windows_common/tasks/check_softwares_installed.yml
 
     - name: Include download_Softwares.yml
-      ansible.builtin.include: Roles/windows_common/tasks/download_Softwares.yml
+      ansible.builtin.import_tasks: Roles/windows_common/tasks/download_Softwares.yml
 
     - name: Include install_Softwares.yml
-      ansible.builtin.include: Roles/windows_common/tasks/install_Softwares.yml
+      ansible.builtin.import_tasks: Roles/windows_common/tasks/install_Softwares.yml
 
     - name: Include install_Softwares.yml
-      ansible.builtin.include: Roles/windows_common/tasks/settings_softwares.yml
+      ansible.builtin.import_tasks: Roles/windows_common/tasks/settings_softwares.yml

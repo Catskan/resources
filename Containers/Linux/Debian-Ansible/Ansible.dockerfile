@@ -33,6 +33,6 @@ USER aurelien
 #Install Ansible and Ansible's modules inside the user's home
 RUN python3 -m pip install --user ansible && python3 -m pip install argcomplete && python3 -m pip install docker \
     && python3 -m pip install pywinrm \
-    && activate-global-python-argcomplete --user && ansible-galaxy collection install ansible.windows
+    && activate-global-python-argcomplete --user && ansible-galaxy collection install ansible.windows && ansible-galaxy collection install kewlfft.aur
     
 CMD ["tail", "-f", "/dev/null"]

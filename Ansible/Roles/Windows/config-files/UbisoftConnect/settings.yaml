@@ -33,12 +33,12 @@ hotkeys_overlayToggle:
 language:
   code: en-US
 masters:
-  password: ""
-  username: ""
+  password: "{{ ubisoft_connect_password }}"
+  username: "{{ ubisoft_connect_username }}"
 misc:
   enable_auto_wall_posts: true
   enable_screenshots_on_achievements: false
-  game_installation_path: C:/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/games/
+  game_installation_path: "{{ games_directory }}"
   installer_cache_path: C:/Program Files (x86)/Ubisoft/Ubisoft Game Launcher/cache/installers/
   save_screenshot_uncompressed_copy: false
   screenshot_root_path: C:/Users/Aurel/Pictures/UbisoftConnect/

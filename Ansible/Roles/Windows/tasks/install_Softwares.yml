@@ -12,6 +12,11 @@
     register: result
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
 
+  - name: Install Nvidia Drivers
+    win_command: C:\temp\NvidiaGeforceExperience.exe /s
+    register: result
+    when: ansible_hostname == "Aurel-Gaming"
+
 # #Reboot computer
 #   - name: Reboot Gaming
 #     ansible.windows.win_reboot:

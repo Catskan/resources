@@ -27,7 +27,13 @@
       dest: C:\temp\Nvidia.exe
       force: no
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
-
+  # IDownload Nvidia Drivers with win_package
+  - name: Download the Nvidia
+    win_get_url:
+      url: https://www.nvidia.com/fr-fr/geforce/geforce-experience/download/#btn568b31c7_18b6_4c27_a3ce_c0a79bddeed7
+      dest: C:\temp\NvidiaGeforceExperience.exe
+      force: no
+    when: ansible_hostname == "Aurel-Gaming"
   # Download Ubisoft Connect with win_package
   - name: Download the Ubisoft Connect 
     win_get_url:
