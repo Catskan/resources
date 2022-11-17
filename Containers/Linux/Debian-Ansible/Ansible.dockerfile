@@ -31,7 +31,7 @@ RUN tar xzf /tmp/Python-$python_version.tgz -C /tmp/ && cd /tmp/Python-$python_v
     && ./configure --enable-optimizations && make && make install \
     && rm -r * /tmp
 
-
+FROM python as Ansible
 #Run the next dockerfiles layers as aurelien user
 USER aurelien
 
