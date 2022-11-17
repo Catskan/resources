@@ -10,11 +10,11 @@ Vagrant.configure("2") do |config|
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
   config.vm.define "ansible" do
-  config.vm.provider "docker" do |d, docker|
+  config.vm.provider "docker" do |d|
+    d.name = "Debian-Ansible"
     d.image = "catskan/debian-ansible:v1"
-    #d.has_ssh = true
-    #config.ssh.insert_key = true
     config.vm.provision "docker" do |d|
+      config.vm.hostname = "Debian-Ansible"
       #d.post_install_provision "shell", path: "./prepare_ansible_env.sh"
     end
     docker.vm.network :private_network, type: "dhcp", docker_network__internal: true
@@ -58,7 +58,8 @@ Vagrant.configure("2") do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   #config.vm.synced_folder ".", "/vagrant", type: "smb", smb_host: "127.0.0.1"
-  config.vm.synced_folder "/home/aurel/git/resources/Ansible", "/share/Ansible", docker_consistency: "cached"
+  config.vm.synced_folder "/home/aurel/git/resources/", "/share/git/resources/", docker_consistency: "cached"
+  config.vm.synced_folder "/home/aurel/git/resources/Containers/Linux/.ssh", "/.ssh_keys", docker_consistency: "cached"
 
   
   # Provider-specific configuration so you can fine-tune various

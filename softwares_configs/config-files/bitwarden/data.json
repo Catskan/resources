@@ -1,0 +1,46 @@
+{
+	"global.vaultTimeout": -1,
+	"global.vaultTimeoutAction": "lock",
+	"global": {
+		"theme": "system",
+		"window": {},
+		"stateVersion": 6,
+		"environmentUrls": {
+			"base": "{{ bitwarden_server_url }}",
+			"api": null,
+			"identity": null,
+			"icons": null,
+			"notifications": null,
+			"events": null,
+			"webVault": null,
+			"keyConnector": null
+		},
+		"openAtLogin": false,
+		"enableBiometrics": false,
+		"biometricText": "unlockWithWindowsHello",
+        "rememberedEmail": "{{ bitwarden_email }}",
+		"noAutoPromptBiometricsText": "autoPromptWindowsHello",
+		"installedVersion": "2022.10.1"
+	},
+	"tempAccountSettings": {
+		"environmentUrls": {
+			"base": null,
+			"api": null,
+			"identity": null,
+			"icons": null,
+			"notifications": null,
+			"events": null,
+			"webVault": null,
+			"keyConnector": null
+		},
+		"pinProtected": {
+			"decrypted": null,
+			"encrypted": null
+		},
+		"protectedPin": null,
+		"settings": null,
+		"vaultTimeout": -1,
+		"vaultTimeoutAction": "lock"
+	},
+	"authenticatedAccounts": []
+}

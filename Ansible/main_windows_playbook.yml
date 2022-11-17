@@ -30,5 +30,5 @@
     - name: Include install_Softwares.yml
       ansible.builtin.import_tasks: Roles/Windows/tasks/install_Softwares.yml
 
-    - name: Include install_Softwares.yml
-      ansible.builtin.import_tasks: Roles/Windows/tasks/settings_softwares.yml
+    - name: Include settings_softwares
+      ansible.builtin.import_tasks: Roles/Common/tasks/settings_softwares.yml

@@ -1,8 +1,25 @@
 ---
+  - name: Upgrade System (pacman -Syu)
+    community.general.pacman:
+      update_cache: true
+      upgrade: true
+    register: upgrade_summarized
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
+  - debug:
+      var: upgrade_summarized.stdout
+  - debug:
+      var: upgrade_summarized.packages
+
   - name: Install package Unzip from pacman
     community.general.pacman:
       name: unzip
       state: present
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
 
   - name: Install package Virtualbox from pacman
     community.general.pacman:
@@ -14,36 +31,38 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
-  # - name: Untar i8ksutils
-  #   ansible.builtin.command:
-  #     argv:
-  #       - /bin/tar 
-  #       - xzf 
-  #       - /home/aurel/Download_temp/i8kutils.tar.gz
-  #       - -C
-  #       - /home/aurel/Download_temp
-  #   register: extract
-  # - debug: 
-  #     var: extract.stdout 
+  - name: Untar i8ksutils
+    ansible.builtin.command:
+      argv:
+        - /bin/tar 
+        - xzf 
+        - /home/aurel/Download_temp/i8kutils.tar.gz
+        - -C
+        - /home/aurel/Download_temp
+    register: extract
+  - debug: 
+      var: extract.stdout 
+
+  - name: makePKG i8ksutils
+    ansible.builtin.command:
+      argv:
+        - /usr/bin/makepkg 
+        - -s
+        - -f
+      chdir: /home/aurel/Download_temp/i8kutils
+    register: makepkg
+  - debug:
+      var: makepkg.stdout_lines
 
   # - name: makePKG i8ksutils
   #   ansible.builtin.command:
   #     argv:
   #       - /usr/bin/makepkg 
-  #       - -s
-  #       - -f
+  #       - -i
   #     chdir: /home/aurel/Download_temp/i8kutils
-  #   register: makepkg
+  #   register: makepkginstall
   # - debug:
-  #     var: makepkg.stdout_lines
-
-  # - name: Install i8kutils
-  #   community.general.pacman:
-  #     name: i8kutils_1.43.tar.xz
-  #     state: present
-  #   vars:
-  #     ansible_become: yes
-  #     ansible_become_pass: "{{ sudo_pwd }}"
+  #     var: makepkginstall.stdout_lines
 
 
   # - name: Install package i8kutils from pacman
@@ -98,3 +117,47 @@
     vars:
       ansible_become: yes
       ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Install Dev softwares
+    community.general.pacman:
+      name: git
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Install VsCodium
+    community.general.pacman:
+      name: vscodium-bin
+      state: present
+      executable: yay
+    # vars:
+    #   ansible_become: yes
+    #   ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Install DevOPS tools
+    community.general.pacman:
+      name:
+        - docker
+        - vagrant
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  # - name: Install Synology Drive
+  #   ansible.builtin.command:
+  #     argv:
+  #       - /usr/bin/paru
+  #       - -Sy
+  #       - synology-drive
+  #   register: synologyDrive
+  # - debug: 
+  #     var: synologyDrive.stdout 
+
+  - name: Install VsCodium
+    community.general.pacman:
+      name: synology-drive
+      state: present
+      executable: paru
+      extra_args: -Sy

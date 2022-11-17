@@ -19,3 +19,6 @@
 
     - name: Include install_softwares
       ansible.builtin.import_tasks: Roles/Linux/Laptop/tasks/install_softwares.yml
+
+    - name: Include settings_softwares
+      ansible.builtin.import_tasks: Roles/Common/tasks/settings_softwares.yml
