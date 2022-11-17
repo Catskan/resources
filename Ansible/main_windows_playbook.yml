@@ -8,7 +8,7 @@
     - Roles/Windows/vars/aurelien-gaming-vars.yml
     - Roles/Windows/vars/w11-vm-vars-secrets.yml
     - Roles/Windows/vars/w11-vm-vars.yml
-    - Roles/Windows/vars/common_secrets.yml
+    - Roles/Common/vars/common_secrets.yml
     - Roles/Windows/vars/common_vars.yml
 
 

@@ -155,9 +155,13 @@
   # - debug: 
   #     var: synologyDrive.stdout 
 
-  - name: Install VsCodium
-    community.general.pacman:
-      name: synology-drive
-      state: present
-      executable: paru
-      extra_args: -Sy
+  # - name: Run the equivalent of "pacman -Sy" as a separate step
+  #   community.general.pacman:
+  #     update_cache: true
+  #     executable: paru
+
+  # - name: Install VsCodium
+  #   community.general.pacman:
+  #     name: synology-drive
+  #     state: present
+  #     executable: paru
