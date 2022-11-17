@@ -1,12 +1,9 @@
 #Use the official debian slim image
-FROM debian:stable-slim
+FROM debian:stable-slim as main
 
-#Declare all arguments (variables) will used by dockerfile layers
-ARG python_version=3.11.0
-
-ARG OS
-#Download Python archive from official URL
-ADD https://www.python.org/ftp/python/3.11.0/Python-$python_version.tgz /tmp/Python-$python_version.tgz
+#Build & Install Python3.11 and other packages from sources
+RUN apt update && apt upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client \
+    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl iputils-ping netcat iproute2 python3-dnf -y
 
 #Add user /bin directory to the PATH
 ENV PATH="${PATH}:/home/aurelien/.local/bin"
@@ -17,16 +14,23 @@ COPY ./Containers/Linux/Debian-Ansible/id_rsa.pub /home/aurelien/.ssh/id_rsa.pub
 #Create a user with home directory to install ansible inside it
 RUN useradd aurelien && chown -R aurelien:aurelien /home/aurelien/
 
-#Build & Install Python3.11 and other packages from sources
-RUN apt update && apt upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client \
-    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl iputils-ping netcat iproute2 python3-dnf -y
+#Setting up the openssh-server
+RUN sed -i "s/AuthorizedKeysFile /.ssh_keys/" /etc/ssh/ssh_config
+
+FROM main-packages as python
+#Declare all arguments (variables) will used by dockerfile layers
+
+ARG python_version=3.11.0
+
+ARG OS
+
+#Download Python archive from official URL
+ADD https://www.python.org/ftp/python/3.11.0/Python-$python_version.tgz /tmp/Python-$python_version.tgz
 
 RUN tar xzf /tmp/Python-$python_version.tgz -C /tmp/ && cd /tmp/Python-$python_version \ 
     && ./configure --enable-optimizations && make && make install \
     && rm -r * /tmp
 
-#Setting up the openssh-server
-RUN sed -i "s/AuthorizedKeysFile /.ssh_keys/" /etc/ssh/ssh_config
 
 #Run the next dockerfiles layers as aurelien user
 USER aurelien
