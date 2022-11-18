@@ -107,7 +107,7 @@
       url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.4.7/npp.8.4.7.Installer.x64.exe
       dest: C:\temp\Notepad++.exe
       #follow_redirects: yes
-    when: ansible_facts['architecture2'] == "x86_64"
+    when: ansible_facts['architecture'] == "64-bit"
 
   #Download Notepad++ arm64
   - name: Download Notepad++ arm64
@@ -115,5 +115,5 @@
       url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.4.7/npp.8.4.7.Installer.arm64.exe
       dest: C:\temp\Notepad++.exe
       #follow_redirects: yes
-    when: ansible_facts['architecture2'] == "arm64"
+    when: ansible_facts['architecture'] == "arm64"
 

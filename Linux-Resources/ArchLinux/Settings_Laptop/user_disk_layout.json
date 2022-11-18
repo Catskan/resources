@@ -1,0 +1,49 @@
+{
+    "/dev/nvme0n1": {
+        "partitions": [
+            {
+                "boot": true,
+                "encrypted": false,
+                "filesystem": {
+                    "format": "fat32"
+                },
+                "mountpoint": "/boot",
+                "size": "512MiB",
+                "start": "1MiB",
+                "type": "primary",
+                "wipe": true
+            },
+            {
+                "filesystem": {
+                    "format": "fat32"
+                },
+                "mountpoint": "/efi",
+                "size": "1024MiB",
+                "start": "513MiB",
+                "type": "primary",
+                "wipe": true
+            },
+            {
+                "filesystem": {
+                    "format": "ext4"
+                },
+                "mountpoint": "/",
+                "size": "60%",
+                "start": "1025MiB",
+                "type": "primary",
+                "wipe": true
+            },
+            {
+                "filesystem": {
+                    "format": "ext4"
+                },
+                "mountpoint": "/home",
+                "size": "100%",
+                "start": "61%",
+                "type": "primary",
+                "wipe": true
+            }
+        ],
+        "wipe": true
+    }
+}

@@ -13,6 +13,14 @@
   - debug:
       var: upgrade_summarized.packages
 
+  - name: Install OpenVPN package for NetworkManager from pacman
+    community.general.pacman:
+      name: networkmanager-openvpn
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
   - name: Install package Unzip from pacman
     community.general.pacman:
       name: unzip
@@ -31,28 +39,28 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
-  - name: Untar i8ksutils
-    ansible.builtin.command:
-      argv:
-        - /bin/tar 
-        - xzf 
-        - /home/aurel/Download_temp/i8kutils.tar.gz
-        - -C
-        - /home/aurel/Download_temp
-    register: extract
-  - debug: 
-      var: extract.stdout 
+  # - name: Untar i8ksutils
+  #   ansible.builtin.command:
+  #     argv:
+  #       - /bin/tar 
+  #       - xzf 
+  #       - /home/aurel/Download_temp/i8kutils.tar.gz
+  #       - -C
+  #       - /home/aurel/Download_temp
+  #   register: extract
+  # - debug: 
+  #     var: extract.stdout 
 
-  - name: makePKG i8ksutils
-    ansible.builtin.command:
-      argv:
-        - /usr/bin/makepkg 
-        - -s
-        - -f
-      chdir: /home/aurel/Download_temp/i8kutils
-    register: makepkg
-  - debug:
-      var: makepkg.stdout_lines
+  # - name: makePKG i8ksutils
+  #   ansible.builtin.command:
+  #     argv:
+  #       - /usr/bin/makepkg 
+  #       - -s
+  #       - -f
+  #     chdir: /home/aurel/Download_temp/i8kutils
+  #   register: makepkg
+  # - debug:
+  #     var: makepkg.stdout_lines
 
   # - name: makePKG i8ksutils
   #   ansible.builtin.command:
@@ -72,7 +80,42 @@
   #   vars:
   #     ansible_become: yes
   #     ansible_become_pass: "{{ sudo_pwd }}"
-    
+  - name: Install Firefox & Thunderbird
+    community.general.pacman:
+      name: 
+        - firefox
+        - thunderbird
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Create a directory if it does not exist
+    ansible.builtin.file:
+      path: /usr/lib/firefox/distribution/extensions
+      state: directory
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Copy file with owner and permissions
+    ansible.builtin.copy:
+      src: /home/aurel/Download_temp/videoDownloadHelper.xpi
+      dest: /usr/lib/firefox/browser/features
+      remote_src: yes
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
+  - name: Copy file with owner and permissions
+    ansible.builtin.copy:
+      src: /home/aurel/Download_temp/bitwarden.xpi
+      dest: /usr/lib/firefox/browser/features
+      remote_src: yes
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
   - name: Download VideoDownloadHelper Companion
     ansible.builtin.get_url:
       url: https://github.com/mi-g/vdhcoapp/releases/download/v1.6.3/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz
@@ -100,15 +143,6 @@
   #     ansible_become: yes
   #     ansible_become_password: "{{ sudo_pwd }}"
 
-  - name: Install Firefox & Thunderbird
-    community.general.pacman:
-      name: 
-        - firefox
-        - thunderbird
-      state: present
-    vars:
-      ansible_become: yes
-      ansible_become_password: "{{ sudo_pwd }}"
 
   - name: Install Bitwarden
     community.general.pacman:
@@ -160,8 +194,8 @@
   #     update_cache: true
   #     executable: paru
 
-  # - name: Install VsCodium
+  # - name: Install Synology Drive
   #   community.general.pacman:
   #     name: synology-drive
   #     state: present
-  #     executable: paru
+  #     executable: yay

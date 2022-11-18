@@ -3,6 +3,7 @@
   hosts: 
     - windows_hosts
   gather_facts: yes  
+
   vars_files:
     - Roles/Windows/vars/aurelien-gaming-vars-secrets.yml
     - Roles/Windows/vars/aurelien-gaming-vars.yml
@@ -14,6 +15,10 @@
 
 
   tasks:
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: ansible_facts
+        
     - name: Include windows_settings.yml
       ansible.builtin.import_tasks: Roles/Windows/tasks/windows_settings.yml
 

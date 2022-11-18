@@ -1,0 +1,27 @@
+---
+  - name: Create downloads temp dir
+    ansible.builtin.file:
+      path: /home/aurel/Download_temp
+      state: directory
+      owner: aurel
+
+  - name: Download i8kutils (Dell Fan Management)
+    ansible.builtin.get_url:
+      url: https://aur.archlinux.org/cgit/aur.git/snapshot/i8kutils.tar.gz
+      dest: /home/aurel/Download_temp/i8kutils.tar.gz
+
+  - name: Download Bitwarden Firefox Addon
+    ansible.builtin.get_url:
+      url: https://addons.mozilla.org/firefox/downloads/file/4018008/bitwarden_password_manager-2022.10.1.xpi
+      dest: /home/aurel/Download_temp/bitwarden.xpi
+
+  - name: Download VideoDOwnloadHelper Firefox Addon
+    ansible.builtin.get_url:
+      url: https://addons.mozilla.org/firefox/downloads/file/3804074/video_downloadhelper-7.6.0.xpi
+      dest: /home/aurel/Download_temp/videoDownloadHelper.xpi
+
+  - name: Download DownThemAll Firefox Addon
+    ansible.builtin.get_url:
+      url: https://addons.mozilla.org/firefox/downloads/file/3983650/downthemall-4.5.2.xpi
+      dest: /home/aurel/Download_temp/downThemAll.xpi
+

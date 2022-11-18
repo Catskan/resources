@@ -28,6 +28,7 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
+
   # - name: Create the `aur_builder` user
   #   ansible.builtin.user:
   #     name: aur_builder

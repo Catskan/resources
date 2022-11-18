@@ -13,17 +13,29 @@
         force: false
     when: ansible_facts['system'] == "Linux"
 
+  - name: Import Firefox Polocies
+    ansible.builtin.template:
+        src: /share/git/resources/softwares_configs/config-files/Firefox/policies.json
+        dest: /usr/lib/firefox/distribution
+        force: false
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+    when: ansible_facts['system'] == "Linux"
+
+
   - name: Import GoG conf
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/config.json
         dest: C:\Users\{{ ansible_user }}\AppData\Local\GOG.com\Galaxy\Configuration
         force: false
-    when: ansible_facts['netbios_name'] == aurel_gaming_computer_hostname
+    when: ansible_facts['hostname'] == "Aurel-Gaming"
     
   - name: Import Ubisoft Connect Config
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/UbisoftConnect/settings.yaml
         dest: 'C:\Users\{{ ansible_user }}\AppData\Local\Ubisoft Game Launcher'
         force: false
-    when: ansible_facts['netbios_name'] == aurel_gaming_computer_hostname
+    when: ansible_facts['hostname'] == "Aurel-Gaming"
+
 
