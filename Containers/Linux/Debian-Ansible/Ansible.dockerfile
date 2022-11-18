@@ -8,11 +8,14 @@ RUN apt update && apt dist-upgrade -y && apt install cmake gcc pkg-config build-
 #Add user /bin directory to the PATH
 ENV PATH="${PATH}:/home/aurelien/.local/bin"
 
+COPY ./Containers/Linux/Debian-Ansible/entrypoint.sh /etc/bin/entrypoint.sh
+
 #Copy the public key of the destination SSH server
 #COPY ./Containers/Linux/Debian-Ansible/id_rsa.pub /home/aurelien/.ssh/id_rsa.pub
 #COPY ./Containers/Linux/Debian-Ansible/config_files/ssh_config /etc/ssh/ssh_config
 #Create a user with home directory to install ansible inside it
 RUN useradd aurelien && mkdir /home/aurelien && chown -R aurelien:aurelien /home/aurelien/
+RUN chmod +x /etc/bin/entrypoint.sh
 
 #Setting up the openssh-server
 RUN sed -i "s/AuthorizedKeysFile /.ssh_keys/" /etc/ssh/ssh_config 

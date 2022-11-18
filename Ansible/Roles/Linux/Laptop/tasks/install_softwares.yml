@@ -21,6 +21,27 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
+  - name: Install Gnome Bluetooth
+    community.general.pacman:
+      name:  
+        - bluez
+        - gnome-bluetooth
+        - gnome-shell
+        - gnome-control-center
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
+  - name: Install Gnome Bluetooth Nautilus
+    community.general.pacman:
+      name: nautlis-bluetooth
+      state: present
+      executable: yay
+      extra_args: --answerdiff None --answerclean None
+    vars:
+      ansible_become: yes
+
   - name: Install package Unzip from pacman
     community.general.pacman:
       name: unzip
@@ -90,31 +111,13 @@
       ansible_become: yes
       ansible_become_password: "{{ sudo_pwd }}"
 
-  - name: Create a directory if it does not exist
-    ansible.builtin.file:
-      path: /usr/lib/firefox/distribution/extensions
-      state: directory
+  - name: Install Remmina
+    community.general.pacman:
+      name: remmina
+      state: present
     vars:
       ansible_become: yes
-      ansible_become_password: "{{ sudo_pwd }}"
-
-  - name: Copy file with owner and permissions
-    ansible.builtin.copy:
-      src: /home/aurel/Download_temp/videoDownloadHelper.xpi
-      dest: /usr/lib/firefox/browser/features
-      remote_src: yes
-    vars:
-      ansible_become: yes
-      ansible_become_password: "{{ sudo_pwd }}"
-
-  - name: Copy file with owner and permissions
-    ansible.builtin.copy:
-      src: /home/aurel/Download_temp/bitwarden.xpi
-      dest: /usr/lib/firefox/browser/features
-      remote_src: yes
-    vars:
-      ansible_become: yes
-      ansible_become_password: "{{ sudo_pwd }}"
+      ansible_become_pass: "{{ sudo_pwd }}"
 
   - name: Download VideoDownloadHelper Companion
     ansible.builtin.get_url:

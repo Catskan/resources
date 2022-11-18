@@ -6,6 +6,7 @@
   vars_files:
     - Roles/Linux/Laptop/vars/linux-laptop-secrets.yml
     - Roles/Common/vars/common_secrets.yml
+    - Roles/Common/vars/common_vars.yml
 
   tasks:
     - name: Print all available facts

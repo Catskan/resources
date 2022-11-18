@@ -13,11 +13,11 @@
         force: false
     when: ansible_facts['system'] == "Linux"
 
-  - name: Import Firefox Polocies
+  - name: Import Firefox Policies
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/Firefox/policies.json
         dest: /usr/lib/firefox/distribution
-        force: false
+        force: true
     vars:
       ansible_become: yes
       ansible_become_password: "{{ sudo_pwd }}"
@@ -38,4 +38,9 @@
         force: false
     when: ansible_facts['hostname'] == "Aurel-Gaming"
 
-
+  - name: Import RDP Remina Conf
+    ansible.builtin.template:
+        src: /share/git/resources/softwares_configs/config-files/Remmina/rdp.remmina
+        dest: /home/aurel/.local/share/remmina/group_rdp_rdp-{{ ansible_facts.hostname }}.remmina
+        force: false
+    when: ansible_facts['system'] == "Linux"
