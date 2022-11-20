@@ -1,18 +1,31 @@
 ---
-  - name: Remove TightVNC as a Service
-    win_shell: |
-        Remove-Item -Type Directory "C:\Program Files\TightVNC"
-
-
-  - name: Remove registry path MyCompany (including all entries it contains)
-    ansible.windows.win_regedit:
-      path: HKLM:\Software\TightVNC
+  - name: Uninstall WindowsAppxPackages
+    ansible.windows.win_package:
+      product_id: "{{ item }}"
       state: absent
-      delete_key: yes
+    loop:
+      - Microsoft.WindowsMaps
+      - Microsoft.ScreenSketch
+      - Microsoft.MicrosoftOfficeHub
+      - Microsoft.GetHelp
+      - Microsoft.ZuneMusic
+      - Microsoft.ZuneVideo
+      - Microsoft.WindowsCamera
+      - Microsoft.YourPhone
+      - Microsoft.WindowsAlarms
+      - Microsoft.BingWeathe
+      - Microsoft.Todos
+      - Microsoft.BingNews
+      - Microsoft.MicrosoftEdge.Stable
+      - Microsoft.People
+      - Clipchamp.Clipchamp
+      - MicrosoftTeams
+      - SpotifyAB.SpotifyMusic
+      - Microsoft.MicrosoftSolitaireCollection
+      - Microsoft.Getstarted
+      - Microsoft.WindowsFeedbackHub
+      - microsoft.windowscommunicationsapps
 
-  - name: Remove registry path MyCompany (including all entries it contains)
-    ansible.windows.win_regedit:
-      path: HKCU:\Software\TightVNC
-      state: absent
-      delete_key: yes
+
+
 

@@ -12,10 +12,11 @@
       ansible.windows.win_file:
         path: E:\Aurel\Downloads
         state: directory
+  
 
     - name: Create new User\AppData\Local Low
       ansible.windows.win_file:
-        path: "{{ root_user_directory }}"
+        path: "{{ item }}"
         state: directory
       loop:
         - "{{ sendTo_user_directory }}"
@@ -31,6 +32,7 @@
         - "{{ cache_user_directory }}"
         - "{{ templates_user_directory }}"
         - "{{ savedGames_user_directory }}"
+        - "{{ appData_Roaming_user_directory }}"
 
 
 

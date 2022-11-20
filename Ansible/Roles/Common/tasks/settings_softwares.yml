@@ -1,9 +1,28 @@
 ---
+  - name: Create Bitwarden config folder
+    ansible.windows.win_file:
+      path: '{{ appData_Roaming_user_directory }}\Bitwarden'
+      state: directory
+    when: ansible_facts['system'] == "Win32NT"
+
   - name: Import Bitwarden conf
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/bitwarden/data.json
         dest: '{{ appData_Roaming_user_directory }}\Bitwarden'
-        force: false
+        force: true
+    when: ansible_facts['system'] == "Win32NT"
+
+  - name: Create C:\Temp directory
+    ansible.windows.win_file:
+      path: C:\Program Files\Mozilla Firefox\distribution
+      state: directory
+    when: ansible_facts['system'] == "Win32NT"
+    
+  - name: Import Firefox Policies
+    ansible.builtin.template:
+        src: /share/git/resources/softwares_configs/config-files/Firefox/policies.json
+        dest: C:\Program Files\Mozilla Firefox\distribution
+        force: true
     when: ansible_facts['system'] == "Win32NT"
 
   - name: Add Firefox Policies

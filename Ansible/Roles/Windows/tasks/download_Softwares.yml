@@ -23,13 +23,13 @@
   # IDownload Nvidia Drivers with win_package
   - name: Download the Nvidia
     win_get_url:
-      url: https://us.download.nvidia.com/Windows/526.86/526.86-desktop-win10-win11-64bit-international-dch-whql.exe
+      url: https://fr.download.nvidia.com/Windows/526.98/526.98-desktop-win10-win11-64bit-international-dch-whql.exe
       dest: C:\temp\Nvidia.exe
       force: no
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
 
-  # Download Nvidia Drivers with win_package
-  - name: Download the Nvidia
+  # Download Nvidia Geforce Experience with win_package
+  - name: Download the Nvidia Geforce Experience
     win_get_url:
       url: https://fr.download.nvidia.com/GFE/GFEClient/3.26.0.154/GeForce_Experience_v3.26.0.154.exe
       dest: C:\temp\NvidiaGeforceExperience.exe
