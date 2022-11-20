@@ -3,7 +3,7 @@ FROM debian:stable-slim as main
 
 #Build & Install Python3.11 and other packages from sources
 RUN apt update && apt dist-upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client \
-    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl iputils-ping netcat iproute2 python3-dnf nano -y
+    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl iputils-ping netcat iproute2 nano -y
 
 #Add user /bin directory to the PATH
 ENV PATH="${PATH}:/home/aurelien/.local/bin"
