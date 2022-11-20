@@ -79,11 +79,18 @@
     when: Steam_installed.exists == false
 
   #Download GoG
-  - name: Download Galaxy
+  - name: Download GoG Galaxy
     win_get_url:
       url: https://cdn.gog.com/open/galaxy/client/2.0.55.99/setup_galaxy_2.0.55.99.exe
       dest: C:\temp\GoG.exe
     when: GoG_installed.exists == false
+
+  #Download Rockstar Game Social Club
+  - name: Download Rockstar Game Social Club
+    win_get_url:
+      url: https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe
+      dest: C:\temp\Rockstar.exe
+    #when: rockstar_installed.exists == false
 
   #Download Captvty
   - name: Download CaptvTY

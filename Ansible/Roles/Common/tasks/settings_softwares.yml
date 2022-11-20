@@ -2,9 +2,17 @@
   - name: Import Bitwarden conf
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/bitwarden/data.json
-        dest: C:\Users\{{ ansible_user }}\AppData\Roaming\Bitwarden
+        dest: '{{ appData_Roaming_user_directory }}\Bitwarden'
         force: false
-    when: ansible_facts['system'] == "Windows"
+    when: ansible_facts['system'] == "Win32NT"
+
+  - name: Add Firefox Policies
+    ansible.windows.win_regedit:
+        path: 'HKLM:\SOFTWARE\Policies\Mozilla\Firefox\3rdparty\"{ bitwarden_firefox_extension_id }}'
+        name: base
+        data: "{{ bitwarden_server_url }}"
+        type: expandstring
+    when: ansible_facts['system'] == "Win32NT"
 
   - name: Import Bitwarden conf
     ansible.builtin.template:
@@ -26,15 +34,15 @@
 
   - name: Import GoG conf
     ansible.builtin.template:
-        src: /share/git/resources/softwares_configs/config-files/config.json
-        dest: C:\Users\{{ ansible_user }}\AppData\Local\GOG.com\Galaxy\Configuration
+        src: /share/git/resources/softwares_configs/config-files/GoGGalaxy/config.json
+        dest: '{{ localAppData_user_directory }}\GOG.com\Galaxy\Configuration'
         force: false
     when: ansible_facts['hostname'] == "Aurel-Gaming"
     
   - name: Import Ubisoft Connect Config
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/UbisoftConnect/settings.yaml
-        dest: 'C:\Users\{{ ansible_user }}\AppData\Local\Ubisoft Game Launcher'
+        dest: '{{ localAppData_user_directory }}\Ubisoft Game Launcher'
         force: false
     when: ansible_facts['hostname'] == "Aurel-Gaming"
 

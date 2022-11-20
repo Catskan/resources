@@ -1,3 +1,4 @@
 aurelien_gaming_name: "Aurel-Gaming"
 aurelien_gaming_ip: "192.168.1.4"
-remote_desktop_port: '3535'
+remote_desktop_port: "3535"
+bitwarden_firefox_extension_id: "{446900e4-71c2-419f-a6a7-df9c091e268b}"

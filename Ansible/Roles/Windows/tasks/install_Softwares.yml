@@ -75,3 +75,7 @@
   - name: Install Notepad++
     win_command: C:\temp\Notepad++.exe /S
 
+# #Install Rockstar Game Social Club
+#   - name: Install RockStar Game Social Club
+#     win_command: C:\temp\Rockstar.exe /S
+

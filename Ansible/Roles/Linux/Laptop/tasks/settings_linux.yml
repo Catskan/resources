@@ -28,6 +28,11 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
+  - name: Enable service bluetooth
+    ansible.builtin.systemd:
+      name: bluetooth
+      enabled: yes
+      masked: no
 
   # - name: Create the `aur_builder` user
   #   ansible.builtin.user:
