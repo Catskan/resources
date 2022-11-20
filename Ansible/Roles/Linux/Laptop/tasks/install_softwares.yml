@@ -55,6 +55,7 @@
       name: 
         - virtualbox-host-modules-arch
         - virtualbox
+        - virtualbox-guest-iso
       state: present
     vars:
       ansible_become: yes
