@@ -124,3 +124,11 @@
       #follow_redirects: yes
     when: ansible_facts['architecture'] == "arm64"
 
+  #Download CrystalDiskInfo
+  - name: Download CrystalDiskinfo
+    win_get_url:
+      url: https://osdn.net/frs/redir.php?m=rwthaachen&f=crystaldiskinfo%2F77950%2FCrystalDiskInfo8_17_11.exe
+      dest: C:\temp\Crystaldiskinfo.exe
+      #follow_redirects: yes
+    #when: ansible_facts['architecture'] == "arm64"
+    when: ansible_hostname == "Aurel-Gaming"

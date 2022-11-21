@@ -2,7 +2,7 @@
   #Check in Registry if 7-Zip is already installed
   - name: Check if 7-Zip is already installed
     win_reg_stat:
-      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-1701-000001000000}
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-2201-000001000000}
     register: Sevenzip_installed
 
   #Check in Registry if Firefox is already installed
@@ -16,7 +16,14 @@
     win_reg_stat:
       path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}_Display.Driver
     register: Nvidia_installed
-  #  when: ansible_hostname == "Aurel-Gaming"
+    when: ansible_hostname == "Aurel-Gaming"
+
+  #Check in Registry if Nvidia Display Driver is already installed
+  - name: Check if Nvidia Display Driver is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}_Display.GFExperience
+    register: Nvidia_Geforce_Experience_installed
+    when: ansible_hostname == "Aurel-Gaming"
 
   #Check in Registry if Ubisoft Connect is already installed
   - name: Check if Ubisoft Connect is already installed
@@ -60,6 +67,12 @@
     win_reg_stat:
       path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{7258BA11-600C-430E-A759-27E2C691A335}_is1
     register: GoG_installed
+
+  #Check in Registry if CrystalDiskInfo is already installed
+  - name: Check if CrystalDiskInfo is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\CrystalDiskInfo_is1
+    register: CrystalDiskInfo_installed
     
   - name: Check if Captvty exists
     ansible.windows.win_stat:

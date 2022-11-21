@@ -59,6 +59,21 @@ startup_user_directory: 'E:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu\P
 templates_user_directory_reg_key_name: 'Templates'
 templates_user_directory: 'E:\Aurel\AppData\Roaming\Microsoft\Windows\Templates'
 
+common_adminTools_reg_key_name: 'Common Administrative Tools'
+common_adminTools_directory: 'E:\ProgramData\Microsoft\Windows\Start Menu\Programs\Administrative Tools'
+common_appData_reg_key_name: 'Common AppData'
+common_appData_directory: 'E:\ProgramData'
+common_programs_reg_key_name: 'Common Programs'
+common_programs_directory: 'E:\ProgramData\Microsoft\Windows\Start Menu\Programs'
+common_startMenu_reg_key_name: 'Common Start Menu'
+common_startMenu_directory: 'E:\ProgramData\Microsoft\Windows\Start Menu'
+common_startup_reg_key_name: 'Common Startup'
+common_Startup_directory: 'E:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup'
+common_templates_reg_key_name: 'Common Templates'
+common_templates_directory: 'E:\ProgramData\Microsoft\Windows\Templates'
+oemLinks_reg_key_name: 'OEM Links'
+oemLinks_directory: 'E:\ProgramData\OEM\Links'
+
 
 aurel_gaming_computer_hostname: 'Aurel-Gaming'
 games_directory: 'E:\Games'

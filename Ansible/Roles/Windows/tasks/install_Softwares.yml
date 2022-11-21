@@ -15,7 +15,7 @@
   - name: Install Nvidia Drivers
     win_command: C:\temp\NvidiaGeforceExperience.exe /s
     register: result
-    when: ansible_hostname == "Aurel-Gaming"
+    when: ansible_hostname == "Aurel-Gaming" and Nvidia_Geforce_Experience_installed == false
 
 # #Reboot computer
 #   - name: Reboot Gaming
@@ -57,6 +57,12 @@
   - name: Install GoG Galaxy 2
     win_command: C:\temp\GoG.exe /verysilent
     when: GoG_installed.exists == false
+
+#Install Crystal Disk Info
+  - name: Install CrystalDiskInfo
+    win_command: C:\temp\Crystaldiskinfo.exe /VERYSILENT /NORESTART
+    when: ansible_hostname == "Aurel-Gaming" and CrystalDiskInfo_installed.exists == false
+
 
 ##################################W11-VM-Aurel Softwares##################################
 #Unzip Captvty

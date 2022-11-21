@@ -24,7 +24,7 @@
       ansible.builtin.import_tasks: Roles/Windows/tasks/windows_settings.yml
 
     - name: Include user_location.yml
-      ansible.builtin.import_tasks: Roles/Windows/tasks/user_location.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/registry_keys_location.yml
       when: ansible_hostname == "Aurel-Gaming"
 
     - name: Include check_softwares_installed.yml

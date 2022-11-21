@@ -1,18 +1,12 @@
 ---
-  - name: Create Bitwarden config folder
-    ansible.windows.win_file:
-      path: '{{ appData_Roaming_user_directory }}\Bitwarden'
-      state: directory
-    when: ansible_facts['system'] == "Win32NT"
-
   - name: Import Bitwarden conf
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/bitwarden/data.json
-        dest: '{{ appData_Roaming_user_directory }}\Bitwarden'
-        force: true
-    when: ansible_facts['system'] == "Win32NT"
+        dest: '{{ appData_user_directory }}\Bitwarden'
+        force: false
+    when: ansible_facts['system'] == "Win32NT" and ansible_hostname == "Aurel-Gaming"
 
-  - name: Create C:\Temp directory
+  - name: Create Firefox/Distribution directory
     ansible.windows.win_file:
       path: C:\Program Files\Mozilla Firefox\distribution
       state: directory
@@ -25,13 +19,13 @@
         force: true
     when: ansible_facts['system'] == "Win32NT"
 
-  - name: Add Firefox Policies
-    ansible.windows.win_regedit:
-        path: 'HKLM:\SOFTWARE\Policies\Mozilla\Firefox\3rdparty\"{ bitwarden_firefox_extension_id }}'
-        name: base
-        data: "{{ bitwarden_server_url }}"
-        type: expandstring
-    when: ansible_facts['system'] == "Win32NT"
+  # - name: Add Firefox Policies
+  #   ansible.windows.win_regedit:
+  #       path: 'HKLM:\SOFTWARE\Policies\Mozilla\Firefox\3rdparty\"{ bitwarden_firefox_extension_id }}'
+  #       name: base
+  #       data: "{{ bitwarden_server_url }}"
+  #       type: expandstring
+  #   when: ansible_facts['system'] == "Win32NT"
 
   - name: Import Bitwarden conf
     ansible.builtin.template:

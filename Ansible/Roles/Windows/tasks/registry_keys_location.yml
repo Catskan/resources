@@ -7,11 +7,6 @@
           user_name_sid: "{{ raw_user_name_sid.stdout }}"
     - debug:
         var: user_name_sid
-
-    - name: Create new User\Directory
-      ansible.windows.win_file:
-        path: E:\Aurel\Downloads
-        state: directory
   
 
     - name: Create new User\AppData\Local Low
@@ -25,15 +20,27 @@
         - "{{ recent_user_directory }}"
         - "{{ printHood_user_directory }}"
         - "{{ searches_user_directory }}"
-        - "{{ localLow_user_directory }}"
+        - "{{ appData_Local_Low_user_directory }}"
         - "{{ startup_user_directory }}"
         - "{{ adminTools_user_directory }}"
         - "{{ links_user_directory }}"
         - "{{ cache_user_directory }}"
         - "{{ templates_user_directory }}"
         - "{{ savedGames_user_directory }}"
-        - "{{ appData_Roaming_user_directory }}"
+        - "{{ appData_user_directory }}"
 
+    - name: Create new ProgramData
+      ansible.windows.win_file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ common_adminTools_directory }}"
+        - "{{ common_appData_directory }}"
+        - "{{ common_programs_directory }}"
+        - "{{ common_startMenu_directory }}"
+        - "{{ common_Startup_directory }}"
+        - "{{ common_templates_directory }}"
+        - "{{ oemLinks_directory }}"
 
 
 ###########################################Change location in HKCU:Shell Folders###########################################
@@ -208,8 +215,8 @@
     - name: Change location of User\Local Low
       ansible.windows.win_regedit:
         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ localLow_user_directory_reg_key_name }}"
-        data: "{{ localLow_user_directory }}"
+        name: "{{ appdata_local_Low_reg_key_name }}"
+        data: "{{ appData_Local_Low_user_directory }}"
         type: expandstring
 
     - name: Change location of User\Startup
@@ -409,11 +416,98 @@
         name: System.IsPinnedToNameSpaceTree
         data: 1
         type: dword
+###########################################Change location in HKLM:Shell Folders###########################################
+    - name: Change location of Common Administrative Tools
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        name: "{{ common_adminTools_reg_key_name }}"
+        data: "{{ common_adminTools_directory }}"
+        type: expandstring
 
-    - name: Ensure WinRM starts when the system has settled and is ready to work reliably
-      win_service:
-        name: WinRM
-        start_mode: delayed
+    - name: Change location of Program Data
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        name: "{{ common_appData_reg_key_name }}"
+        data: "{{ common_appData_directory }}"
+        type: expandstring
+
+    - name: Change location of Common Programs
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        name: "{{ common_programs_reg_key_name }}"
+        data: "{{ common_programs_directory }}"
+        type: expandstring
+
+    - name: Change location of Common  StartMenu
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        name: "{{ common_startMenu_reg_key_name }}"
+        data: "{{ common_startMenu_directory }}"
+        type: expandstring
+
+    - name: Change location of Common Startup
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        name: "{{ common_startup_reg_key_name }}"
+        data: "{{ common_Startup_directory }}"
+        type: expandstring
+
+    - name: Change location of Common Templates
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        name: "{{ common_templates_reg_key_name }}"
+        data: "{{ common_templates_directory }}"
+        type: expandstring
+
+    - name: Change location of OEM Links
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        name: "{{ oemLinks_reg_key_name }}"
+        data: "{{ oemLinks_directory }}"
+        type: expandstring
+
+###########################################Change location in HKLM:User Shell Folders###########################################
+    - name: Change location of Common Administrative Tools
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+        name: "{{ common_adminTools_reg_key_name }}"
+        data: "{{ common_adminTools_directory }}"
+        type: expandstring
+
+    - name: Change location of Program Data
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+        name: "{{ common_appData_reg_key_name }}"
+        data: "{{ common_appData_directory }}"
+        type: expandstring
+
+    - name: Change location of Common Programs
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+        name: "{{ common_programs_reg_key_name }}"
+        data: "{{ common_programs_directory }}"
+        type: expandstring
+
+    - name: Change location of Common StartMenu
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+        name: "{{ common_startMenu_reg_key_name }}"
+        data: "{{ common_startMenu_directory }}"
+        type: expandstring
+
+    - name: Change location of Common Startup
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+        name: "{{ common_startup_reg_key_name }}"
+        data: "{{ common_Startup_directory }}"
+        type: expandstring
+
+    - name: Change location of Common Templates
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+        name: "{{ common_templates_reg_key_name }}"
+        data: "{{ common_templates_directory }}"
+        type: expandstring
 
     - name: Create an application shortcut for an executable in PATH to your desktop
       community.windows.win_shortcut:

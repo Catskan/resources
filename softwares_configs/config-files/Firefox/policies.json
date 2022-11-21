@@ -4,26 +4,26 @@
       "PasswordManagerEnabled": false,
 
       "ExtensionSettings": {
-        "uBlock0@raymondhill.net": {
+        "{{ firefox_extension_id_uBlockOrigin }}": {
           "installation_mode": "normal_installed",
           "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
         },
-        "{446900e4-71c2-419f-a6a7-df9c091e268b}": {
+        "{{ firefox_extension_id_bitwarden }}": {
             "installation_mode": "normal_installed",
             "install_url": "https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi"
         },
-        "{b9db16a4-6edc-47ec-a1f4-b86292ed211d}": {
+        "{{ firefox_extension_id_videoDownloadHelper }}": {
             "installation_mode": "normal_installed",
             "install_url": "https://addons.mozilla.org/firefox/downloads/file/3804074/video_downloadhelper-7.6.0.xpi"
         },
-        "{DDC359D1-844A-42a7-9AA1-88A850A938A8}": {
+        "{{ firefox_extension_id_downThemAll }}": {
             "installation_mode": "normal_installed",
             "install_url": "https://addons.mozilla.org/firefox/downloads/file/3983650/downthemall-4.5.2.xpi" 
         }
       },
     "3rdparty": {
       "Extensions": {
-        "{446900e4-71c2-419f-a6a7-df9c091e268b}": {
+        "{{ firefox_extension_id_bitwarden }}": {
           "environment": {
             "base": "{{ bitwarden_server_url }}"
           }

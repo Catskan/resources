@@ -1,8 +1,9 @@
 ---
   ##########################################Aurel-Gaming##########################################
-    - name: Print all available facts
-      ansible.builtin.debug:
-        var: ansible_facts
+    - name: Ensure WinRM starts when the system has settled and is ready to work reliably
+      win_service:
+        name: WinRM
+        start_mode: delayed
 
 #Change hostname
     - name: Change Gaming computer hostname
@@ -161,6 +162,8 @@
         category_names: '*'
         reboot: yes
         reboot_timeout: 3600
+
+
 
 
 
