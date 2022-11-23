@@ -32,7 +32,19 @@
     ansible.builtin.systemd:
       name: bluetooth
       enabled: yes
-      masked: no
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
+  - name: Download DashToDock
+    ansible.builtin.get_url:
+      url: https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v75.shell-extension.zip
+      dest: /home/aurel/Downloads
+
+  - name: Install DashToDock
+    ansible.builtin.script: /share/git/resources/Ansible/Roles/Linux/Laptop/scripts/install_dashtodock.sh
+
+
 
   # - name: Create the `aur_builder` user
   #   ansible.builtin.user:

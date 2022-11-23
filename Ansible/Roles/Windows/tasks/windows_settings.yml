@@ -11,6 +11,12 @@
         name: "{{ aurel_gaming_computer_hostname }}"
       register: old_hostname
       when: inventory_hostname == "aurelien-gaming"
+      
+#Reboot computer
+    - name: Reboot Gaming
+      ansible.windows.win_reboot:
+          test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+      when: inventory_hostname == "aurelien-gaming" and old_hostname.changed == true
 
 #Change power plan
     - name: Change power plan to high performance
@@ -151,7 +157,11 @@
   #       ansible_become_user: '{{ ansible_user }}'
   #       ansible_become_pass: '{{ ansible_password }}'
 
-
+    - name: Disable Nahimic Service
+      ansible.windows.win_service:
+        name: NahimicService
+        start_mode: disabled
+        state: stopped
 
   ##########################################Install all Windows Updates##########################################
     # - name: Unregister Scheduled job if one exists

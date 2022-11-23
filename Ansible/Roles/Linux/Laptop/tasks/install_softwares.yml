@@ -28,6 +28,7 @@
         - gnome-bluetooth
         - gnome-shell
         - gnome-control-center
+        - ntfs-3g
       state: present
     vars:
       ansible_become: yes

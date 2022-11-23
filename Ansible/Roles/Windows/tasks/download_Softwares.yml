@@ -21,7 +21,7 @@
     when: Firefox_installed.exists == false
 
   # IDownload Nvidia Drivers with win_package
-  - name: Download the Nvidia
+  - name: Download Nvidia Drivers
     win_get_url:
       url: https://fr.download.nvidia.com/Windows/526.98/526.98-desktop-win10-win11-64bit-international-dch-whql.exe
       dest: C:\temp\Nvidia.exe
@@ -29,7 +29,7 @@
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
 
   # Download Nvidia Geforce Experience with win_package
-  - name: Download the Nvidia Geforce Experience
+  - name: Download Nvidia Geforce Experience
     win_get_url:
       url: https://fr.download.nvidia.com/GFE/GFEClient/3.26.0.154/GeForce_Experience_v3.26.0.154.exe
       dest: C:\temp\NvidiaGeforceExperience.exe
@@ -132,3 +132,12 @@
       #follow_redirects: yes
     #when: ansible_facts['architecture'] == "arm64"
     when: ansible_hostname == "Aurel-Gaming"
+    
+  #Download VLC
+  - name: Download VLC
+    win_get_url:
+      url: https://mirror.cyberbits.eu/videolan/vlc/3.0.17.4/win64/vlc-3.0.17.4-win64.exe
+      dest: C:\temp\vlc.exe
+      #follow_redirects: yes
+
+

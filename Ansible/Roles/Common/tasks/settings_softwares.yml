@@ -3,8 +3,13 @@
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/bitwarden/data.json
         dest: '{{ appData_user_directory }}\Bitwarden'
+<<<<<<< HEAD
         force: false
     when: ansible_facts['system'] == "Win32NT" and ansible_hostname == "Aurel-Gaming"
+=======
+        force: true
+    when: ansible_facts['system'] == "Win32NT"
+>>>>>>> 631e9a3 (Gnome extension)
 
   - name: Create Firefox/Distribution directory
     ansible.windows.win_file:

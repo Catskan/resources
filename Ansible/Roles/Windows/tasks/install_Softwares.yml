@@ -81,6 +81,9 @@
   - name: Install Notepad++
     win_command: C:\temp\Notepad++.exe /S
 
+#Install VLC
+  - name: Install VLC
+    win_command: C:\temp\vlc.exe /S
 # #Install Rockstar Game Social Club
 #   - name: Install RockStar Game Social Club
 #     win_command: C:\temp\Rockstar.exe /S
