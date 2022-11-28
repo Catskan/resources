@@ -34,15 +34,16 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
-  - name: Install Gnome Bluetooth Nautilus
-    community.general.pacman:
-      name: nautlis-bluetooth
-      state: present
-      executable: yay
-      extra_args: --answerdiff None --answerclean None
-    vars:
-      ansible_become: yes
-
+  # - name: Install Gnome Bluetooth Nautilus
+  #   community.general.pacman:
+  #     name: nautlis-bluetooth
+  #     state: present
+  #     executable: yay
+  #     extra_args: --answerdiff None --answerclean None
+  #   vars:
+  #     ansible_become: yes
+  #     ansible_become_pass: "{{ sudo_pwd }}"
+      
   - name: Install package Unzip from pacman
     community.general.pacman:
       name: unzip
@@ -184,6 +185,13 @@
       ansible_become: yes
       ansible_become_password: "{{ sudo_pwd }}"
 
+  - name: Install Vagrant Environment variables plugin
+    ansible.builtin.command:
+         vagrant plugin install vagrant-env
+    vars:
+      ansible_become: yes
+      ansible_become_password: "{{ sudo_pwd }}"
+
   # - name: Install Synology Drive
   #   ansible.builtin.command:
   #     argv:
@@ -193,11 +201,6 @@
   #   register: synologyDrive
   # - debug: 
   #     var: synologyDrive.stdout 
-
-  # - name: Run the equivalent of "pacman -Sy" as a separate step
-  #   community.general.pacman:
-  #     update_cache: true
-  #     executable: paru
 
   # - name: Install Synology Drive
   #   community.general.pacman:

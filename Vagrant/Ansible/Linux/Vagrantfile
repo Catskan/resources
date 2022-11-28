@@ -5,22 +5,30 @@
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
+
+
 Vagrant.configure("2") do |config|
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
+  config.env.enable
   config.vm.define "ansible" do
   config.vm.provider "docker" do |d, docker|
     d.name = "Debian-Ansible"
-    d.image = "catskan/debian-ansible:v1.1"
+    d.image = "catskan/debian-ansible:v1.2-aws-1"
+    d.env = {
+      "AWS_ACCESS_KEY_ID" => ENV['AWS_ACCESS_KEY_ID'],
+      "AWS_SECRET_ACCESS_KEY" => ENV['AWS_SECRET_ACCESS_KEY'],
+      "AWS_DEFAULT_REGION" => ENV['AWS_DEFAULT_REGION']
+            }
+
     config.vm.provision "docker" do |d, docker|
       config.vm.hostname = "Debian-Ansible"
-      #d.post_install_provision "shell", path: "./prepare_ansible_env.sh"
     end
     docker.vm.network :private_network, type: "dhcp", docker_network__internal: true
   end
 
- 
+
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
 
@@ -88,6 +96,6 @@ Vagrant.configure("2") do |config|
   #   apt-get update
   #   apt-get install -y apache2
   # SHELL
-  #config.vm.provision "shell", path: "./prepare_ansible_env.sh"
+  #config.vm.provision "shell", path: "/home/aurel/git/resources/Containers/Linux/Debian-Ansible/entrypoint.sh", env: {"AWS_SECRET_ACCESS_KEY" => ENV['AWS_SECRET_ACCESS_KEY'],"AWS_ACCESS_KEY_ID" => ENV['AWS_ACCESS_KEY_ID']}
 end
 end

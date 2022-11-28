@@ -3,7 +3,7 @@ FROM debian:stable-slim as main
 
 #Build & Install Python3.11 and other packages from sources
 RUN apt update && apt dist-upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client \
-    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl iputils-ping netcat iproute2 nano -y
+    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl iputils-ping netcat iproute2 nano unzip -y
 
 #Add user /bin directory to the PATH
 ENV PATH="${PATH}:/home/aurelien/.local/bin"
@@ -21,6 +21,9 @@ RUN chmod +x /etc/bin/entrypoint.sh
 RUN sed -i "s/AuthorizedKeysFile /.ssh_keys/" /etc/ssh/ssh_config 
 #RUN sed -i "s/IdentityFile /.ssh_keys/id_rsa_debian_ansible/" /etc/ssh/ssh_config
 
+#Install AWS CLI
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \ 
+    && unzip awscliv2.zip && ./aws/install
 
 
 #Declare all arguments (variables) will used by dockerfile layers
@@ -41,7 +44,7 @@ USER aurelien
 
 #Install Ansible and Ansible's modules inside the user's home
 RUN python3 -m pip install --upgrade pip && python3 -m pip install --user ansible && python3 -m pip install argcomplete && python3 -m pip install docker \
-    && python3 -m pip install pywinrm \
+    && python3 -m pip install pywinrm && python3 -m pip install boto3 && python3 -m pip install botocore \
     && activate-global-python-argcomplete --user && ansible-galaxy collection install ansible.windows && ansible-galaxy collection install community.general
     
-CMD ["tail", "-f", "/dev/null"]
+CMD ["/etc/bin/entrypoint.sh"]

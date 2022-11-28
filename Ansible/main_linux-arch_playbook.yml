@@ -9,10 +9,6 @@
     - Roles/Common/vars/common_vars.yml
 
   tasks:
-    - name: Print all available facts
-      ansible.builtin.debug:
-        var: ansible_facts
-
     - name: Perform Linux settings
       ansible.builtin.import_tasks: Roles/Linux/Laptop/tasks/settings_linux.yml
 

@@ -1,7 +1,4 @@
+*.DS_STORE
 **/.vagrant
-<<<<<<< HEAD
 Containers/Linux/Debian-Ansible/.ssh
-=======
-Containers/Linux/.ssh
-Containers/Linux/Debian-Ansible/.ssh
->>>>>>> 631e9a3 (Gnome extension)
+**/.env

@@ -9,7 +9,7 @@
 
 ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources//Ansible/main_windows_playbook.yml --ask-vault-password
 
-ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources//Ansible/main_linux-arch_playbook.yml --ask-vault-password -v
+ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources//Ansible/main_linux-arch_playbook.yml --ask-vault-password --start-at-task
 
 ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources//Ansible/main_remove_softwares.yml
 
