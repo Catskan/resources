@@ -1,3 +1,4 @@
+#Common variables can be used by all Windows hosts
 adk_silent_argument: "/quiet"
 adk_install_dir: 'C:\ADK'
 adk_feature_deploymentTools: "OptionId.DeploymentTools"

@@ -1,4 +1,6 @@
 user_name: 'Aurel'
+
+#New User location
 root_user_directory: 'E:\Aurel'
 roamingTiles_user_directory_reg_key_name: '{00BCFC5A-ED94-4E48-96A1-3F6217F21990}'
 roamingTiles_user_directory: 'E:\Aurel\AppData\Local\Microsoft\Windows\RoamingTiles'
