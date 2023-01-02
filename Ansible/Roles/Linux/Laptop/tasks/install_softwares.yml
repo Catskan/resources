@@ -21,7 +21,7 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
-  - name: Install Gnome Bluetooth
+  - name: Install Gnome Modules
     community.general.pacman:
       name:  
         - bluez
@@ -29,6 +29,8 @@
         - gnome-shell
         - gnome-control-center
         - ntfs-3g
+        - cups
+        - system-config-printer
       state: present
     vars:
       ansible_become: yes
