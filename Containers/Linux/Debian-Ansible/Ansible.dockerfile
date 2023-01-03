@@ -1,18 +1,30 @@
 #Use the official debian slim image
-FROM debian:stable-slim as main
+FROM debian:stable-slim as python
 
-#Build & Install Python3.11 and other packages from sources
-RUN apt update && apt dist-upgrade -y && apt install cmake gcc pkg-config build-essential zlib1g-dev openssh-client \
-    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl iputils-ping netcat iproute2 nano unzip -y
+ARG python_version=3.11.1
 
-#Add user /bin directory to the PATH
+ARG OS
+#Install Deb packages to build Python
+RUN apt update && apt dist-upgrade -y \
+    && apt install cmake gcc pkg-config build-essential zlib1g-dev \
+    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev -y
+
+#Download Python archive from official URL
+ADD https://www.python.org/ftp/python/$python_version/Python-$python_version.tgz /tmp/Python-$python_version.tgz
+
+RUN tar xzf /tmp/Python-$python_version.tgz -C /tmp/ && cd /tmp/Python-$python_version \ 
+    && ./configure --enable-optimizations && make && make install
+
+FROM python as main
+
+RUN apt update && apt install openssh-client \
+    curl iputils-ping netcat iproute2 nano unzip npm jq -y
+
+# #Add user /bin directory to the PATH
 ENV PATH="${PATH}:/home/aurelien/.local/bin"
 
 COPY ./Containers/Linux/Debian-Ansible/entrypoint.sh /etc/bin/entrypoint.sh
 
-#Copy the public key of the destination SSH server
-#COPY ./Containers/Linux/Debian-Ansible/id_rsa.pub /home/aurelien/.ssh/id_rsa.pub
-#COPY ./Containers/Linux/Debian-Ansible/config_files/ssh_config /etc/ssh/ssh_config
 #Create a user with home directory to install ansible inside it
 RUN useradd aurelien && mkdir /home/aurelien && chown -R aurelien:aurelien /home/aurelien/
 RUN chmod +x /etc/bin/entrypoint.sh
@@ -23,28 +35,18 @@ RUN sed -i "s/AuthorizedKeysFile /.ssh_keys/" /etc/ssh/ssh_config
 
 #Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \ 
-    && unzip awscliv2.zip && ./aws/install
+    && unzip awscliv2.zip && ./aws/install && rm awscliv2.zip && rm -r ./aws
 
-
-#Declare all arguments (variables) will used by dockerfile layers
-
-ARG python_version=3.11.0
-
-ARG OS
-
-#Download Python archive from official URL
-ADD https://www.python.org/ftp/python/3.11.0/Python-$python_version.tgz /tmp/Python-$python_version.tgz
-
-RUN tar xzf /tmp/Python-$python_version.tgz -C /tmp/ && cd /tmp/Python-$python_version \ 
-    && ./configure --enable-optimizations && make && make install \
-    && rm -r * /tmp
+RUN npm install -g @bitwarden/cli
 
 #Run the next dockerfiles layers as aurelien user
 USER aurelien
 
 #Install Ansible and Ansible's modules inside the user's home
-RUN python3 -m pip install --upgrade pip && python3 -m pip install --user ansible && python3 -m pip install argcomplete && python3 -m pip install docker \
+RUN python3 -m pip install --upgrade pip && python3 -m pip install --user ansible && python3 -m pip install argcomplete \
+    && python3 -m pip install docker \
     && python3 -m pip install pywinrm && python3 -m pip install boto3 && python3 -m pip install botocore \
-    && activate-global-python-argcomplete --user && ansible-galaxy collection install ansible.windows && ansible-galaxy collection install community.general
+    && activate-global-python-argcomplete --user && ansible-galaxy collection install ansible.windows \
+    && ansible-galaxy collection install community.general
     
 CMD ["/etc/bin/entrypoint.sh"]

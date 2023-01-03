@@ -36,6 +36,14 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
+  - name: Enable service CUPS (Printer)
+    ansible.builtin.systemd:
+      name: cups
+      enabled: yes
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
   - name: Download DashToDock
     ansible.builtin.get_url:
       url: https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v75.shell-extension.zip

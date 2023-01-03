@@ -54,6 +54,22 @@
       ansible_become: yes
       ansible_become_pass: "{{ sudo_pwd }}"
 
+  - name: Install package LibreOffice Writer
+    community.general.pacman:
+      name: libreoffice-writer
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
+  - name: Install package CUPS
+    community.general.pacman:
+      name: cups
+      state: present
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
+
   - name: Install package Virtualbox from pacman
     community.general.pacman:
       name: 

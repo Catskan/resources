@@ -72,6 +72,12 @@
     win_command: C:\temp\Crystaldiskinfo.exe /VERYSILENT /NORESTART
     when: ansible_hostname == "Aurel-Gaming" and CrystalDiskInfo_installed.exists == false
 
+  - name: Install WindowsAppxPackages
+    ansible.windows.win_package:
+        product_id: "{{ item }}"
+        state: present
+    loop:
+        - Microsoft.GamingServices
 
 ##################################W11-VM-Aurel Softwares##################################
 #Unzip Captvty

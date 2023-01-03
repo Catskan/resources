@@ -115,7 +115,7 @@
         ansible_become_user: '{{ ansible_user }}'
         ansible_become_pass: '{{ ansible_password }}'
 
-    - name: Create mapped drive with credentials and save the username and password
+    - name: Save Microsoft Account Credentials to Credentials Store
       block:
       - name: Save the network credentials required for the mapped drive
         community.windows.win_credential:
@@ -126,7 +126,6 @@
           state: present
           persistence: local
       vars:
-        # become is required to save and retrieve the credentials in the tasks
         ansible_become: yes
         ansible_become_method: runas
         ansible_become_user: '{{ ansible_user }}'
@@ -173,7 +172,18 @@
         reboot: yes
         reboot_timeout: 3600
 
-
+    - name: Turn off UAC
+      win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\policies\system
+        name: EnableLUA
+        data: 0
+        type: dword
+        state: present
+      register: output_uac
+ 
+    - name: Reboot to apply UAC Turned off
+      win_reboot:
+      when: output_uac is changed
 
 
 
