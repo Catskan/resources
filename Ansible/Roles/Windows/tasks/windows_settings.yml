@@ -31,6 +31,13 @@
         password: "{{ ansible_password }}"
       #when: inventory_hostname == "aurelien-gaming"
 
+#Disable password expiration
+    - name: Disable password expiration of "{{ ansible_user }}"
+      ansible.windows.win_user:
+        name: "{{ ansible_user }}"
+        password_never_expires: yes
+
+
 #Set RDP
     - name: Allow RDP TSConnection
       ansible.windows.win_regedit:

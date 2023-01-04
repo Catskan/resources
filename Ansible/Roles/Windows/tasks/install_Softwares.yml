@@ -33,14 +33,22 @@
     win_command: C:\temp\EaApp.exe /SILENT /NORESTART
     when: EAApp_installed.exists == false
 
-#Add EAApp to Start Programs
-  - name: Create EAApp shortcut to Start Programs
-    community.windows.win_shortcut:
-      src: C:\Program Files\Electronic Arts\EA Desktop\EA Desktop\EALauncher.exe
-      dest: '{{ startup_user_directory }}\EALauncher.lnk'
-      icon: C:\Program Files\Electronic Arts\EA Desktop\EA Desktop\EALauncher.exe,0
-      windowstyle: 'minimized'
-    when: EAApp_installed.exists == true
+# #Add EAApp to Start Programs
+#   - name: Create EAApp shortcut to Start Programs
+#     community.windows.win_shortcut:
+#       src: C:\Program Files\Electronic Arts\EA Desktop\EA Desktop\EALauncher.exe
+#       dest: '{{ startup_user_directory }}\EALauncher.lnk'
+#       icon: C:\Program Files\Electronic Arts\EA Desktop\EA Desktop\EALauncher.exe,0
+#       windowstyle: 'minimized'
+#     when: EAApp_installed.exists == true
+
+#Run EA App as Administrator
+  - name: Add "Run as Admin" flag to EAApp
+    ansible.windows.win_regedit:
+      path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"
+      name: C:\Program Files\Electronic Arts\EA Desktop\EA Desktop\EADesktop.exe
+      data: RUNASADMIN
+      type: expandstring
 
 #Install Epic Launcher
   - name: Ensure Epic is installed via win_command
