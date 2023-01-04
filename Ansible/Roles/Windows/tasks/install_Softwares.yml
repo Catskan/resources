@@ -78,11 +78,12 @@
 #Install Crystal Disk Info
   - name: Install CrystalDiskInfo
     win_command: C:\temp\Crystaldiskinfo.exe /VERYSILENT /NORESTART
-    when: ansible_hostname == "Aurel-Gaming" and CrystalDiskInfo_installed.exists == false
+    when: CrystalDiskInfo_installed.exists == false
 
   - name: Install WindowsAppxPackages
     ansible.windows.win_package:
         product_id: "{{ item }}"
+        provider: msix
         state: present
     loop:
         - Microsoft.GamingServices
