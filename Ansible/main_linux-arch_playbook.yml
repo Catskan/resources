@@ -9,6 +9,9 @@
     - Roles/Common/vars/common_vars.yml
 
   tasks:
+     - name: Perform common settings
+      ansible.builtin.import_tasks: Roles/Common/tasks/common_settings.yml
+ 
     - name: Perform Linux settings
       ansible.builtin.import_tasks: Roles/Linux/Laptop/tasks/settings_linux.yml
 
