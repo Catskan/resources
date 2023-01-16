@@ -9,37 +9,37 @@
       },
       {
         "type": "File",
-        "directory": "C:\\ProgramData\\GSX Solutions\\Alert",
+        "directory": "C:\\ProgramData\\Aurelien-Soft\\Alert",
         "filter": "*.txt",
         "includeSubdirectories": true
       },
       {
         "type": "File",
-        "directory": "C:\\ProgramData\\GSX Solutions\\Data Tier",
+        "directory": "C:\\ProgramData\\Aurelien-Soft\\Data Tier",
         "filter": "*.txt",
         "includeSubdirectories": true
       },
       {
         "type": "File",
-        "directory": "C:\\ProgramData\\GSX Solutions\\Preprocessing",
+        "directory": "C:\\ProgramData\\Aurelien-Soft\\Preprocessing",
         "filter": "*.txt",
         "includeSubdirectories": true
       },
       {
         "type": "File",
-        "directory": "C:\\ProgramData\\GSX Solutions\\Scan Configuration",
+        "directory": "C:\\ProgramData\\Aurelien-Soft\\Scan Configuration",
         "filter": "*.txt",
         "includeSubdirectories": true
       },
       {
         "type": "File",
-        "directory": "C:\\ProgramData\\GSX Solutions\\Status Calculation",
+        "directory": "C:\\ProgramData\\Aurelien-Soft\\Status Calculation",
         "filter": "*.txt",
         "includeSubdirectories": true
       },
       {
         "type": "File",
-        "directory": "C:\\ProgramData\\GSX Solutions\\WebUI",
+        "directory": "C:\\ProgramData\\Aurelien-Soft\\WebUI",
         "filter": "*.txt",
         "includeSubdirectories": true
       },

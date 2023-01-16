@@ -2,7 +2,7 @@
         [string] $APP_NAME = "Default Web Site",
         [string] $AppPool_NAME = "DefaultAppPool",
         [string] $API_NAME = "WebAPI",
-        [string] $API_Path = "C:\Program Files\GSX Solutions\Gsx-Web-UI\WebAPI"
+        [string] $API_Path = "C:\Program Files\Aurelien-Soft\Web-UI\WebAPI"
     )
 
     Start-Service -Name W3SVC
@@ -76,10 +76,10 @@
 
         Write-Host 'Retrieving SQL connection parameters...'
         # Registry keys
-        $GsxSolutionsRegistryKey = 'HKLM:\SOFTWARE\GSX Solutions'
-        $ScanConfigRegistryKey = Join-Path $GsxSolutionsRegistryKey -ChildPath "Scan Configuration Microservice"
+        $AurelienSoftRegistryKey = 'HKLM:\SOFTWARE\Aurelien-Soft'
+        $ScanConfigRegistryKey = Join-Path $AurelienSoftRegistryKey -ChildPath "Scan Configuration Microservice"
 
-        Set-ItemProperty -Path "IIS:\sites\$APP_NAME" -Name "physicalPath" -Value "C:\Program Files\GSX Solutions\Gsx-Web-UI"
+        Set-ItemProperty -Path "IIS:\sites\$APP_NAME" -Name "physicalPath" -Value "C:\Program Files\Aurelien-Soft\Web-UI"
     }
     catch {
         $ErrorMessage = if ($_.Exception.InnerException -and $_.Exception.InnerException.Message) { $_.Exception.InnerException.Message } else { $_.Exception.Message }

@@ -37,7 +37,7 @@ RUN Set-Service -Name W3SVC -StartupType "Manual"
 #Execute Powershell scripts to finished Gizmo configuration
 RUN C:\Scripts\ServicesACLs.ps1
 
-RUN New-WebVirtualDirectory -Name 'Downloads' -Site 'Default Web Site' -PhysicalPath 'C:\ProgramData\GSX Solutions\Downloads'  -Force
+RUN New-WebVirtualDirectory -Name 'Downloads' -Site 'Default Web Site' -PhysicalPath 'C:\ProgramData\Aurelien-Soft\Downloads'  -Force
 RUN Set-WebConfiguration system.webServer/directoryBrowse -PSPath 'IIS:' -Location 'Default Web Site' -Value @{enabled='False'}
 
 #Start ServiceMonitor to take container running (Microsoft official solution)

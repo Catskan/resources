@@ -1,4 +1,4 @@
-$Username="GizmoAPI"
+$Username="APIUser"
 $LocalUser=$null
 $Feature = "Web-Windows-Auth"
 
@@ -25,15 +25,15 @@ if ((Get-WebConfigurationProperty -PSPath 'MACHINE/WEBROOT/APPHOST'  -filter "sy
 
 try {
 #If the new website are correctly create, enable windowsAuthentication & disable anonymousAuth. And copy the rewrite rules file into the website directory
-if (Get-Website | Where-Object "Name" -eq gsxapi){
+if (Get-Website | Where-Object "Name" -eq aureliensoftapi){
     Write-Host Already exist
     } else {
-        New-Item -Path C:\inetpub -Name "gsxapi" -ItemType "Directory" #Create the gsxapi directory to use it in gsxapi IIS website
-        New-WebAppPool -Name "gsxapi" #Create a new ApplicationPool named "gsxapi"
-        New-Website -Name 'gsxapi' -Port '8080' -PhysicalPath 'C:\inetpub\gsxapi' -ApplicationPool 'gsxapi' #Create the new website named "gsxapi"
-        Copy-Item -Path $PSScriptRoot\api\web.config -Destination C:\inetpub\gsxapi\
-        Set-WebConfiguration system.webServer/security/authentication/anonymousAuthentication -PSPath IIS:\ -Location gsxapi -Value @{enabled="False"}
-        Set-WebConfiguration system.webServer/security/authentication/windowsAuthentication -PSPath IIS:\ -Location gsxapi -Value @{enabled="True"}   
+        New-Item -Path C:\inetpub -Name "aureliensoftapi" -ItemType "Directory" #Create the aureliensoftapi directory to use it in aureliensoftapi IIS website
+        New-WebAppPool -Name "aureliensoftapi" #Create a new ApplicationPool named "aureliensoftapi"
+        New-Website -Name 'aureliensoftapi' -Port '8080' -PhysicalPath 'C:\inetpub\aureliensoftapi' -ApplicationPool 'aureliensoftapi' #Create the new website named "aureliensoftapi"
+        Copy-Item -Path $PSScriptRoot\api\web.config -Destination C:\inetpub\aureliensoftapi\
+        Set-WebConfiguration system.webServer/security/authentication/anonymousAuthentication -PSPath IIS:\ -Location aureliensoftapi -Value @{enabled="False"}
+        Set-WebConfiguration system.webServer/security/authentication/windowsAuthentication -PSPath IIS:\ -Location aureliensoftapi -Value @{enabled="True"}   
     }
 }
 

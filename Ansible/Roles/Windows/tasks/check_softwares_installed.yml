@@ -71,7 +71,7 @@
   #Check in Registry if CrystalDiskInfo is already installed
   - name: Check if CrystalDiskInfo is already installed
     win_reg_stat:
-      path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\CrystalDiskInfo_is1
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\CrystalDiskInfo_is1
     register: CrystalDiskInfo_installed
     
   - name: Check if Captvty exists

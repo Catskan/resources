@@ -1,4 +1,4 @@
-$Services = Get-Service gsx*
+$Services = Get-Service aurelien*
 foreach ($service in $Services) 
 {
    $SvcName = $service.Name

@@ -23,11 +23,11 @@ cp $AgentBuildDirectory/containers/nginx-ingress/licenses/nginx-repo.key .
 ls nginx-repo.*
 
 #Build the image
-make debian-image-plus PREFIX=$GsxContainerRegistryName/nginx-plus-ingress TARGET=container TAG=$IngressVersion
+make debian-image-plus PREFIX=$ContainerRegistryName/nginx-plus-ingress TARGET=container TAG=$IngressVersion
 
 #Push image into the container registry
-make push PREFIX=$GsxContainerRegistryName/nginx-plus-ingress TAG=$IngressVersion
-echo "Rename image tag to push to Martello registry"
-docker tag $GsxContainerRegistryName/nginx-plus-ingress:$IngressVersion $MtloContainerRegistryName/nginx-plus-ingress:$IngressVersion
-make push PREFIX=$MtloContainerRegistryName/nginx-plus-ingress TAG=$IngressVersion
+make push PREFIX=$ContainerRegistryName/nginx-plus-ingress TAG=$IngressVersion
+echo "Rename image tag to push to another registry"
+docker tag $ContainerRegistryName/nginx-plus-ingress:$IngressVersion $NewContainerRegistryName/nginx-plus-ingress:$IngressVersion
+make push PREFIX=$NewContainerRegistryName/nginx-plus-ingress TAG=$IngressVersion
 
