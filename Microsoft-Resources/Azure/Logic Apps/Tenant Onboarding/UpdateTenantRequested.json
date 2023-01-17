@@ -120,7 +120,7 @@
                         }
                     },
                     "method": "patch",
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://martello.sharepoint.com/sites/GSX-ProjectSWO'))}/tables/@{encodeURIComponent(encodeURIComponent('9d50a43a-4d83-4aec-94c5-6ad9289e3063'))}/items/@{encodeURIComponent(variables('SHAREPOINTID'))}"
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://org.sharepoint.com/sites/SiteName'))}/tables/@{encodeURIComponent(encodeURIComponent('9d50a43a-4d83-4aec-94c5-6ad9289e3063'))}/items/@{encodeURIComponent(variables('SHAREPOINTID'))}"
                 },
                 "runAfter": {
                     "Initialize_variable_5": [

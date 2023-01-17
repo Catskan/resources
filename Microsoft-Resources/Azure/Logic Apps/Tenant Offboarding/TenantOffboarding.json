@@ -644,7 +644,7 @@
                         }
                     },
                     "method": "get",
-                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://martello.sharepoint.com/sites/GSX-IT'))}/tables/@{encodeURIComponent(encodeURIComponent('f7c1e322-bb8e-4b91-91d1-675361635137'))}/onupdateditems",
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://org.sharepoint.com/sites/siteName'))}/tables/@{encodeURIComponent(encodeURIComponent('f7c1e322-bb8e-4b91-91d1-675361635137'))}/onupdateditems",
                     "retryPolicy": {
                         "type": "none"
                     }

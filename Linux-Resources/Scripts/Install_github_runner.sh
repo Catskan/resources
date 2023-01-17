@@ -4,11 +4,11 @@ cpu_model_Apple="Apple M1"
 # Create a folder
 mkdir $runner_name && cd $runner_name
 # Download the latest runner package
-if [ "$(sysctl -n machdep.cpu.brand_string)" != "Apple M1" ]
+if [ "$(sysctl -a | grep -E 'ostype' | awk '{print $2, $3}')" = "Linux" ]
 then
     os_type=linux
     curl -o $runner_name-$os_type-$runner_version.tar.gz -L https://github.com/actions/runner/releases/download/v2.299.1/actions-runner-linux-x64-$runner_version.tar.gz
-elif [ "$(sysctl -n machdep.cpu.brand_string)" = "Apple M1" ]
+elif [ "$(sysctl -a | grep -E 'ostype' | awk '{print $2, $3}')" = "Darwin" ]
 then
     os_type=macOS
     curl -o $runner_name-$os_type-$runner_version.tar.gz -L https://github.com/actions/runner/releases/download/v2.300.2/actions-runner-osx-arm64-$runner_version.tar.gz

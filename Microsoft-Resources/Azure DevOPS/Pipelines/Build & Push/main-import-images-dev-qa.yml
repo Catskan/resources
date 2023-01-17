@@ -37,7 +37,7 @@ steps:
 
 #This task check what is the container registry source and get all details to az acr import cmd line
   - task: AzureCLI@2
-    displayName: Getting  GSX registry informations
+    displayName: Getting  registry informations
     inputs:
       azureSubscription: '$(SRC_AZURE_SUBSCRIPTION)'
       scriptType: ps

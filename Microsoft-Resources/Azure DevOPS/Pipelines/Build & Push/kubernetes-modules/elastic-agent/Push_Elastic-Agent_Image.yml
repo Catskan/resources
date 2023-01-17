@@ -49,7 +49,7 @@ jobs:
 
     #Import the official elastic-agent images into our Azure Container Registry
     - task: AzureCLI@2
-      displayName: Import Elastic Agent image to GSX
+      displayName: Import Elastic Agent image to registry
       inputs:
         azureSubscription: '$(azure-subscription)'
         scriptType: 'ps'
@@ -75,9 +75,9 @@ jobs:
             az acr import --name $(cluster1ContainerRegistry) --source $(ELASTICAGENT_IMAGE_NAME) --image $(ELASTICAGENT_REPO_NAME):$(FLEET_AGENT_VERSION)
           }
 
-#Push the image previously built to the GSX registry
+#Push the image previously built to the registry
     - task: Docker@2
-      displayName: Push the Windows image to GSX Registry
+      displayName: Push the Windows image to Registry
       inputs:
         containerRegistry: '$(CR_SERVICE_CONNECTION)'
         repository: '$(WIN_ELASTICAGENT_REPO_NAME)'

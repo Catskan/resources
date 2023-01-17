@@ -7,7 +7,7 @@ jobs:
   workspace:
     clean: all
   steps:
-  #Import the official Cert-Manager images into the GSX Container Registry
+  #Import the official Cert-Manager images into the Container Registry
   - task: AzureCLI@2
     displayName: Push CertManager images to $(azureContainerRegistry) registry
     inputs:
