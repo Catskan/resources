@@ -1,7 +1,7 @@
 variables:
   ### DEV ENVIRONMENT RELATED VARIABLES ###
   azure-subscription-id: 'a548cb3d-0887-4b87-8460-6bf34967538b'
-  azure-subscription: 'GSX Dev/Test'
+  azure-subscription: 'Dev/Test'
   azdevops-svc-connection-sp-client-id: 'b9a18852-a7ea-4dae-a081-a78ad46db660'
   dns-azure-subscription: 'GSX Dev/Test'
   mtlo-azure-subscription: 'Vantage-SharedResources'
