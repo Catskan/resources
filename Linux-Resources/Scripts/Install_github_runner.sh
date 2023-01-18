@@ -10,7 +10,7 @@ case $kernel in
     *"Linux"*)
         echo "It's Linux"
         os_type=linux
-        curl -o "$runner_name-$os_type-$runner_version.tar.gz" -L https://github.com/actions/runner/releases/download/v2.299.1/actions-runner-linux-x64-$runner_version.tar.gz
+        curl -o $HOME/$runner_name/$runner_name-$os_type-$runner_version.tar.gz -L https://github.com/actions/runner/releases/download/v$runner_version/actions-runner-linux-x64-$runner_version.tar.gz
 ;;
     *"Darwin"*)
         echo "It's MacOS"
@@ -19,14 +19,14 @@ case $kernel in
         then
             arch="arm64"
         fi
-            curl -o $runner_name-$os_type-$runner_version.tar.gz -L https://github.com/actions/runner/releases/download/v2.300.2/actions-runner-osx-$arch-$runner_version.tar.gz
+            curl -o $HOME/$runner_name/$runner_name-$os_type-$runner_version.tar.gz -L https://github.com/actions/runner/releases/download/v$runner_version/actions-runner-osx-$arch-$runner_version.tar.gz
 ;;
 esac
 # Optional: Validate the hash
-echo "147c14700c6cb997421b9a239c012197f11ea9854cd901ee88ead6fe73a72c74  $runner_name-$os_type-$runner_version.tar.gz" | shasum -a 256 -c
+echo "147c14700c6cb997421b9a239c012197f11ea9854cd901ee88ead6fe73a72c74  $HOME/$runner_name/$runner_name-$os_type-$runner_version.tar.gz" | shasum -a 256 -c
 # Extract the installer
-tar xzf ./$runner_name-$os_type-$runner_version.tar.gz
+tar xzf $HOME/$runner_name/$runner_name-$os_type-$runner_version.tar.gz --directory $HOME/$runner_name
 # Create the runner and start the configuration experience
-./config.sh --url https://github.com/Catskan/resources --token $GITHUB_TOKEN --unattended
+$HOME/$runner_name/config.sh --url https://github.com/Catskan/resources --token $GITHUB_TOKEN --unattended
 # Last step, run it!
-./run.sh
+$HOME/$runner_name/run.sh
