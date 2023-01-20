@@ -10,4 +10,10 @@ jobs:
     
     steps:
       - name: "Ensure docker daemon is running"
-        run: echo "$(systemctl status docker)"
+        run: |
+          if [ "$(systemctl is-active containerd)" == "active" ]
+          then
+            echo "Containerd is active" ;;
+          elif [ "$(systemctl is-active containerd)" == "inactive" ]
+            echo "Containerd is inactive" ;;
+          fi
