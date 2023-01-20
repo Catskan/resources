@@ -13,7 +13,7 @@ jobs:
         run: |
           if [ "$(systemctl is-active containerd)" == "active" ]
           then
-            echo "Containerd is active" ;;
+            echo "Containerd is active"
           elif [ "$(systemctl is-active containerd)" == "inactive" ]
-            echo "Containerd is inactive" ;;
+            echo "Containerd is inactive"
           fi
