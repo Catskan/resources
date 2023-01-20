@@ -1,0 +1,13 @@
+#Github Action to run the Debian-Ansible container and start Ansible to manager targets
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  start-ansible:
+    name: run ansible container
+    runs-on: self-hosted
+    
+    steps:
+      - name: "Ensure docker daemon is running"
+        run: echo "$(systemctl status docker)"
