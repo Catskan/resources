@@ -10,7 +10,7 @@ jobs:
     
     steps:
       - name: Show the OS
-        run: echo $GITHUB_WORKSPACE && ls -la $GITHUB_WORKSPACE
+        run: echo $GITHUB_WORKSPACE && ls -la $GITHUB_WORKSPACE && ls $GITHUB_WORKSPACE/aurelien
 
       - name: Start docker on macOS
         if: runner.os == 'macOS'
