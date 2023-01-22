@@ -14,18 +14,7 @@ jobs:
 
       - name: Start docker on macOS
         if: runner.os == 'macOS'
-        run: |
-          if [ -f ~/Library/LaunchAgents/com.docker.registry.plist ]
-            then
-              launchctl load ~/Library/LaunchAgents/com.docker.registry.plist
-              launchctl start com.docker.registry
-            else
-              plutil -lint docs/recipes/osx/com.docker.registry.plist
-              cp docs/recipes/osx/com.docker.registry.plist ~/Library/LaunchAgents/
-              chmod 644 ~/Library/LaunchAgents/com.docker.registry.plist
-              launchctl load ~/Library/LaunchAgents/com.docker.registry.plist
-              launchctl start com.docker.registry
-            fi
+        run: open -a docker && sleep 10
 
 
       - name: "Ensure docker daemon is running on Linux"
