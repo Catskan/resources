@@ -1,9 +1,9 @@
 variables:
-  DEST_AZURE_SUBSCRIPTION: MSmonitor Hosted QA
-  DEST_REGISTRY_NAME: registryName_destination
-  SRC_AZURE_SUBSCRIPTION: azureSubscriptionName_Source
-  SRC_REGISTRY_NAME: registryName_Source
-  SHARED_KEYVAULT: sharedKeyvault_Name
+  DEST_AZURE_SUBSCRIPTION: 
+  DEST_REGISTRY_NAME: 
+  SRC_AZURE_SUBSCRIPTION: 
+  SRC_REGISTRY_NAME: 
+  SHARED_KEYVAULT: 
   ##QA Variables##
   subscription-id: id_of_the_azure_subscription
   registry-resource-group: qaResourcegroupName

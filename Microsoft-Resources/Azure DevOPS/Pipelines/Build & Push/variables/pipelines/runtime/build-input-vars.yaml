@@ -2,9 +2,8 @@ variables:
   #####################################
   #    KUBERNETES MODULES VARIABLES   #
   #####################################
-  CR_SERVICE_CONNECTION: CR_cbmt${{ parameters.environment }}
-  CR_MTLO_SERVICE_CONNECTION: CR_mtlo_cluster1${{ parameters.environment }}
-  BUILD_AGENT_POOLS: 'Dev-Build-Hosted'
+  CR_SERVICE_CONNECTION: CR_${{ parameters.environment }}
+  BUILD_AGENT_POOLS: ''
   ### NGINX PLUS INGRESS VARIABLES ###
   INGRESS_VERSION: v${{ parameters.IngressControllerImageTag }}
   ### ELASTIC AGENT VARIABLES ###
