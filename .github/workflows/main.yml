@@ -12,12 +12,10 @@ jobs:
       - name: Show the OS
         run: echo $RUNNER_OS
 
-      - name: "Ensure docker daemon is running"
-        shell: bash
+      - name: Start docker on macOS
+        if: runner.os == "macOS"
         run: |
-          case $RUNNER_OS in 
-          macOS)
-            if [ -f ~/Library/LaunchAgents/com.docker.registry.plist ]
+          if [ -f ~/Library/LaunchAgents/com.docker.registry.plist ]
             then
               launchctl load ~/Library/LaunchAgents/com.docker.registry.plist
               launchctl start com.docker.registry
@@ -28,8 +26,11 @@ jobs:
               launchctl load ~/Library/LaunchAgents/com.docker.registry.plist
               launchctl start com.docker.registry
             fi
-            
-          *Linux*)
+
+
+      - name: "Ensure docker daemon is running on Linux"
+        if: runner.os == "Linux"
+        run: |
             until [ $(systemctl is-active containerd docker) = active ]
               do
                 systemctl start containerd docker
