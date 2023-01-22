@@ -3,7 +3,6 @@ FROM debian:stable-slim as python
 
 ARG python_version=3.11.1
 
-ARG OS
 #Install Deb packages to build Python
 RUN apt update && apt dist-upgrade -y \
     && apt install cmake gcc pkg-config build-essential zlib1g-dev \
