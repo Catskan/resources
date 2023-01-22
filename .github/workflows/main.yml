@@ -11,9 +11,18 @@ jobs:
     steps:
       - name: "Ensure docker daemon is running"
         run: |
-          if [ "$(systemctl is-active containerd)" == "active" ]
-          then
-            echo "Containerd is active"
-          elif [ "$(systemctl is-active containerd)" == "inactive" ]
-            echo "Containerd is inactive"
-          fi
+          until [ $(systemctl is-active containerd docker) = active ]
+            do
+              systemctl start containerd docker
+              sleep 3;
+            done
+          echo -e "Service Containerd & Docker are started and active"
+      
+      - name: Build and push Debian-Ansible image
+        # You may pin to the exact commit or the version.
+        # uses: docker/build-push-action@37abcedcc1da61a57767b7588cb9d03eb57e28b3
+        uses: docker/build-push-action@v3.3.0
+        with:
+          file: $HOME/git/resources/Containers/Linux/Debian-Ansible/Ansible.dockerfile
+          push: true
+          tags: catskan.dockerhub.io/debian-ansible:v1
