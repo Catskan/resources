@@ -1,0 +1,9 @@
+---
+  - name: Upgrade System (pacman -Syu)
+    community.general.pacman:
+      update_cache: true
+      upgrade: true
+    register: upgrade_summarized
+    vars:
+      ansible_become: yes
+      ansible_become_pass: "{{ sudo_pwd }}"
