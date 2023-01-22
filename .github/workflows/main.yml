@@ -35,3 +35,4 @@ jobs:
           file: Containers/Linux/Debian-Ansible/Ansible.dockerfile
           push: false
           tags: catskan.dockerhub.io/debian-ansible:v1
+          context: .
