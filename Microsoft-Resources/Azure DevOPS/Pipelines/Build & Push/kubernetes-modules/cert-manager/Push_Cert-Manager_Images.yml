@@ -28,7 +28,7 @@ jobs:
   - task: AzureCLI@2
     displayName: Push CertManager images to $(cluster1ContainerRegistry) registry
     inputs:
-      azureSubscription: '$(mtlo-azure-subscription)'
+      azureSubscription: '$(second-azure-subscription)'
       scriptType: 'bash'
       scriptLocation: 'inlineScript'
       inlineScript: |

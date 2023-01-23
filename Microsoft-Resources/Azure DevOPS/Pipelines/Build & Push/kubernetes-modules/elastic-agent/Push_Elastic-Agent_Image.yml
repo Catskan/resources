@@ -65,7 +65,7 @@ jobs:
     - task: AzureCLI@2
       displayName: Import Elastic Agent image to Martello
       inputs:
-        azureSubscription: '$(mtlo-azure-subscription)'
+        azureSubscription: '$(second-azure-subscription)'
         scriptType: 'ps'
         scriptLocation: 'inlineScript'
         inlineScript: |

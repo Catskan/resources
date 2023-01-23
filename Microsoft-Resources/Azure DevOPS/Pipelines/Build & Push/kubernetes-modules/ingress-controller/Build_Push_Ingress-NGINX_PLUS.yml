@@ -25,14 +25,6 @@ jobs:
     inputs:
       containerRegistry: '$(CR_MTLO_SERVICE_CONNECTION)'
       command: 'login'
-  
-  #   #Login into the azure container registry
-  # - task: "Docker@2"
-  #   condition: eq($(environment), 'prod-east-us')
-  #   displayName: Login into the mtlo registry to perform powershell commands
-  #   inputs:
-  #     containerRegistry: '$(MTLO_AZURE_CONTAINER_REGISTRY_SERVICE_CONNECTION)'
-  #     command: 'login'
 
   - task: AzureCLI@2
     displayName: Download NGINX PLUS certificates from Keyvault
