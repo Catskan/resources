@@ -44,7 +44,7 @@ jobs:
         with:
           file: ${{ github.workspace }}/Containers/Linux/Debian-Ansible/Ansible.dockerfile
           push: true
-          tags: catskan/debian-ansible:${{ github.job_id }}
+          tags: catskan/debian-ansible:${{ github.job }}
           labels: 'python-Version:${{ inputs.python_version }}'
           context: .
           build-args: python_version=${{ inputs.python_version }}
