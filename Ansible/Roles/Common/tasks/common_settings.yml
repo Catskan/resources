@@ -1,9 +1,0 @@
----
-  - name: Add GitHub Action token to environment variables
-    shell: "echo $GITHUB_TOKEN"
-    environment: 
-      GITHUB_TOKEN: "{{ lookup('amazon.aws.aws_secret', 'Ansible.github_token', nested=true) }}"
-    register: github_token
-
-  - debug: 
-      var: github_token.stdout
