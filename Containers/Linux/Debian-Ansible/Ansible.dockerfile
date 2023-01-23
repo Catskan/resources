@@ -1,7 +1,7 @@
 #Use the official debian slim image
 FROM debian:stable-slim as python
 
-ARG python_version=3.11.1
+ARG python_version
 
 #Install Deb packages to build Python
 RUN apt update && apt dist-upgrade -y \

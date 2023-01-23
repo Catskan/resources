@@ -2,6 +2,12 @@
 
 on:
   workflow_dispatch:
+    inputs:
+      python_version:
+        type: string
+        description: Python Version you want to use in the Debian-Ansible container
+        required: true
+
   
 jobs:
   start-ansible:
@@ -40,3 +46,4 @@ jobs:
           push: false
           tags: catskan.dockerhub.io/debian-ansible:v1
           context: .
+          build-args: python_version=3.11.1
