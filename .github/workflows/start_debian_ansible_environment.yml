@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Replace string in Vagrant file
-        if: runner.os = 'macOS'
+        if: runner.os == 'macOS'
         uses: datamonsters/replace-action@v2
         with:
           files: '$GITHUB_WORKSPACE/Vagrant/Ansible/MacOS/Vagrantfile'
