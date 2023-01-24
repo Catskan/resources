@@ -46,7 +46,7 @@ jobs:
       - name: Start Vagrant box
         if: runner.os == 'Linux'
         run: |
-            cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux && sudo vagrant up
+            cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux && vagrant up
 
       - name: Start ansible 
         run: |
