@@ -1,0 +1,43 @@
+#Github Action to run the Debian-Ansible container and start Ansible to manager targets
+
+on:
+  workflow_dispatch:
+
+  
+jobs:
+  start-ansible:
+    name: run ansible container
+    runs-on: self-hosted
+    
+    steps:
+#Checkout the repo to have all files needed
+      - name: Checkout
+        uses: actions/checkout@v3
+
+#Check the runner OS to start docker and use the right VagrantFile
+      - name: Start docker on macOS
+        if: runner.os == 'macOS'
+        run: | 
+          open -a docker && sleep 10
+          cd $GITHUB_WORKSPACE/Vagrant/Ansible/MacOS && vagrant up
+
+#       - name: Ensure docker daemon is running on Linux
+#         if: runner.os == 'Linux'
+#         run: |
+#             until [ $(systemctl is-active containerd docker) = active ]
+#               do
+#                 systemctl start containerd docker
+#                 sleep 3;
+#               done
+#             echo -e "Service Containerd & Docker are started and active"
+        
+# #Build the container and push it to the docker registry
+#       - name: Build and push Debian-Ansible image
+#         uses: docker/build-push-action@v3.3.0
+#         with:
+#           file: ${{ github.workspace }}/Containers/Linux/Debian-Ansible/Ansible.dockerfile
+#           push: true
+#           tags: catskan/debian-ansible:${{ github.run_number }}
+#           labels: 'python-Version:${{ inputs.python_version }}'
+#           context: .
+#           build-args: python_version=${{ inputs.python_version }}
