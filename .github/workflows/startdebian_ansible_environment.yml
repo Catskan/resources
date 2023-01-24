@@ -21,15 +21,15 @@ jobs:
           open -a docker && sleep 10
           cd $GITHUB_WORKSPACE/Vagrant/Ansible/MacOS && vagrant up
 
-#       - name: Ensure docker daemon is running on Linux
-#         if: runner.os == 'Linux'
-#         run: |
-#             until [ $(systemctl is-active containerd docker) = active ]
-#               do
-#                 systemctl start containerd docker
-#                 sleep 3;
-#               done
-#             echo -e "Service Containerd & Docker are started and active"
+      - name: Ensure docker daemon is running on Linux
+        if: runner.os == 'Linux'
+        run: |
+            until [ $(systemctl is-active containerd docker) = active ]
+              do
+                systemctl start containerd docker
+                sleep 10;
+              done
+            cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux
         
 # #Build the container and push it to the docker registry
 #       - name: Build and push Debian-Ansible image
