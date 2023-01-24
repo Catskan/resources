@@ -59,27 +59,3 @@ jobs:
         else
           echo "kc role doesn't exists... doing nothing"
         fi
-  
-  - task: AzureCLI@2
-    displayName: Delete NPV Postgres DB & Role
-    inputs:
-      azureSubscription: '$(azure-subscription)'
-      scriptType: bash
-      scriptLocation: inlineScript
-      inlineScript: |
-        az login --identity
-        while $(psql "host='$(anpmPostgreSqlServerFQDN)' port=5432 dbname=npv$(CUSTOMERNAME) user='$(anpmPostgreSqlServerAdminLogin)' password='$(anpmPostgreSqlServerAdminPwd)' sslmode=require" -c "\q" )
-        do
-          echo "anpm database exists... deleting it"
-          psql "host='$(anpmPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(anpmPostgreSqlServerAdminLogin)' password='$(anpmPostgreSqlServerAdminPwd)' sslmode=require" -c "DROP DATABASE npv$(CUSTOMERNAME)"
-          sleep 15s
-        done
-        echo "anpm database deleted"
-
-        if [ $(psql "host='$(anpmPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(anpmPostgreSqlServerAdminLogin)' password='$(anpmPostgreSqlServerAdminPwd)' sslmode=require" -c "\du+" | cut -d \| -f 1| grep -w "npv$(CUSTOMERNAME)") ]
-        then
-          echo "anpm role exists... deleting it"
-          psql "host='$(anpmPostgreSqlServerFQDN)' port=5432 dbname=postgres user='$(anpmPostgreSqlServerAdminLogin)' password='$(anpmPostgreSqlServerAdminPwd)' sslmode=require" -c "DROP ROLE npv$(CUSTOMERNAME)"
-        else
-          echo "anpm role doesn't exists... doing nothing"
-        fi

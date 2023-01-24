@@ -80,13 +80,13 @@ function CreateAgentUser {
     If (!$ObjLocalUser) {
         Write-Verbose "Creating User $($LocalAgentUsername)"
         $mtloagentadmin_Password = Read-Host "Enter the password for mtloagentadmin user" -AsSecureString
-        New-LocalUser -Name $LocalAgentUsername -FullName "Martello Agent Admin" -Password $mtloagentadmin_Password -Description "User to run the Azure agent service" -AccountNeverExpires    
+        New-LocalUser -Name $LocalAgentUsername -FullName "Agent Admin" -Password $mtloagentadmin_Password -Description "User to run the Azure agent service" -AccountNeverExpires    
         Add-LocalGroupMember -Group "Administrators" -Member $LocalAgentUsername
         $acl = Get-Acl $TempFilesDestination
         $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule("$LocalAgentUsername","FullControl","Allow")
         $acl.SetAccessRule($AccessRule)
         $acl | Set-Acl $TempFilesDestination
-        Write-Verbose "User mtloagentadmin successfully created"
+        Write-Verbose "User successfully created"
     } 
 }
     

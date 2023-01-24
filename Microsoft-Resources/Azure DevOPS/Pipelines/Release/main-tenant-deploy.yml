@@ -28,10 +28,6 @@ parameters:
   displayName: iQ Image Version
   type: string
   default: '3.6.1.457'
-- name: npvImageVersion
-  displayName: NPV Image Version
-  type: string
-  default: '3.6.0-32565'
 - name: elasticSearchVersion
   displayName: Elastic Search Version
   type: string
@@ -122,24 +118,6 @@ stages:
   condition: and(succeeded(), eq(variables.DEPLOY_IQ, true))
   jobs:
     - template: pipelines-jobs/deploy/ntwmonitor/aks-ntwmonitor-resources.yml
-
-- stage: npv_keyvault_variables
-  dependsOn: ntwmonitor_job_create_aks_resources
-  condition: and(succeeded(), eq(variables.DEPLOY_NPV, true))
-  jobs:
-    - template: pipelines-jobs/deploy/npv/00_add-vars-to-keyvault.yaml
-
-- stage: npv_create_db
-  dependsOn: npv_keyvault_variables
-  condition: and(succeeded(), eq(variables.DEPLOY_NPV, true))
-  jobs:
-    - template: pipelines-jobs/deploy/npv/10_create-tenant-db.yaml
-
-- stage: npv_deploy_application
-  dependsOn: npv_create_db
-  condition: and(succeeded(), eq(variables.DEPLOY_NPV, true))
-  jobs:
-    - template: pipelines-jobs/deploy/npv/20_create-aks-resources.yaml
 
 ### GET VERSION VARIABLES VALUE AND SEND IT TO ELASTICSEARCH ###
 - stage: job_version_management_variables

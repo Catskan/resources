@@ -18,10 +18,3 @@
   id: http-#{CUSTOMERNAME}#-id-msmonitor
   name: '#{CUSTOMERNAME}#-msmonitor'
   tags: ["#{aks-cluster-name}#"]
-
-- type: http
-  schedule: '@every 300s'
-  urls: ["https://#{CUSTOMERNAME}#.#{cluster1CL1DnsZoneName}#/npv"]
-  id: http-#{CUSTOMERNAME}#-id-npv
-  name: '#{CUSTOMERNAME}#-npv'
-  tags: ["#{aks-cluster-name}#"]

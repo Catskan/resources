@@ -104,14 +104,6 @@ jobs:
           echo "##vso[task.setvariable variable=FILLKEYVAULT]false"
         fi
 
-  
-  #Create a random GUID for NPV
-  - task: guid-generator@2
-    condition: eq(variables.FILLKEYVAULT, true)
-    displayName: Generate GUID linked to the license
-    inputs:
-      VariableName: 'MARTELLO_ADMIN_TENANT_ID'
-      GuidToUpper: false
 
   #Create a random GUID for MSP_TENANT_ID
   - task: guid-generator@2
@@ -119,14 +111,6 @@ jobs:
     displayName: Generate GUID linked to the license
     inputs:
       VariableName: 'MSP_TENANT_ID'
-      GuidToUpper: false
-
-  #Create a random GUID for MARTELLO ADMIN TENANT ID
-  - task: guid-generator@2
-    condition: eq(variables.FILLKEYVAULT, true)
-    displayName: Generate GUID linked to the license
-    inputs:
-      VariableName: 'MARTELLO_ADMIN_TENANT_ID'
       GuidToUpper: false
 
   #Create a random GUID for msm-agent

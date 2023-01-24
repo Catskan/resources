@@ -6,7 +6,7 @@ metadata:
     cert-manager.io/issuer: "#{CUSTOMERNAME}#-issuer"
     kubernetes.io/tls-acme: "true"
     nginx.org/listen-ports: "80"
-    nginx.org/websocket-services: "service-ntwmonitor,npv"
+    nginx.org/websocket-services: "service-ntwmonitor"
     nginx.org/server-tokens: 'false'
     nginx.org/proxy-connect-timeout: '3s'
     nginx.org/proxy-read-timeout: '1000s'

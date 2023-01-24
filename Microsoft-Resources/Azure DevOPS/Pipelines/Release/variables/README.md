@@ -14,18 +14,16 @@ The following list contains the variables configured at the runtime of the pipel
 - CLIENT_KEYVAULT_NAME: By default is 'KV$(CUSTOMERNAME)' could be change if the pipeline detects that it already exists as the Keyvaults names are globally unntwmonitorue.
 - CUSTOMERNAME: Name of the tenant to be deployed.
 - MSmonitor_IMAGE_VERSION: MSmonitor image version to deploy (e.g.'2.3.0.22315.22968')
-- IQ_IMAGE_VERSION: Iq image version to deploy (e.g.'3.0.0.22825.22834')
+- NTW_IMAGE_VERSION: Iq image version to deploy (e.g.'3.0.0.22825.22834')
 - KEYCLOAK_IMAGE_VERSION: Keycloak image version to deploy (e.g.'v20211109.1')
-- NPV_IMAGE_VERSION: NPV image version to deploy (e.g.'1.1.3-24390')
 - ES_VERSION: Elastic Search Version to deploy (e.g. '7.16.3')
 
 # Upgrade Pipeline Runtime Variables
 
 - CUSTOMERNAME: Name of the tenant to be updated (e.g.'client1')
 - MSmonitor_IMAGE_VERSION: New MSmonitor image version to deploy (e.g.'3.0.0.22825.22834')
-- IQ_IMAGE_VERSION: New Iq image version to deploy (e.g.'3.0.0.22825.22834')
+- NTW_IMAGE_VERSION: New Iq image version to deploy (e.g.'3.0.0.22825.22834')
 - KEYCLOAK_IMAGE_VERSION: New Keycloak image version to deploy (e.g.'v20211109.1')
-- NPV_IMAGE_VERSION: New NPV image version to deploy (e.g.'1.1.3-24390')
 - ES_VERSION: New Elastic-Search image version to deploy (e.g.'7.16.3')
 - UPGRADE_INGRESS: Update tenant's ingress object with latest annotations & config (e.g.'True/False')
 

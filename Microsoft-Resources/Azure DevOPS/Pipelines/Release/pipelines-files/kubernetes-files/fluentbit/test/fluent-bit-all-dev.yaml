@@ -87,13 +87,6 @@ data:
     [INPUT]
         Name              tail
         Tag               kube.*
-        Path              /var/log/containers/*npv*.log
-        Parser            simple_cri_parser
-        DB                /var/log/flb_kube1.db
-        Refresh_Interval  60
-    [INPUT]
-        Name              tail
-        Tag               kube.*
         Path              ,/var/log/containers/*keycloak*.log
         Parser            simple_cri_parser
         DB                /var/log/flb_kube1.db
@@ -124,11 +117,6 @@ data:
     [FILTER]
         name                  multiline
         match                 *msm-agent*
-        multiline.key_content log
-        multiline.parser      both-multiline-parser
-    [FILTER]
-        name                  multiline
-        match                 *npv-server*
         multiline.key_content log
         multiline.parser      both-multiline-parser
     [FILTER]

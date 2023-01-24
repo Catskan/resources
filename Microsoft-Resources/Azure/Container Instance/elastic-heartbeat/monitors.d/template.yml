@@ -23,7 +23,7 @@
 
 - type: http
   schedule: '@every 300s'
-  urls: ["https://tenantname.dnszonename/npv"]
-  id: http-tenantname-npv
-  name: tenantname-npv
+  urls: ["https://tenantname.dnszonename/"]
+  id: http-tenantname
+  name: tenantname
   tags: ["clustername"]

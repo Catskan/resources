@@ -63,7 +63,7 @@ jobs:
 
     #Import the official elastic-agent images into our Azure Container Registry
     - task: AzureCLI@2
-      displayName: Import Elastic Agent image to Martello
+      displayName: Import Elastic Agent image
       inputs:
         azureSubscription: '$(second-azure-subscription)'
         scriptType: 'ps'
@@ -88,9 +88,9 @@ jobs:
     - powershell: 
           docker tag $(azureContainerRegistry)/$(WIN_ELASTICAGENT_REPO_NAME):$(FLEET_AGENT_VERSION) $(cluster1ContainerRegistry)/$(WIN_ELASTICAGENT_REPO_NAME):$(FLEET_AGENT_VERSION)
 
-#Push the image previously built to the Martello registry
+#Push the image previously built
     - task: Docker@2
-      displayName: Push the Windows image to Martello Registry
+      displayName: Push the Windows image
       inputs:
         containerRegistry: '$(CR_MTLO_SERVICE_CONNECTION)'
         repository: '$(WIN_ELASTICAGENT_REPO_NAME)'

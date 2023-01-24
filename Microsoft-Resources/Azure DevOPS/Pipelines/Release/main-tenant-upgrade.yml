@@ -26,13 +26,7 @@ parameters:
   default:
     ' '
 - name: ntwmonitorImageVersion
-  displayName: iQ New Image Version
-  type: string
-  # blank-space to transform it to optional in the run pipeline interface
-  default:
-    ' '
-- name: npvImageVersion
-  displayName: NPV New Image Version
+  displayName: New Image Version
   type: string
   # blank-space to transform it to optional in the run pipeline interface
   default:
@@ -140,16 +134,6 @@ stages:
 #   condition: and(succeeded(), ne(variables.UPGRADE_MSM-Agent, true))
 #   jobs:
 #     - template: pipelines-jobs/upgrade/aks-msm-agent-upgrade.yml
-
-### UPGRADE NPV kubernetes deployment ###
-- stage: job_upgrade_npv
-  dependsOn:
-  - tenant_validation
-  - job_shared_config_upgrade
-  #if the version variable is not null, the stage is executed
-  condition: and(succeeded('tenant_validation'), ne(variables.NPV_IMAGE_VERSION, ''))
-  jobs:
-    - template: pipelines-jobs/upgrade/aks-npv-upgrade.yml
 
 ### get version variables value and send it to elasticsearch ###
 - stage: job_version_management_variables
