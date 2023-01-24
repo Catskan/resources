@@ -14,6 +14,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Replace string in Vagrant file
+        if: runner.os = 'macOS'
+        uses: datamonsters/replace-action@v2
+        with:
+          files: '$GITHUB_WORKSPACE/Vagrant/Ansible/MacOS/Vagrantfile'
+          replacements: '$ContainerName=Ansible'
+
+      - name: Replace string in Vagrant file
+        if: runner.os = 'Linux'
+        uses: datamonsters/replace-action@v2
+        with:
+          files: '$GITHUB_WORKSPACE/Vagrant/Ansible/Linux/Vagrantfile'
+          replacements: '$ContainerName=Ansible'
+
 #Check the runner OS to start docker and use the right VagrantFile
       - name: Start docker on macOS
         if: runner.os == 'macOS'
@@ -29,15 +43,5 @@ jobs:
                 systemctl start containerd docker
                 sleep 10;
               done
-            cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux
+            cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux && vagrant up
         
-# #Build the container and push it to the docker registry
-#       - name: Build and push Debian-Ansible image
-#         uses: docker/build-push-action@v3.3.0
-#         with:
-#           file: ${{ github.workspace }}/Containers/Linux/Debian-Ansible/Ansible.dockerfile
-#           push: true
-#           tags: catskan/debian-ansible:${{ github.run_number }}
-#           labels: 'python-Version:${{ inputs.python_version }}'
-#           context: .
-#           build-args: python_version=${{ inputs.python_version }}

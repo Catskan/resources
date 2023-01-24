@@ -14,7 +14,7 @@ Vagrant.configure("2") do |config|
   config.env.enable
   config.vm.define "ansible" do
   config.vm.provider "docker" do |d, docker|
-    d.name = "Debian-Ansible"
+    d.name = "$ContainerName"
     d.image = "catskan/debian-ansible:v1.2-aws-1"
     d.env = {
       "AWS_ACCESS_KEY_ID" => ENV['AWS_ACCESS_KEY_ID'],
