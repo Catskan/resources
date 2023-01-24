@@ -38,7 +38,7 @@ jobs:
       - name: Ensure docker daemon is running on Linux
         if: runner.os == 'Linux'
         run: |
-            until [ $(systemctl is-active containerd docker) = active ]
+            until [ $(sudo systemctl is-active containerd docker) = active ]
               do
                 sudo systemctl start containerd docker
                 sleep 10;
