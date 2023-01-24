@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
             }
 
     config.vm.provision "docker" do |d, docker|
-      config.vm.hostname = "Debian-Ansible"
+      config.vm.hostname = "$ContainerName"
     end
     docker.vm.network :private_network, type: "dhcp", docker_network__internal: true
   end
