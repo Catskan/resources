@@ -8,7 +8,8 @@ jobs:
   start-ansible:
     name: run ansible container
     runs-on: self-hosted
-    
+    env: 
+      CONTAINER_NAME: Ansible
     steps:
 #Checkout the repo to have all files needed
       - name: Checkout
@@ -19,7 +20,7 @@ jobs:
         uses: datamonsters/replace-action@v2
         with:
           files: '${{ github.workspace }}/Vagrant/Ansible/MacOS/Vagrantfile'
-          replacements: '$ContainerName=Ansible'
+          replacements: '$ContainerName=${{ env.CONTAINER_NAME }}'
 
       - name: Replace string in Vagrant file
         if: runner.os == 'Linux'
@@ -44,4 +45,8 @@ jobs:
                 sleep 10s
               done
             cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux && vagrant up
+
+      - name: Start ansible 
+        run: |
+          vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_linux-arch_playbook.yml
         
