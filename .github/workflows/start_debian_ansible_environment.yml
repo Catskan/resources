@@ -27,7 +27,7 @@ jobs:
         uses: datamonsters/replace-action@v2
         with:
           files: '${{ github.workspace }}/Vagrant/Ansible/Linux/Vagrantfile'
-          replacements: '$ContainerName=$CONTAINER_NAME'
+          replacements: $ContainerName=$CONTAINER_NAME
 
 #Check the runner OS to start docker and use the right VagrantFile
       - name: Start docker on macOS
@@ -48,7 +48,7 @@ jobs:
       - name: Start Vagrant box
         if: runner.os == 'Linux'
         run: |
-            cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux && vagrant up
+            cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux && sudo vagrant up
 
       - name: Start ansible 
         run: |
