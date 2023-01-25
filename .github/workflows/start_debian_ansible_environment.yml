@@ -50,8 +50,9 @@ jobs:
 
       - name: Check if there is an existing vagrant box with the good image
         run: |
-          if [ "$(docker ps -a -q -f NAME=${{ env.CONTAINER_NAME }})" ] && [ ! "$(docker ps -a -q -f ancestor=${{ github.event.inputs.image_tag }})" ];
+          if [ "$(docker ps --format '{{ .Names }}')" = "${{ env.CONTAINER_NAME }}" ] && [ "$(docker ps --format '{{.Image}}')" != "${{ github.event.inputs.image_tag }}" ];
           then
+            echo ok
             cd $GITHUB_WORKSPACE/Vagrant/Ansible/${{ runner.os }} && vagrant destroy -f
           fi
 
