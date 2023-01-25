@@ -25,15 +25,15 @@ jobs:
         uses: datamonsters/replace-action@v2
         with:
           files: '${{ github.workspace }}/Vagrant/Ansible/MacOS/Vagrantfile'
-          replacements: '$ContainerName=${{ env.CONTAINER_NAME }}'
-
+          replacements: | 
+              $ContainerName=${{ env.CONTAINER_NAME }}, \
+              $ImageTag=${{ inputs.debian-ansible_image_tag }}
+              
       - name: Replace string in Vagrant file
         if: runner.os == 'Linux'
         uses: datamonsters/replace-action@v2
         with:
-          files: | 
-              '${{ github.workspace }}/Vagrant/Ansible/Linux/Vagrantfile'
-              '${{ github.workspace }}/Vagrant/Ansible/MacOS/Vagrantfile'
+          files: '${{ github.workspace }}/Vagrant/Ansible/Linux/Vagrantfile'
           replacements: | 
               $ContainerName=${{ env.CONTAINER_NAME }}, \
               $ImageTag=${{ inputs.debian-ansible_image_tag }}
