@@ -32,7 +32,6 @@ jobs:
         if: runner.os == 'macOS'
         run: | 
           open -a docker && sleep 10
-          cd $GITHUB_WORKSPACE/Vagrant/Ansible/MacOS && vagrant up
 
       - name: Ensure docker daemon is running on Linux
         if: runner.os == 'Linux'
@@ -43,10 +42,15 @@ jobs:
                 sleep 10s
               done
 
-      - name: Start Vagrant box
+      - name: Start Vagrant box on Linux
         if: runner.os == 'Linux'
         run: |
             cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux && sudo echo Start vagrant box; vagrant up
+
+      - name: Start Vagrant box on MacOS
+        if: runner.os == 'macOS'
+        run: |
+            cd $GITHUB_WORKSPACE/Vagrant/Ansible/MacOS && vagrant up
 
       - name: Start ansible 
         run: |
