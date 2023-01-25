@@ -1,6 +1,13 @@
 #Github Action to run the Debian-Ansible container and start Ansible to manager targets
 on:
   workflow_dispatch:
+    inputs:
+      debian-ansible_image_tag:
+        description: Tag of the Debian-Ansible image to deploy
+        type: string
+        default: 'catskan/debian-ansible:3'
+        required: true
+      
 
 jobs:
   start-ansible:
@@ -42,6 +49,13 @@ jobs:
                 sleep 10s
               done
 
+      - name: Check if there is an existing vagrant box with the good image
+        run: |
+          if [ "$(docker ps -a -q -f NAME=$CONTAINER_NAME)" ] && [ ! "$(docker ps -a -q -f ancestor=${{ github.event.inputs.python_version }})" ];
+          then
+            cd $GITHUB_WORKSPACE/Vagrant/Ansible/MacOS && sudo vagrant destroy -f
+          fi
+
       - name: Start Vagrant box on Linux
         if: runner.os == 'Linux'
         run: |
@@ -56,3 +70,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/Vagrant/Ansible/MacOS && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_linux-arch_playbook.yml
         
+
+        if [ "$(docker ps -a -q -f NAME=Debian-Ansible)" ] && [ ! "$(docker ps -a -q -f ancestor=catskan/debian-ansible:v1.3)" ];
+        then
+          echo "Container should be deleted"
+        fi
