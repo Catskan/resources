@@ -25,18 +25,14 @@ jobs:
         uses: datamonsters/replace-action@v2
         with:
           files: '${{ github.workspace }}/Vagrant/Ansible/MacOS/Vagrantfile'
-          replacements: | 
-              $ContainerName=${{ env.CONTAINER_NAME }},
-              $ImageTag=${{ inputs.image_tag }}
+          replacements: $ContainerName=${{ env.CONTAINER_NAME }},$ImageTag=${{ inputs.image_tag }}
 
       - name: Replace string in Vagrant file
         if: runner.os == 'Linux'
         uses: datamonsters/replace-action@v2
         with:
           files: '${{ github.workspace }}/Vagrant/Ansible/Linux/Vagrantfile'
-          replacements: | 
-              $ContainerName=${{ env.CONTAINER_NAME }},
-              $ImageTag=${{ inputs.image_tag }}
+          replacements: $ContainerName=${{ env.CONTAINER_NAME }},$ImageTag=${{ inputs.image_tag }}
 
 #Check the runner OS to start docker and use the right VagrantFile
       - name: Start docker on macOS
