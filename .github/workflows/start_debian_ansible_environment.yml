@@ -32,7 +32,9 @@ jobs:
         uses: datamonsters/replace-action@v2
         with:
           files: '${{ github.workspace }}/Vagrant/Ansible/Linux/Vagrantfile'
-          replacements: $ContainerName=${{ env.CONTAINER_NAME }}
+          replacements: | 
+              $ContainerName=${{ env.CONTAINER_NAME }}, \
+              $ImageTag=${{ inputs.debian-ansible_image_tag }}
 
 #Check the runner OS to start docker and use the right VagrantFile
       - name: Start docker on macOS
