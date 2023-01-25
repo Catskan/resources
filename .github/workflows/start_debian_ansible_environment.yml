@@ -69,9 +69,3 @@ jobs:
       - name: Start ansible 
         run: |
           cd $GITHUB_WORKSPACE/Vagrant/Ansible/MacOS && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_linux-arch_playbook.yml
-        
-
-        if [ "$(docker ps -a -q -f NAME=Debian-Ansible)" ] && [ ! "$(docker ps -a -q -f ancestor=catskan/debian-ansible:v1.3)" ];
-        then
-          echo "Container should be deleted"
-        fi
