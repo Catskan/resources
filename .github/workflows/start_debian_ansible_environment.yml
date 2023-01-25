@@ -25,27 +25,13 @@ jobs:
         # uses: cschleiden/replace-tokens@8e091844c27eb36853efbfade5ffca07260f0250
         uses: cschleiden/replace-tokens@v1.2
         with:
-          files: '${{ github.workspace }}/Vagrant/Ansible/MacOS/Vagrantfile'
+          files: '${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }}/Vagrantfile'
         env:
           ContainerName: ${{ env.CONTAINER_NAME }}
           ImageTag: ${{ github.event.inputs.image_tag }}
 
       - name: Display VagrantFile
-        run: cat '${{ github.workspace }}/Vagrant/Ansible/MacOS/Vagrantfile'
-
-      # - name: Replace string in Vagrant file
-      #   if: runner.os == 'macOS'
-      #   uses: datamonsters/replace-action@v2
-      #   with:
-      #     files: '${{ github.workspace }}/Vagrant/Ansible/MacOS/Vagrantfile'
-      #     replacements: '$ContainerName=${{ env.CONTAINER_NAME }},$ImageTag=${{ inputs.image_tag }}'
-
-      # - name: Replace string in Vagrant file
-      #   if: runner.os == 'Linux'
-      #   uses: datamonsters/replace-action@v2
-      #   with:
-      #     files: '${{ github.workspace }}/Vagrant/Ansible/Linux/Vagrantfile'
-      #     replacements: '$ContainerName=${{ env.CONTAINER_NAME }},$ImageTag=${{ inputs.image_tag }}'
+        run: cat '${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }}/Vagrantfile'
 
 #Check the runner OS to start docker and use the right VagrantFile
       - name: Start docker on macOS
