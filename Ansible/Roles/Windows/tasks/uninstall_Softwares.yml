@@ -16,7 +16,7 @@
       - Microsoft.BingWeathe
       - Microsoft.Todos
       - Microsoft.BingNews
-      - Microsoft.MicrosoftEdge*
+#      - Microsoft.MicrosoftEdge*
       - Microsoft.People
       - Clipchamp.Clipchamp
       - MicrosoftTeams
