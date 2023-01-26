@@ -53,13 +53,13 @@ jobs:
           if [ "$(docker ps --format '{{ .Names }}')" = "${{ env.CONTAINER_NAME }}" ] && [ "$(docker ps --format '{{.Image}}')" != "${{ github.event.inputs.image_tag }}" ];
           then
             echo ok
-            cd $GITHUB_WORKSPACE/Vagrant/Ansible/${{ runner.os }} && vagrant destroy -f
+            cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant destroy -f
           fi
 
       - name: Start Vagrant box on Linux
         if: runner.os == 'Linux'
         run: |
-            cd $GITHUB_WORKSPACE/Vagrant/Ansible/Linux && sudo echo "Start vagrant box"; vagrant up
+            cd ${{ github.workspace }}/Vagrant/Ansible/Linux && sudo echo "Start vagrant box"; vagrant up
 
       - name: Start Vagrant box on MacOS
         if: runner.os == 'macOS'
