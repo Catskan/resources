@@ -14,8 +14,8 @@ Vagrant.configure("2") do |config|
   config.env.enable
   config.vm.define "ansible" do
   config.vm.provider "docker" do |d, docker|
-    d.name = "$ContainerName"
-    d.image = "$ImageTag"
+    d.name = "#{ContainerName}#"
+    d.image = "#{ImageTag}#"
     d.env = {
       "AWS_ACCESS_KEY_ID" => ENV['AWS_ACCESS_KEY_ID'],
       "AWS_SECRET_ACCESS_KEY" => ENV['AWS_SECRET_ACCESS_KEY'],
@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
             }
 
     config.vm.provision "docker" do |d, docker|
-      config.vm.hostname = "$ContainerName"
+      config.vm.hostname = "#{ContainerName}#"
     end
     docker.vm.network :private_network, type: "dhcp", docker_network__internal: true
   end
