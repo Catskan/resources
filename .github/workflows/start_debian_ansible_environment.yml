@@ -73,3 +73,8 @@ jobs:
       - name: Start ansible 
         run: |
           cd ${{ github.workspace }}/Vagrant/Ansible/macOS && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_windows_playbook.yml
+
+      - name: Delete ${{ env.CONTAINER_NAME }} container
+        if: always()
+        run: |
+           docker rm $(docker ps --format '{{ .Names }}' | grep Ansible) -f
