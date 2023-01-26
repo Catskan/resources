@@ -58,7 +58,7 @@ jobs:
 
       - name: Vagrant Status
         run: |
-          cd ${{ github.workspace }}/Vagrant/Ansible/Linux && vagrant status
+          cd ${{ github.workspace }}/Vagrant/Ansible/macOS && vagrant status
 
       - name: Start Vagrant box on Linux
         if: runner.os == 'Linux'
@@ -68,8 +68,8 @@ jobs:
       - name: Start Vagrant box on MacOS
         if: runner.os == 'macOS'
         run: |
-            cd ${{ github.workspace }}/Vagrant/Ansible/MacOS && vagrant --provision
+            cd ${{ github.workspace }}/Vagrant/Ansible/macOS && vagrant --provision
 
       - name: Start ansible 
         run: |
-          cd ${{ github.workspace }}/Vagrant/Ansible/MacOS && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_windows_playbook.yml
+          cd ${{ github.workspace }}/Vagrant/Ansible/macOS && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_windows_playbook.yml
