@@ -48,13 +48,17 @@ jobs:
                 sleep 10s
               done
 
-      - name: Check if there is an existing vagrant box with the good image
+      # - name: Check if there is an existing vagrant box with the good image
+      #   run: |
+      #     if [ "$(docker ps --format '{{ .Names }}')" = "${{ env.CONTAINER_NAME }}" ] && [ "$(docker ps --format '{{.Image}}')" != "${{ github.event.inputs.image_tag }}" ];
+      #     then
+      #       echo ok
+      #       cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant destroy -f
+      #     fi
+
+      - name: Vagrant Status
         run: |
-          if [ "$(docker ps --format '{{ .Names }}')" = "${{ env.CONTAINER_NAME }}" ] && [ "$(docker ps --format '{{.Image}}')" != "${{ github.event.inputs.image_tag }}" ];
-          then
-            echo ok
-            cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant destroy -f
-          fi
+          cd ${{ github.workspace }}/Vagrant/Ansible/Linux && vagrant status
 
       - name: Start Vagrant box on Linux
         if: runner.os == 'Linux'
@@ -64,7 +68,7 @@ jobs:
       - name: Start Vagrant box on MacOS
         if: runner.os == 'macOS'
         run: |
-            cd ${{ github.workspace }}/Vagrant/Ansible/MacOS && vagrant up
+            cd ${{ github.workspace }}/Vagrant/Ansible/MacOS && vagrant --provision
 
       - name: Start ansible 
         run: |
