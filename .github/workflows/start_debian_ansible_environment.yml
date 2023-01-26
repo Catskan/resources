@@ -68,4 +68,4 @@ jobs:
 
       - name: Start ansible 
         run: |
-          cd ${{ github.workspace }}/Vagrant/Ansible/MacOS && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_linux-arch_playbook.yml
+          cd ${{ github.workspace }}/Vagrant/Ansible/MacOS && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_windows_playbook.yml
