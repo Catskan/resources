@@ -68,7 +68,7 @@ jobs:
       - name: Start Vagrant box on MacOS
         if: runner.os == 'macOS'
         run: |
-            cd ${{ github.workspace }}/Vagrant/Ansible/macOS && vagrant --provision
+            cd ${{ github.workspace }}/Vagrant/Ansible/macOS && vagrant reload
 
       - name: Start ansible 
         run: |
