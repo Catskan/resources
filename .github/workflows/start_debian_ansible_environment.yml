@@ -74,5 +74,5 @@ jobs:
       - name: Delete ${{ env.CONTAINER_NAME }} container
         if: always()
         run: |
-           #docker rm $(docker ps --format '{{ .Names }}' | grep Ansible) -f
            cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant destroy -f
+           docker rm $(docker ps --format '{{ .Names }}' | grep Ansible) -f
