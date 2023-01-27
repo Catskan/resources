@@ -1,4 +1,0 @@
-variables:
-  CUSTOMERNAME: ${{ parameters.tenantname }}
-  SOFT_DELETE_KEYVAULT: ${{ parameters.softDeleteKV }}
-  PURGE_KEYVAULT: ${{ parameters.purgeKV }}

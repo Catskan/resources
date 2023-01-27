@@ -1,5 +1,0 @@
-variables:
-  AGENT_NAME: 'devops-agent'
-  JUMPBOX_NAME: 'jumpboxvm'
-  AZ_DEVOPS_URL: 'https://dev.azure.com/myorganization'
-  AZ_DEVOPS_PAT: ''
