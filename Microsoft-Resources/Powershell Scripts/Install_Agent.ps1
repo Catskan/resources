@@ -276,7 +276,7 @@ else {
     }
 }
 
-#Download iQ Dependencies
+#Download Dependencies
 function Download_iQDependencies {
 $DependenciesPath = "C:\Dependencies"
 if ([System.IO.Directory]::Exists($DependenciesPath) -eq $True){

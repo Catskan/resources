@@ -96,7 +96,7 @@ function Set-OrCreatePropertyIfNotExists {
 function SetRegistryKeys {
     Write-Host @"
     ####################################################
-    ######START - Set up Registry Keys for Gizmo########
+    ######START - Set up Registry Keys########
     ####################################################
 "@
     #--------------------------- begin Registry Keys-------------------------------------
@@ -225,7 +225,7 @@ function SetRegistryKeys {
     #--------------------------- Stop Registry Keys-------------------------------------
     Write-Host @"
     ####################################################
-    ######END - Set up Registry Keys for Gizmo########
+    ######END - Set up Registry Keys########
     ####################################################
 "@
 }
