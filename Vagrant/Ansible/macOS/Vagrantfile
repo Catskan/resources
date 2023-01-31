@@ -15,9 +15,9 @@ Vagrant.configure("2") do |config|
     d.name = "#{ContainerName}#"
     d.image = "#{ImageTag}#"
     d.env = {
-      "AWS_ACCESS_KEY_ID" => "#{AWS_ACCESS_KEY_ID}#",
-      "AWS_SECRET_ACCESS_KEY" => "#{AWS_SECRET_ACCESS_KEY}#",
-      "AWS_DEFAULT_REGION" => "#{AWS_DEFAULT_REGION}#"
+      "AWS_ACCESS_KEY_ID" => "#{AwsAccessKeyID}#",
+      "AWS_SECRET_ACCESS_KEY" => "#{AwsSecretAccessKey}#",
+      "AWS_DEFAULT_REGION" => "#{AwsDefaultRegion}#"
             }
     config.vm.provision "docker" do |d, docker|
       #d.post_install_provision "shell", path: "./prepare_ansible_env.sh"
