@@ -46,7 +46,7 @@ jobs:
         # uses: cschleiden/replace-tokens@8e091844c27eb36853efbfade5ffca07260f0250
         uses: cschleiden/replace-tokens@v1.2
         with:
-          files: '${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }}/Vagrantfile,${{ github.workspace }}/Ansible/ansible.cfg'
+          files: '[${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }}/Vagrantfile]','[${{ github.workspace }}/Ansible/ansible.cfg]'
         env:
           ContainerName: ${{ env.CONTAINER_NAME }}
           ImageTag: ${{ github.event.inputs.image_tag }}
