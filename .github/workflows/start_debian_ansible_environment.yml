@@ -26,6 +26,11 @@ jobs:
 #Checkout the repo to have all files needed
       - name: Checkout
         uses: actions/checkout@v3
+#Set secrets to env variables
+      - name: Set secrets to env variables
+        uses: Firenza/secrets-to-env@v1.2.0
+        with:
+            secrets: ${{ toJSON(secrets) }}
 
 #Replaces all token in the VagrantFile
       - name: Replace tokens
@@ -37,7 +42,7 @@ jobs:
         env:
           ContainerName: ${{ env.CONTAINER_NAME }}
           ImageTag: ${{ github.event.inputs.image_tag }}
-          AwsAccessKeyID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AwsAccessKeyID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AwsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AwsDefaultRegion: ${{ secrets.AWS_DEFAULT_REGION }}
 
