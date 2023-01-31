@@ -8,6 +8,13 @@ on:
         type: string
         default: 'catskan/debian-ansible:3'
         required: true
+      target_os:
+        description: Target OS to use ansible
+        type: choice
+        options:
+          - Linux
+          - Windows
+        required: true
 
 jobs:
   start-ansible:
@@ -67,9 +74,10 @@ jobs:
         run: |
             cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant up
 
-      - name: Start ansible 
+      - name: Start ansible on ${{ github.event.inputs.target_os }} hosts
+        if: ${{ github.event.inputs.target_os }} == 'Windows'
         run: |
-          cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_windows_playbook.yml
+          cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_${{ github.event.inputs.target_os }}_playbook.yml
 
       - name: Delete ${{ env.CONTAINER_NAME }} container
         if: always()
