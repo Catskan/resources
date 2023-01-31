@@ -53,6 +53,7 @@ jobs:
           AwsAccessKeyID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AwsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AwsDefaultRegion: ${{ secrets.AWS_DEFAULT_REGION }}
+          AnsibleConfig: '/share/git/resources/Ansible/ansible.cfg'
 
   #Replaces all token in the ansible.cfg
       - name: Replace tokens in ansible.cfg
