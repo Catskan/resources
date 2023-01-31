@@ -97,3 +97,4 @@ Vagrant.configure("2") do |config|
   # SHELL
   #config.vm.provision "shell", path: "./prepare_ansible_env.sh"
 end
+end
