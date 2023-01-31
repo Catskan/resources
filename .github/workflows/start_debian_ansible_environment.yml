@@ -38,8 +38,8 @@ jobs:
         uses: aws-actions/aws-secretsmanager-get-secrets@v1
         with:
           secret-ids: |
-            ANSIBLE_INVENTORY_FILE,Ansible/ansible_inventory_location
-            ANSIBLE_LOG_OUTPUT,Ansible/ansible_log_output
+            ANSIBLE_INVENTORY_FILE,arn:aws:secretsmanager:eu-west-3:850204412331:secret:Ansible-gTAmY1/ansible_inventory_location
+            ANSIBLE_LOG_OUTPUT,arn:aws:secretsmanager:eu-west-3:850204412331:secret:Ansible-gTAmY1/ansible_log_output
 
 #Replaces all token in the VagrantFile
       - name: Replace tokens
