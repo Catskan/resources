@@ -1,0 +1,3 @@
+2023-01-31 17:43:52,624 p=10 u=aurelien n=ansible | ERROR! Unable to retrieve file contents
+Could not find or access '/share/git/resources/Ansible/Roles/Common/tasks/common_settings.yml' on the Ansible Controller.
+If you are using a module and expect the file to exist on the remote, see the remote_src option
