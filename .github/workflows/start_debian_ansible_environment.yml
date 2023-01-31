@@ -59,6 +59,9 @@ jobs:
       - name: Display VagrantFile
         run: cat '${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }}/Vagrantfile'
 
+      - name: Display ansible.cfg
+        run: cat '${{ github.workspace }}/Vagrant/Ansible/ansible.cfg'
+
 #Check the runner OS to start docker and use the right VagrantFile
       - name: Start docker on macOS
         if: runner.os == 'macOS'
