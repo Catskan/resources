@@ -37,7 +37,7 @@ jobs:
         env:
           ContainerName: ${{ env.CONTAINER_NAME }}
           ImageTag: ${{ github.event.inputs.image_tag }}
-          AwsAccessKeyID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AwsAccessKeyID: ${{ env.AWS_ACCESS_KEY_ID }}
           AwsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AwsDefaultRegion: ${{ secrets.AWS_DEFAULT_REGION }}
 
