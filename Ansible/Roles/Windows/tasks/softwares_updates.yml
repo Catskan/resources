@@ -5,3 +5,6 @@
       url: https://cdn.gog.com/open/galaxy/client/{{ gog_galaxy_version }}/setup_galaxy_{{ gog_galaxy_version }}.exe
       dest: C:\temp\GoG-{{ gog_galaxy_version }}.exe
     when: gog_version_installed.value != "{{ gog_version_installed }}"
+    include_task: 
+        files: install_softwares.yml
+        name: Install Gog
