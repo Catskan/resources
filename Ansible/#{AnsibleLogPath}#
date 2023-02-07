@@ -929,3 +929,87 @@
 2023-02-07 14:10:57,383 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
 2023-02-07 14:10:58,808 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.WindowsMaps)
 2023-02-07 14:10:58,815 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:10:58,985 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:00,380 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.ScreenSketch)
+2023-02-07 14:11:00,386 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:00,560 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:01,896 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.MicrosoftOfficeHub)
+2023-02-07 14:11:01,908 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:02,087 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:03,388 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.GetHelp)
+2023-02-07 14:11:03,398 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:03,578 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:04,921 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.ZuneMusic)
+2023-02-07 14:11:04,927 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:05,091 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:06,465 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.ZuneVideo)
+2023-02-07 14:11:06,479 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:06,638 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:07,982 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.WindowsCamera)
+2023-02-07 14:11:07,992 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:08,150 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:09,468 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.YourPhone)
+2023-02-07 14:11:09,479 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:09,636 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:10,990 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.WindowsAlarms)
+2023-02-07 14:11:11,000 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:11,167 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:12,465 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.BingWeathe)
+2023-02-07 14:11:12,472 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:12,631 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:14,034 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.Todos)
+2023-02-07 14:11:14,040 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:14,283 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:15,594 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.BingNews)
+2023-02-07 14:11:15,604 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:15,769 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:17,100 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.People)
+2023-02-07 14:11:17,111 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:17,277 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:18,695 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Clipchamp.Clipchamp)
+2023-02-07 14:11:18,706 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:18,928 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:20,238 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=MicrosoftTeams)
+2023-02-07 14:11:20,245 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:20,413 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:21,767 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=SpotifyAB.SpotifyMusic)
+2023-02-07 14:11:21,777 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:21,950 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:23,393 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.MicrosoftSolitaireCollection)
+2023-02-07 14:11:23,402 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:23,572 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:24,965 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.Getstarted)
+2023-02-07 14:11:24,975 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:25,145 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:26,422 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=Microsoft.WindowsFeedbackHub)
+2023-02-07 14:11:26,430 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:26,633 p=332 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:28,029 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=microsoft.windowscommunicationsapps)
+2023-02-07 14:11:28,118 p=10 u=aurelien n=ansible | TASK [Check if GoG is already installed] ***************************************
+2023-02-07 14:11:28,233 p=334 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:28,383 p=334 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:29,150 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-07 14:11:29,220 p=10 u=aurelien n=ansible | TASK [debug] *******************************************************************
+2023-02-07 14:11:29,292 p=336 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:29,443 p=336 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:29,603 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => {
+    "gog_version_installed": {
+        "changed": false,
+        "exists": true,
+        "failed": false,
+        "raw_value": "2.0.57.14",
+        "type": "REG_SZ",
+        "value": "2.0.57.14"
+    }
+}
+2023-02-07 14:11:29,645 p=10 u=aurelien n=ansible | TASK [Download GoG Galaxy] *****************************************************
+2023-02-07 14:11:29,717 p=338 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:29,855 p=10 u=aurelien n=ansible | [WARNING]: conditional statements should not include jinja2 templating
+delimiters such as {{ }} or {% %}. Found: gog_version_installed.value != {{
+gog_version_installed }}
+
+2023-02-07 14:11:29,860 p=338 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-07 14:11:54,591 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-07 14:11:54,763 p=10 u=aurelien n=ansible | PLAY RECAP *********************************************************************
+2023-02-07 14:11:54,764 p=10 u=aurelien n=ansible | aurelien-gaming            : ok=126  changed=8    unreachable=0    failed=0    skipped=32   rescued=0    ignored=0   
+2023-02-07 14:11:54,764 p=10 u=aurelien n=ansible | w11-vm-aurel               : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
