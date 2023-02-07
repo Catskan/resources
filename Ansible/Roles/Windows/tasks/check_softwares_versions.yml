@@ -1,0 +1,10 @@
+---
+  #Check in Registry if GoG is updated
+  - name: Check if GoG is already installed
+    win_reg_stat:
+      path: HKLM:\SOFTWARE\WOW6432Node\GOG.com\GalaxyClient
+      name: version
+    register: gog_version_installed
+  
+  - debug:
+      var: gog_version_installed

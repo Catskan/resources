@@ -1,3 +1,818 @@
-2023-01-31 17:43:52,624 p=10 u=aurelien n=ansible | ERROR! Unable to retrieve file contents
-Could not find or access '/share/git/resources/Ansible/Roles/Common/tasks/common_settings.yml' on the Ansible Controller.
-If you are using a module and expect the file to exist on the remote, see the remote_src option
+2023-02-01 10:55:27,552 p=10 u=aurelien n=ansible | PLAY [Main Aurelien Gaming Playbook] *******************************************
+2023-02-01 10:55:27,606 p=10 u=aurelien n=ansible | TASK [Gathering Facts] *********************************************************
+2023-02-01 10:55:27,710 p=21 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:55:27,714 p=22 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:55:27,951 p=21 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:55:27,973 p=22 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:55:30,950 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:55:58,186 p=10 u=aurelien n=ansible | fatal: [w11-vm-aurel]: UNREACHABLE! => {"changed": false, "msg": "basic: HTTPConnectionPool(host='192.168.1.193', port=5985): Max retries exceeded with url: /wsman (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0xffff9e68d790>, 'Connection to 192.168.1.193 timed out. (connect timeout=30)'))", "unreachable": true}
+2023-02-01 10:55:58,319 p=10 u=aurelien n=ansible | TASK [Print all available facts] ***********************************************
+2023-02-01 10:55:58,368 p=25 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:55:58,566 p=25 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:55:58,701 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => {
+    "ansible_facts": {
+        "architecture": "64-bit",
+        "architecture2": "x86_64",
+        "bios_date": "10/27/2022",
+        "bios_version": "2806",
+        "date_time": {
+            "date": "2023-02-01",
+            "day": "01",
+            "epoch": "1675248939.27947",
+            "epoch_int": 1675248939,
+            "epoch_local": "1675252539.27947",
+            "hour": "11",
+            "iso8601": "2023-02-01T10:55:39Z",
+            "iso8601_basic": "20230201T115539279472",
+            "iso8601_basic_short": "20230201T115539",
+            "iso8601_micro": "2023-02-01T10:55:39.279472Z",
+            "minute": "55",
+            "month": "02",
+            "second": "39",
+            "time": "11:55:39",
+            "tz": "Romance Standard Time",
+            "tz_offset": "+01:00",
+            "weekday": "Wednesday",
+            "weekday_number": "3",
+            "weeknumber": "4",
+            "year": "2023"
+        },
+        "distribution": "Microsoft Windows 11 Pro",
+        "distribution_major_version": "10",
+        "distribution_version": "10.0.22621.0",
+        "domain": "",
+        "env": {
+            "ALLUSERSPROFILE": "C:\\ProgramData",
+            "APPDATA": "E:\\Aurel\\AppData\\Roaming",
+            "COMPUTERNAME": "AUREL-GAMING",
+            "ComSpec": "C:\\Windows\\system32\\cmd.exe",
+            "CommonProgramFiles": "C:\\Program Files\\Common Files",
+            "CommonProgramFiles(x86)": "C:\\Program Files (x86)\\Common Files",
+            "CommonProgramW6432": "C:\\Program Files\\Common Files",
+            "DriverData": "C:\\Windows\\System32\\Drivers\\DriverData",
+            "HOMEDRIVE": "C:",
+            "HOMEPATH": "\\Users\\Aurel",
+            "LOCALAPPDATA": "E:\\Aurel\\AppData\\Local",
+            "LOGONSERVER": "\\\\AUREL-GAMING",
+            "NUMBER_OF_PROCESSORS": "16",
+            "OS": "Windows_NT",
+            "OneDrive": "C:\\Users\\Aurel\\OneDrive",
+            "PATHEXT": ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL",
+            "PROCESSOR_ARCHITECTURE": "AMD64",
+            "PROCESSOR_IDENTIFIER": "AMD64 Family 25 Model 33 Stepping 0, AuthenticAMD",
+            "PROCESSOR_LEVEL": "25",
+            "PROCESSOR_REVISION": "2100",
+            "PROMPT": "$P$G",
+            "PSExecutionPolicyPreference": "Unrestricted",
+            "PSModulePath": "E:\\Aurel\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules",
+            "PUBLIC": "C:\\Users\\Public",
+            "Path": "C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program Files\\NVIDIA Corporation\\NVIDIA NvDLISR;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\dotnet\\;C:\\Users\\Aurel\\AppData\\Local\\Microsoft\\WindowsApps",
+            "ProgramData": "C:\\ProgramData",
+            "ProgramFiles": "C:\\Program Files",
+            "ProgramFiles(x86)": "C:\\Program Files (x86)",
+            "ProgramW6432": "C:\\Program Files",
+            "SystemDrive": "C:",
+            "SystemRoot": "C:\\Windows",
+            "TEMP": "C:\\Users\\Aurel\\AppData\\Local\\Temp",
+            "TMP": "C:\\Users\\Aurel\\AppData\\Local\\Temp",
+            "USERDOMAIN": "AUREL-GAMING",
+            "USERDOMAIN_ROAMINGPROFILE": "AUREL-GAMING",
+            "USERNAME": "Aurel",
+            "USERPROFILE": "C:\\Users\\Aurel",
+            "windir": "C:\\Windows"
+        },
+        "fqdn": "Aurel-Gaming",
+        "gather_subset": [
+            "all"
+        ],
+        "hostname": "Aurel-Gaming",
+        "interfaces": [
+            {
+                "connection_name": "Ethernet 2",
+                "default_gateway": null,
+                "dns_domain": null,
+                "interface_index": 15,
+                "interface_name": "Intel(R) Ethernet Controller I225-V",
+                "ipv4": {
+                    "address": "169.254.26.4",
+                    "prefix": "16"
+                },
+                "ipv6": {
+                    "address": "fe80::b7f2:51f2:7b4f:1e2a%15",
+                    "prefix": "64"
+                },
+                "macaddress": "04:42:1A:EC:63:92",
+                "mtu": 1500,
+                "speed": 2500
+            },
+            {
+                "connection_name": "Local Area Connection* 11",
+                "default_gateway": null,
+                "dns_domain": null,
+                "interface_index": 4,
+                "interface_name": "Microsoft Wi-Fi Direct Virtual Adapter #3",
+                "ipv4": {
+                    "address": "169.254.208.110",
+                    "prefix": "16"
+                },
+                "ipv6": {
+                    "address": "fe80::1dce:38d0:dcf2:93c2%4",
+                    "prefix": "64"
+                },
+                "macaddress": "B6:B5:B6:92:E3:CF",
+                "mtu": 1500,
+                "speed": -1e-06
+            },
+            {
+                "connection_name": "Local Area Connection* 12",
+                "default_gateway": null,
+                "dns_domain": null,
+                "interface_index": 5,
+                "interface_name": "Microsoft Wi-Fi Direct Virtual Adapter #4",
+                "ipv4": {
+                    "address": "169.254.29.24",
+                    "prefix": "16"
+                },
+                "ipv6": {
+                    "address": "fe80::6311:69b0:9218:4988%5",
+                    "prefix": "64"
+                },
+                "macaddress": "B6:B5:B6:92:F3:DF",
+                "mtu": 1500,
+                "speed": -1e-06
+            },
+            {
+                "connection_name": "Wi-Fi",
+                "default_gateway": "fe80::2266:cfff:fe66:a0b5%18",
+                "dns_domain": null,
+                "interface_index": 18,
+                "interface_name": "RZ608 Wi-Fi 6E 80MHz",
+                "ipv4": {
+                    "address": "192.168.1.4",
+                    "prefix": "24"
+                },
+                "ipv6": [
+                    {
+                        "address": "2a01:e0a:569:2cf0:1cd1:ccd:498e:969",
+                        "prefix": "64"
+                    },
+                    {
+                        "address": "2a01:e0a:569:2cf0:78e5:d871:473c:ef97",
+                        "prefix": "128"
+                    },
+                    {
+                        "address": "fe80::ba1a:f6b1:28e2:bdf2%18",
+                        "prefix": "64"
+                    }
+                ],
+                "macaddress": "B4:B5:B6:92:C3:EF",
+                "mtu": 1500,
+                "speed": 1201
+            }
+        ],
+        "ip_addresses": [
+            "fe80::b7f2:51f2:7b4f:1e2a%15",
+            "169.254.26.4",
+            "fe80::1dce:38d0:dcf2:93c2%4",
+            "169.254.208.110",
+            "fe80::6311:69b0:9218:4988%5",
+            "169.254.29.24",
+            "2a01:e0a:569:2cf0:1cd1:ccd:498e:969",
+            "2a01:e0a:569:2cf0:78e5:d871:473c:ef97",
+            "fe80::ba1a:f6b1:28e2:bdf2%18",
+            "192.168.1.4"
+        ],
+        "kernel": "10.0.22621.0",
+        "lastboot": "2023-02-01 10:29:36Z",
+        "machine_id": "S-1-5-21-2528255387-4121226493-1236455055",
+        "memfree_mb": 25371,
+        "memtotal_mb": 32683,
+        "module_setup": true,
+        "netbios_name": "AUREL-GAMING",
+        "nodename": "Aurel-Gaming",
+        "os_family": "Windows",
+        "os_installation_type": "Client",
+        "os_name": "Microsoft Windows 11 Pro",
+        "os_product_type": "workstation",
+        "owner_contact": "",
+        "owner_name": "Windows User",
+        "pagefilefree_mb": 2048,
+        "pagefiletotal_mb": 2048,
+        "powershell_version": 5,
+        "processor": [
+            "0",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "1",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "2",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "3",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "4",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "5",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "6",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "7",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "8",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "9",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "10",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "11",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "12",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "13",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "14",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "15",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             "
+        ],
+        "processor_cores": 8,
+        "processor_count": 1,
+        "processor_threads_per_core": 2,
+        "processor_vcpus": 16,
+        "product_name": "System Product Name",
+        "product_serial": "System Serial Number",
+        "reboot_pending": false,
+        "swaptotal_mb": 0,
+        "system": "Win32NT",
+        "system_description": "",
+        "system_vendor": "ASUS",
+        "uptime_seconds": 5164,
+        "user_dir": "C:\\Users\\Aurel",
+        "user_gecos": "",
+        "user_id": "Aurel",
+        "user_sid": "S-1-5-21-2528255387-4121226493-1236455055-1000",
+        "virtualization_role": "NA",
+        "virtualization_type": "NA",
+        "windows_domain": "WORKGROUP",
+        "windows_domain_member": false,
+        "windows_domain_role": "Stand-alone workstation"
+    }
+}
+2023-02-01 10:55:58,739 p=10 u=aurelien n=ansible | TASK [Ensure WinRM starts when the system has settled and is ready to work reliably] ***
+2023-02-01 10:55:58,792 p=27 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:55:59,020 p=27 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:00,565 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:00,633 p=10 u=aurelien n=ansible | TASK [Change Gaming computer hostname] *****************************************
+2023-02-01 10:56:00,685 p=29 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:00,879 p=29 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:02,047 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:02,130 p=10 u=aurelien n=ansible | TASK [Reboot Gaming] ***********************************************************
+2023-02-01 10:56:02,180 p=31 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:02,343 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:56:02,385 p=10 u=aurelien n=ansible | TASK [Change power plan to high performance] ***********************************
+2023-02-01 10:56:02,435 p=33 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:02,604 p=33 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:03,880 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:03,951 p=10 u=aurelien n=ansible | TASK [Set autologon for Aurel] *************************************************
+2023-02-01 10:56:04,002 p=35 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:04,168 p=35 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:04,317 p=35 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:05,534 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:05,602 p=10 u=aurelien n=ansible | TASK [Disable password expiration of "Aurel"] **********************************
+2023-02-01 10:56:05,653 p=37 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:05,811 p=37 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:09,521 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:09,597 p=10 u=aurelien n=ansible | TASK [Allow RDP TSConnection] **************************************************
+2023-02-01 10:56:09,648 p=39 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:09,806 p=39 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:10,979 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:11,044 p=10 u=aurelien n=ansible | TASK [Allow UserAuthentication] ************************************************
+2023-02-01 10:56:11,113 p=41 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:11,262 p=41 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:12,414 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:12,483 p=10 u=aurelien n=ansible | TASK [Allow Client Drives] *****************************************************
+2023-02-01 10:56:12,533 p=43 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:12,725 p=43 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:13,932 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:14,004 p=10 u=aurelien n=ansible | TASK [Change RDP Port] *********************************************************
+2023-02-01 10:56:14,056 p=45 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:14,223 p=45 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:15,387 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:15,465 p=10 u=aurelien n=ansible | TASK [Add user to Remote Desktop Group] ****************************************
+2023-02-01 10:56:15,535 p=47 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:15,677 p=47 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:18,987 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:19,061 p=10 u=aurelien n=ansible | TASK [Enable RDP inside the Firewall] ******************************************
+2023-02-01 10:56:19,132 p=49 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:19,275 p=49 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:20,410 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:20,483 p=10 u=aurelien n=ansible | TASK [Reboot Gaming] ***********************************************************
+2023-02-01 10:56:20,551 p=51 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:20,683 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:56:20,722 p=10 u=aurelien n=ansible | TASK [Change W11 VM Aurel hostname] ********************************************
+2023-02-01 10:56:20,791 p=53 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:20,929 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:56:20,968 p=10 u=aurelien n=ansible | TASK [Reboot W11-VM-Aurel] *****************************************************
+2023-02-01 10:56:21,035 p=55 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:21,167 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:56:21,206 p=10 u=aurelien n=ansible | TASK [Save the network credentials required for the mapped drive] **************
+2023-02-01 10:56:21,275 p=57 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:21,417 p=57 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:21,565 p=57 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:21,708 p=57 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:21,862 p=57 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:22,010 p=57 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:24,019 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:24,094 p=10 u=aurelien n=ansible | TASK [Save the network credentials required for the mapped drive] **************
+2023-02-01 10:56:24,165 p=59 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:24,306 p=59 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:24,443 p=59 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:24,591 p=59 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:24,735 p=59 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:26,703 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:26,777 p=10 u=aurelien n=ansible | TASK [Enable WakeOnMagic Packet] ***********************************************
+2023-02-01 10:56:26,848 p=61 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:26,980 p=61 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:27,122 p=61 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:27,264 p=61 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:28,767 p=10 u=aurelien n=ansible | changed: [aurelien-gaming]
+2023-02-01 10:56:28,844 p=10 u=aurelien n=ansible | TASK [debug] *******************************************************************
+2023-02-01 10:56:28,912 p=63 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:29,056 p=63 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:29,196 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => {
+    "interfaceIndex.stdout": "18\r\n"
+}
+2023-02-01 10:56:29,236 p=10 u=aurelien n=ansible | TASK [Disable Nahimic Service] *************************************************
+2023-02-01 10:56:29,310 p=65 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:29,458 p=65 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:30,907 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:30,989 p=10 u=aurelien n=ansible | TASK [Install all updates and reboot as many times as needed] ******************
+2023-02-01 10:56:31,059 p=67 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:31,206 p=67 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:39,630 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:39,703 p=10 u=aurelien n=ansible | TASK [Turn off UAC] ************************************************************
+2023-02-01 10:56:39,772 p=69 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:39,916 p=69 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:41,115 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:41,196 p=10 u=aurelien n=ansible | TASK [Reboot to apply UAC Turned off] ******************************************
+2023-02-01 10:56:41,267 p=71 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:41,414 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:56:41,452 p=10 u=aurelien n=ansible | TASK [Get UserName SID] ********************************************************
+2023-02-01 10:56:41,521 p=73 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:41,661 p=73 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:42,952 p=10 u=aurelien n=ansible | changed: [aurelien-gaming]
+2023-02-01 10:56:43,025 p=10 u=aurelien n=ansible | TASK [set_fact] ****************************************************************
+2023-02-01 10:56:43,078 p=75 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:43,215 p=75 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:43,344 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:56:43,383 p=10 u=aurelien n=ansible | TASK [debug] *******************************************************************
+2023-02-01 10:56:43,433 p=77 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:43,586 p=77 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:43,716 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => {
+    "user_name_sid": "S-1-5-21-2528255387-4121226493-1236455055-1000\r\n"
+}
+2023-02-01 10:56:43,754 p=10 u=aurelien n=ansible | TASK [Create new User\AppData\Local Low] ***************************************
+2023-02-01 10:56:43,808 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:43,957 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:45,026 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming\Microsoft\Windows\SendTo)
+2023-02-01 10:56:45,037 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:45,231 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:46,246 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu)
+2023-02-01 10:56:46,260 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:46,439 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:47,349 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu\Programs)
+2023-02-01 10:56:47,361 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:47,530 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:48,449 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming\Microsoft\Windows\Recent)
+2023-02-01 10:56:48,462 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:48,668 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:49,692 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming\Microsoft\Windows\Printer Shortcuts)
+2023-02-01 10:56:49,706 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:49,877 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:50,918 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\Searches)
+2023-02-01 10:56:50,928 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:51,107 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:52,155 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\LocalLow)
+2023-02-01 10:56:52,169 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:52,386 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:53,379 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup)
+2023-02-01 10:56:53,391 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:53,569 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:54,500 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Administrative Tools)
+2023-02-01 10:56:54,512 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:54,674 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:55,715 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\Links)
+2023-02-01 10:56:55,726 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:55,894 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:56,830 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Local\Microsoft\Windows\INetCache)
+2023-02-01 10:56:56,842 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:57,010 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:57,925 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming\Microsoft\Windows\Templates)
+2023-02-01 10:56:57,935 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:58,115 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:59,083 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Saved Games)
+2023-02-01 10:56:59,094 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:56:59,256 p=79 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:00,149 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\Aurel\AppData\Roaming)
+2023-02-01 10:57:00,205 p=10 u=aurelien n=ansible | TASK [Create new ProgramData] **************************************************
+2023-02-01 10:57:00,263 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:00,427 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:01,404 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\ProgramData\Microsoft\Windows\Start Menu\Programs\Administrative Tools)
+2023-02-01 10:57:01,416 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:01,579 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:02,500 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\ProgramData)
+2023-02-01 10:57:02,511 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:02,669 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:03,592 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\ProgramData\Microsoft\Windows\Start Menu\Programs)
+2023-02-01 10:57:03,604 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:03,814 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:04,799 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\ProgramData\Microsoft\Windows\Start Menu)
+2023-02-01 10:57:04,809 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:04,977 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:05,911 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup)
+2023-02-01 10:57:05,924 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:06,097 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:07,058 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\ProgramData\Microsoft\Windows\Templates)
+2023-02-01 10:57:07,071 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:07,250 p=81 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:08,244 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => (item=E:\ProgramData\OEM\Links)
+2023-02-01 10:57:08,321 p=10 u=aurelien n=ansible | TASK [Change location of User\Desktop] *****************************************
+2023-02-01 10:57:08,372 p=83 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:08,534 p=83 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:09,713 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:09,786 p=10 u=aurelien n=ansible | TASK [Change location of User\Documents] ***************************************
+2023-02-01 10:57:09,839 p=85 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:10,001 p=85 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:11,160 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:11,225 p=10 u=aurelien n=ansible | TASK [Change location of User\Music] *******************************************
+2023-02-01 10:57:11,289 p=87 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:11,455 p=87 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:12,617 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:12,685 p=10 u=aurelien n=ansible | TASK [Change location of User\Pictures] ****************************************
+2023-02-01 10:57:12,737 p=89 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:12,894 p=89 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:14,071 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:14,134 p=10 u=aurelien n=ansible | TASK [Change location of User\Videos] ******************************************
+2023-02-01 10:57:14,204 p=91 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:14,342 p=91 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:15,532 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:15,599 p=10 u=aurelien n=ansible | TASK [Change location of User\Saved Games] *************************************
+2023-02-01 10:57:15,650 p=93 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:15,806 p=93 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:16,975 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:17,043 p=10 u=aurelien n=ansible | TASK [Change location of User\AppData] *****************************************
+2023-02-01 10:57:17,095 p=95 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:17,250 p=95 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:18,458 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:18,525 p=10 u=aurelien n=ansible | TASK [Change location of User\AppData\Local] ***********************************
+2023-02-01 10:57:18,596 p=97 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:18,737 p=97 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:19,992 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:20,064 p=10 u=aurelien n=ansible | TASK [Change location of CD Burning] *******************************************
+2023-02-01 10:57:20,138 p=99 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:20,278 p=99 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:21,537 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:21,612 p=10 u=aurelien n=ansible | TASK [Change location of User\Libraries] ***************************************
+2023-02-01 10:57:21,664 p=101 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:21,826 p=101 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:23,032 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:23,102 p=10 u=aurelien n=ansible | TASK [Change location of User\History] *****************************************
+2023-02-01 10:57:23,174 p=103 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:23,312 p=103 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:24,521 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:24,586 p=10 u=aurelien n=ansible | TASK [Change location of User\NetHood] *****************************************
+2023-02-01 10:57:24,656 p=105 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:24,798 p=105 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:25,982 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:26,052 p=10 u=aurelien n=ansible | TASK [Change location of User\Contacts] ****************************************
+2023-02-01 10:57:26,124 p=107 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:26,258 p=107 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:27,478 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:27,547 p=10 u=aurelien n=ansible | TASK [Change location of User\Send To] *****************************************
+2023-02-01 10:57:27,618 p=109 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:27,763 p=109 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:28,968 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:29,033 p=10 u=aurelien n=ansible | TASK [Change location of User\RoamingTiles] ************************************
+2023-02-01 10:57:29,104 p=111 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:29,256 p=111 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:30,456 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:30,531 p=10 u=aurelien n=ansible | TASK [Change location of User\Cookies] *****************************************
+2023-02-01 10:57:30,601 p=113 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:30,777 p=113 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:32,052 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:32,124 p=10 u=aurelien n=ansible | TASK [Change location of User\Favorites] ***************************************
+2023-02-01 10:57:32,194 p=115 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:32,335 p=115 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:33,559 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:33,631 p=10 u=aurelien n=ansible | TASK [Change location of User\My Music] ****************************************
+2023-02-01 10:57:33,702 p=117 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:33,856 p=117 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:35,077 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:35,152 p=10 u=aurelien n=ansible | TASK [Change location of User\Start Menu\Programs] *****************************
+2023-02-01 10:57:35,223 p=119 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:35,374 p=119 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:36,619 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:36,688 p=10 u=aurelien n=ansible | TASK [Change location of User\Start Menu] **************************************
+2023-02-01 10:57:36,758 p=121 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:36,907 p=121 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:38,106 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:38,172 p=10 u=aurelien n=ansible | TASK [Change location of User\Recent] ******************************************
+2023-02-01 10:57:38,243 p=123 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:38,396 p=123 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:39,548 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:39,620 p=10 u=aurelien n=ansible | TASK [Change location of User\PrintHood] ***************************************
+2023-02-01 10:57:39,672 p=125 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:39,815 p=125 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:41,091 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:41,162 p=10 u=aurelien n=ansible | TASK [Change location of User\Searches] ****************************************
+2023-02-01 10:57:41,214 p=127 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:41,359 p=127 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:42,679 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:42,750 p=10 u=aurelien n=ansible | TASK [Change location of User\Downloads] ***************************************
+2023-02-01 10:57:42,803 p=129 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:42,961 p=129 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:44,172 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:44,233 p=10 u=aurelien n=ansible | TASK [Change location of User\Local Low] ***************************************
+2023-02-01 10:57:44,286 p=131 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:44,444 p=131 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:45,740 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:45,808 p=10 u=aurelien n=ansible | TASK [Change location of User\Startup] *****************************************
+2023-02-01 10:57:45,860 p=133 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:46,022 p=133 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:47,248 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:47,313 p=10 u=aurelien n=ansible | TASK [Change location of User\adminTools] **************************************
+2023-02-01 10:57:47,366 p=135 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:47,530 p=135 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:48,701 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:48,774 p=10 u=aurelien n=ansible | TASK [Change location of User\Documents] ***************************************
+2023-02-01 10:57:48,826 p=137 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:48,991 p=137 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:50,219 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:50,268 p=10 u=aurelien n=ansible | TASK [Change location of User\Link] ********************************************
+2023-02-01 10:57:50,319 p=139 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:50,482 p=139 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:51,841 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:51,911 p=10 u=aurelien n=ansible | TASK [Change location of User\Cache] *******************************************
+2023-02-01 10:57:51,963 p=141 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:52,143 p=141 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:53,358 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:53,432 p=10 u=aurelien n=ansible | TASK [Change location of User\Templates] ***************************************
+2023-02-01 10:57:53,484 p=143 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:53,646 p=143 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:54,879 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:54,950 p=10 u=aurelien n=ansible | TASK [Change location of User\Saved Games] *************************************
+2023-02-01 10:57:55,002 p=145 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:55,174 p=145 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:56,436 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:56,508 p=10 u=aurelien n=ansible | TASK [Change location of User\Downloads (User Shell Folder)] *******************
+2023-02-01 10:57:56,579 p=147 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:56,722 p=147 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:58,033 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:58,100 p=10 u=aurelien n=ansible | TASK [Change location of User\AppData(User Shell Folder)] **********************
+2023-02-01 10:57:58,152 p=149 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:58,318 p=149 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:59,629 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:57:59,696 p=10 u=aurelien n=ansible | TASK [Change location of User\Cache] *******************************************
+2023-02-01 10:57:59,748 p=151 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:57:59,910 p=151 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:01,227 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:01,295 p=10 u=aurelien n=ansible | TASK [Change location of User\Cookies] *****************************************
+2023-02-01 10:58:01,347 p=153 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:01,511 p=153 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:02,776 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:02,846 p=10 u=aurelien n=ansible | TASK [Change location of User\Desktop] *****************************************
+2023-02-01 10:58:02,897 p=155 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:03,062 p=155 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:04,382 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:04,448 p=10 u=aurelien n=ansible | TASK [Change location of User\Documents] ***************************************
+2023-02-01 10:58:04,499 p=157 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:04,668 p=157 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:05,974 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:06,043 p=10 u=aurelien n=ansible | TASK [Change location of User\Music] *******************************************
+2023-02-01 10:58:06,114 p=159 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:06,256 p=159 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:07,565 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:07,633 p=10 u=aurelien n=ansible | TASK [Change location of User\Pictures] ****************************************
+2023-02-01 10:58:07,704 p=161 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:07,849 p=161 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:09,146 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:09,213 p=10 u=aurelien n=ansible | TASK [Change location of User\Videos] ******************************************
+2023-02-01 10:58:09,284 p=163 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:09,432 p=163 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:10,740 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:10,808 p=10 u=aurelien n=ansible | TASK [Change location of User\AppData\Local] ***********************************
+2023-02-01 10:58:10,880 p=165 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:11,026 p=165 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:12,193 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:12,261 p=10 u=aurelien n=ansible | TASK [Change location of User\History] *****************************************
+2023-02-01 10:58:12,331 p=167 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:12,475 p=167 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:13,789 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:13,856 p=10 u=aurelien n=ansible | TASK [Change location of User\Favorites] ***************************************
+2023-02-01 10:58:13,927 p=169 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:14,070 p=169 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:15,425 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:15,495 p=10 u=aurelien n=ansible | TASK [Change location of User\PrintHood] ***************************************
+2023-02-01 10:58:15,566 p=171 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:15,709 p=171 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:16,868 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:16,937 p=10 u=aurelien n=ansible | TASK [Change location of User\NetHood] *****************************************
+2023-02-01 10:58:17,008 p=173 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:17,155 p=173 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:18,476 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:18,548 p=10 u=aurelien n=ansible | TASK [Change location of User\Start Menu\Programs] *****************************
+2023-02-01 10:58:18,620 p=175 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:18,765 p=175 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:20,093 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:20,152 p=10 u=aurelien n=ansible | TASK [Change location of User\Start Menu] **************************************
+2023-02-01 10:58:20,221 p=177 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:20,367 p=177 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:21,671 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:21,743 p=10 u=aurelien n=ansible | TASK [Change location of User\Recent] ******************************************
+2023-02-01 10:58:21,813 p=179 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:21,955 p=179 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:23,119 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:23,188 p=10 u=aurelien n=ansible | TASK [Change location of User\Send To] *****************************************
+2023-02-01 10:58:23,260 p=181 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:23,412 p=181 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:24,756 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:24,826 p=10 u=aurelien n=ansible | TASK [Change location of User\Startup] *****************************************
+2023-02-01 10:58:24,897 p=183 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:25,041 p=183 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:26,372 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:26,440 p=10 u=aurelien n=ansible | TASK [Change location of User\Templates] ***************************************
+2023-02-01 10:58:26,512 p=185 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:26,659 p=185 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:28,195 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:28,263 p=10 u=aurelien n=ansible | TASK [Enable Windows Explorer Libraries] ***************************************
+2023-02-01 10:58:28,315 p=187 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:28,464 p=187 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:29,796 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:29,864 p=10 u=aurelien n=ansible | TASK [Change location of Common Administrative Tools] **************************
+2023-02-01 10:58:29,916 p=189 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:30,065 p=189 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:31,347 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:31,418 p=10 u=aurelien n=ansible | TASK [Change location of Program Data] *****************************************
+2023-02-01 10:58:31,470 p=191 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:31,634 p=191 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:32,983 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:33,052 p=10 u=aurelien n=ansible | TASK [Change location of Common Programs] **************************************
+2023-02-01 10:58:33,105 p=193 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:33,268 p=193 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:34,597 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:34,665 p=10 u=aurelien n=ansible | TASK [Change location of Common  StartMenu] ************************************
+2023-02-01 10:58:34,718 p=195 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:34,875 p=195 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:36,205 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:36,277 p=10 u=aurelien n=ansible | TASK [Change location of Common Startup] ***************************************
+2023-02-01 10:58:36,330 p=197 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:36,491 p=197 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:37,814 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:37,883 p=10 u=aurelien n=ansible | TASK [Change location of Common Templates] *************************************
+2023-02-01 10:58:37,935 p=199 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:38,098 p=199 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:39,431 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:39,497 p=10 u=aurelien n=ansible | TASK [Change location of OEM Links] ********************************************
+2023-02-01 10:58:39,549 p=201 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:39,715 p=201 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:41,160 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:41,229 p=10 u=aurelien n=ansible | TASK [Change location of Common Administrative Tools] **************************
+2023-02-01 10:58:41,281 p=203 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:41,447 p=203 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:42,665 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:42,735 p=10 u=aurelien n=ansible | TASK [Change location of Program Data] *****************************************
+2023-02-01 10:58:42,788 p=205 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:42,953 p=205 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:44,357 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:44,425 p=10 u=aurelien n=ansible | TASK [Change location of Common Programs] **************************************
+2023-02-01 10:58:44,477 p=207 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:44,641 p=207 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:46,001 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:46,071 p=10 u=aurelien n=ansible | TASK [Change location of Common StartMenu] *************************************
+2023-02-01 10:58:46,143 p=209 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:46,287 p=209 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:47,625 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:47,695 p=10 u=aurelien n=ansible | TASK [Change location of Common Startup] ***************************************
+2023-02-01 10:58:47,767 p=211 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:47,943 p=211 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:49,271 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:49,342 p=10 u=aurelien n=ansible | TASK [Change location of Common Templates] *************************************
+2023-02-01 10:58:49,414 p=213 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:49,550 p=213 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:50,877 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:50,949 p=10 u=aurelien n=ansible | TASK [Create an application shortcut for an executable in PATH to your desktop] ***
+2023-02-01 10:58:51,021 p=215 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:51,161 p=215 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:52,715 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:52,784 p=10 u=aurelien n=ansible | TASK [Check if 7-Zip is already installed] *************************************
+2023-02-01 10:58:52,857 p=217 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:53,000 p=217 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:54,062 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:54,124 p=10 u=aurelien n=ansible | TASK [Check if Firefox is already installed] ***********************************
+2023-02-01 10:58:54,194 p=219 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:54,331 p=219 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:55,276 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:55,336 p=10 u=aurelien n=ansible | TASK [Check if Nvidia Display Driver is already installed] *********************
+2023-02-01 10:58:55,408 p=221 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:55,543 p=221 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:56,523 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:56,593 p=10 u=aurelien n=ansible | TASK [Check if Nvidia Display Driver is already installed] *********************
+2023-02-01 10:58:56,664 p=223 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:56,801 p=223 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:57,795 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:57,860 p=10 u=aurelien n=ansible | TASK [Check if Ubisoft Connect is already installed] ***************************
+2023-02-01 10:58:57,933 p=225 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:58,075 p=225 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:59,099 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:58:59,166 p=10 u=aurelien n=ansible | TASK [Check if EA App is already installed] ************************************
+2023-02-01 10:58:59,236 p=227 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:58:59,371 p=227 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:00,285 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:00,350 p=10 u=aurelien n=ansible | TASK [Check if Epic Launcher is already installed] *****************************
+2023-02-01 10:59:00,422 p=229 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:00,565 p=229 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:01,552 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:01,625 p=10 u=aurelien n=ansible | TASK [Check if Bitwarden is already installed] *********************************
+2023-02-01 10:59:01,697 p=231 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:01,834 p=231 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:02,914 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:02,982 p=10 u=aurelien n=ansible | TASK [Check if Synology Drive Client is already installed] *********************
+2023-02-01 10:59:03,053 p=233 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:03,187 p=233 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:04,167 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:04,211 p=10 u=aurelien n=ansible | TASK [Check if Steam is already installed] *************************************
+2023-02-01 10:59:04,280 p=235 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:04,410 p=235 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:05,492 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:05,579 p=10 u=aurelien n=ansible | TASK [Check if GoG is already installed] ***************************************
+2023-02-01 10:59:05,630 p=237 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:05,770 p=237 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:06,763 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:06,836 p=10 u=aurelien n=ansible | TASK [Check if CrystalDiskInfo is already installed] ***************************
+2023-02-01 10:59:06,890 p=239 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:07,030 p=239 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:08,073 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:08,140 p=10 u=aurelien n=ansible | TASK [Check if Captvty exists] *************************************************
+2023-02-01 10:59:08,192 p=241 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:08,329 p=241 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:09,820 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:09,891 p=10 u=aurelien n=ansible | TASK [Create C:\Temp directory] ************************************************
+2023-02-01 10:59:09,944 p=243 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:10,096 p=243 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:11,204 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:11,276 p=10 u=aurelien n=ansible | TASK [Download the 7-Zip] ******************************************************
+2023-02-01 10:59:11,328 p=245 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:11,479 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:11,517 p=10 u=aurelien n=ansible | TASK [Download the Firefox] ****************************************************
+2023-02-01 10:59:11,568 p=247 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:11,726 p=247 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:19,240 p=10 u=aurelien n=ansible | changed: [aurelien-gaming]
+2023-02-01 10:59:19,313 p=10 u=aurelien n=ansible | TASK [Download Nvidia Drivers] *************************************************
+2023-02-01 10:59:19,365 p=249 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:19,527 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:19,567 p=10 u=aurelien n=ansible | TASK [Download Nvidia Geforce Experience] **************************************
+2023-02-01 10:59:19,618 p=251 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:19,780 p=251 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:26,750 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2023-02-01 10:59:26,826 p=10 u=aurelien n=ansible | TASK [Download the Ubisoft Connect] ********************************************
+2023-02-01 10:59:26,877 p=253 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:27,027 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:27,067 p=10 u=aurelien n=ansible | TASK [Download the EA App] *****************************************************
+2023-02-01 10:59:27,118 p=255 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:27,276 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:27,315 p=10 u=aurelien n=ansible | TASK [Download the Epic Launcher] **********************************************
+2023-02-01 10:59:27,366 p=257 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:27,520 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:27,559 p=10 u=aurelien n=ansible | TASK [Download the Bitwarden] **************************************************
+2023-02-01 10:59:27,628 p=259 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:27,757 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:27,796 p=10 u=aurelien n=ansible | TASK [Download the Synology Drive Client] **************************************
+2023-02-01 10:59:27,847 p=261 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:28,003 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:28,042 p=10 u=aurelien n=ansible | TASK [Download Steam] **********************************************************
+2023-02-01 10:59:28,111 p=263 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:28,247 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:28,287 p=10 u=aurelien n=ansible | TASK [Download GoG Galaxy] *****************************************************
+2023-02-01 10:59:28,355 p=265 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:28,493 p=10 u=aurelien n=ansible | skipping: [aurelien-gaming]
+2023-02-01 10:59:28,533 p=10 u=aurelien n=ansible | TASK [Download Rockstar Game Social Club] **************************************
+2023-02-01 10:59:28,584 p=267 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 10:59:28,744 p=267 u=aurelien n=botocore.credentials | Found credentials in environment variables.
+2023-02-01 11:04:48,953 p=10 u=aurelien n=ansible | fatal: [aurelien-gaming]: UNREACHABLE! => {"changed": false, "msg": "winrm connection error: HTTPConnectionPool(host='192.168.1.4', port=5985): Read timed out. (read timeout=30)", "unreachable": true}
+2023-02-01 11:04:48,960 p=10 u=aurelien n=ansible | PLAY RECAP *********************************************************************
+2023-02-01 11:04:48,962 p=10 u=aurelien n=ansible | aurelien-gaming            : ok=108  changed=3    unreachable=1    failed=0    skipped=14   rescued=0    ignored=0   
+2023-02-01 11:04:48,964 p=10 u=aurelien n=ansible | w11-vm-aurel               : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   

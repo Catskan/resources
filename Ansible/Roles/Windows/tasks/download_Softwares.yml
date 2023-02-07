@@ -23,8 +23,8 @@
   # IDownload Nvidia Drivers with win_package
   - name: Download Nvidia Drivers
     win_get_url:
-      url: https://fr.download.nvidia.com/Windows/526.98/526.98-desktop-win10-win11-64bit-international-dch-whql.exe
-      dest: C:\temp\Nvidia.exe
+      url: https://fr.download.nvidia.com/Windows/{{ nvidia_driver }}/{{ nvidia_driver }}-desktop-win10-win11-64bit-international-dch-whql.exe
+      dest: C:\temp\Nvidia-{{ nvidia_driver }}.exe
       force: no
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
 
