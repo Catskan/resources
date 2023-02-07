@@ -1,6 +1,6 @@
 #Softwares versions
-nvidia_driver: '528.24'
-gog_galaxy: '2.0.58.4'
+nvidia_driver_version: '528.24'
+gog_galaxy_version: '2.0.58.4'
 #Common variables can be used by all Windows hosts
 adk_silent_argument: "/quiet"
 adk_install_dir: 'C:\ADK'

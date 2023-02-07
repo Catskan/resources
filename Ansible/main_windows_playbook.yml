@@ -44,3 +44,6 @@
 
     - name: Include Check_Softwares_versions
       ansible.builtin.import_tasks: Roles/Windows/tasks/check_softwares_versions.yml
+
+    - name: Include update_softwares
+      ansible.builtin.import_tasks: Roles/Windows/tasks/softwares_updates.yml
