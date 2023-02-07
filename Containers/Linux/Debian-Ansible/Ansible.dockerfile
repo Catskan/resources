@@ -28,6 +28,7 @@ COPY ./Containers/Linux/Debian-Ansible/entrypoint.sh /etc/bin/entrypoint.sh
 #Create a user with home directory to install ansible inside it
 RUN useradd aurelien && mkdir /home/aurelien && chown -R aurelien:aurelien /home/aurelien/
 RUN chmod +x /etc/bin/entrypoint.sh
+RUN setfacl u:aurelien:rwx /var/log
 
 #Setting up the openssh-server
 RUN sed -i "s/AuthorizedKeysFile /.ssh_keys/" /etc/ssh/ssh_config 
