@@ -6,7 +6,7 @@ ARG python_version
 #Install Deb packages to build Python
 RUN apt update && apt dist-upgrade -y \
     && apt install cmake gcc pkg-config build-essential zlib1g-dev \
-    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev -y
+    libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev acl -y
 
 #Download Python archive from official URL
 ADD https://www.python.org/ftp/python/$python_version/Python-$python_version.tgz /tmp/Python-$python_version.tgz
