@@ -4,4 +4,4 @@
     win_get_url:
       url: https://cdn.gog.com/open/galaxy/client/2.0.55.99/setup_galaxy_2.0.55.99.exe
       dest: C:\temp\GoG.exe
-    when: gog_version_installed 
+    when: gog_version_installed.value 

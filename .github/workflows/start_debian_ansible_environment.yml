@@ -64,7 +64,7 @@ jobs:
           files: '${{ github.workspace }}/Ansible/ansible.cfg'
         env:
           AnsibleInventoryFile: ${{ env.ANSIBLE_ANSIBLE_INVENTORY_LOCATION }}
-          AnsibleLogPath: ${{ env.ANSIBLE_ANSIBLE_LOG_OUTPUT }}
+          AnsibleLogPath: ${{ env.ANSIBLE_ANSIBLE_LOG_PATH }}
 
       - name: Display VagrantFile
         run: cat '${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }}/Vagrantfile'
