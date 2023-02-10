@@ -9,7 +9,6 @@ on:
         description: Python Version you want to use in the Debian-Ansible container
         required: true
 
-  
 jobs:
   start-ansible:
     name: run ansible container
@@ -28,9 +27,9 @@ jobs:
       - name: Ensure docker daemon is running on Linux
         if: runner.os == 'Linux'
         run: |
-            until [ $(systemctl is-active containerd docker) = active ]
+            until [ $(systemctl is-active docker) = active ]
               do
-                systemctl start containerd docker
+                sudo systemctl start containerd docker
                 sleep 3;
               done
             echo -e "Service Containerd & Docker are started and active"
