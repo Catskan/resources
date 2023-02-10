@@ -98,7 +98,7 @@ jobs:
       - name: Start Vagrant box on Linux
         if: runner.os == 'Linux'
         run: |
-            cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && sudo echo "Start vagrant box"; vagrant up
+            cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && sudo vagrant up
 
       - name: Start Vagrant box on MacOS
         if: runner.os == 'macOS'
