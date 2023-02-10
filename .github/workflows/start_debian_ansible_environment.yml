@@ -110,8 +110,7 @@ jobs:
         run: |
           cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_${{ github.event.inputs.target_os }}_playbook.yml
 
-      # - name: Delete ${{ env.CONTAINER_NAME }} container
-      #   if: always()
-      #   run: |
-      #      cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant destroy -f
-      #      docker rm $(docker ps --format '{{ .Names }}' | grep Ansible) -f
+      - name: Delete ${{ env.CONTAINER_NAME }} container
+        if: always()
+        run: |
+           cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && sudo vagrant destroy -f
