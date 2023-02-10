@@ -114,3 +114,4 @@ jobs:
         if: always()
         run: |
            cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && sudo vagrant destroy -f
+           docker rm "#{ContainerName}#" -f
