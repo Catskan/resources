@@ -46,4 +46,4 @@ jobs:
           tags: catskan/debian-ansible:${{ runner.os }}-${{ github.run_number }}
           labels: 'python-Version:${{ inputs.python_version }}'
           context: .
-          build-args: python_version=${{ inputs.python_version }}
+          build-args: python_version=${{ inputs.python_version }} --no-cache
