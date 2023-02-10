@@ -52,6 +52,10 @@
   - name: Install DashToDock
     ansible.builtin.script: /share/git/resources/Ansible/Roles/Linux/Laptop/scripts/install_dashtodock.sh
 
+  - name: Docker Post Installation
+    ansible.builtin.script: /share/git/resources/Ansible/Roles/Linux/Laptop/scripts/post_install_docker.sh
+
+
 
 
   # - name: Create the `aur_builder` user

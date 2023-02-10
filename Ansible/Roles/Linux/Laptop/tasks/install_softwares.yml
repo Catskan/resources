@@ -197,6 +197,7 @@
     community.general.pacman:
       name:
         - docker
+        - docker-buildx
         - vagrant
       state: present
     vars:
