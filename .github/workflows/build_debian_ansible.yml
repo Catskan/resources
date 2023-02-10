@@ -33,6 +33,9 @@ jobs:
                 sleep 3;
               done
             echo -e "Service Containerd & Docker are started and active"
+
+      - name: Docker login
+        run: docker login
         
 #Build the container and push it to the docker registry
       - name: Build and push Debian-Ansible image
