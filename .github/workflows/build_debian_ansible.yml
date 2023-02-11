@@ -54,7 +54,7 @@ jobs:
         uses: docker/login-action@v2.1.0
         with:
           # Username used to log against the Docker registry
-          username: ${{ env.ANSIBLE_DOCKER_HUB_LOGIN }}
+          username: ${{ env.ANSIBLE_DOCKER_HUB_USERNAME }}
           # Password or personal access token used to log against the Docker registry
           password: ${{ env.ANSIBLE_DOCKER_HUB_PASSWORD }}
           
