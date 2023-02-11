@@ -19,8 +19,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Runner Arch to lower
-        run: echo "$a" | awk '{print tolower($0)}'
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Get secrets by name and by ARN
+        uses: aws-actions/aws-secretsmanager-get-secrets@v1
+        with:
+          secret-ids: |
+            arn:aws:secretsmanager:eu-west-3:850204412331:secret:Ansible-gTAmY1
+          parse-json-secrets: true
 
 #Check the runner OS to start docker by the right way
       - name: Start docker on macOS
