@@ -49,8 +49,8 @@ jobs:
             echo -e "Service Containerd & Docker are started and active"
 
       - name: Docker login
-        run: sudo docker login -u {{ env.ANSIBLE_DOCKER_HUB_USERNAME }} -p{{ env.ANSIBLE_DOCKER_HUB_PASSWORD}}
-        
+        run: sudo docker login -u "{{ env.ANSIBLE_DOCKER_HUB_USERNAME }}" -p "{{ env.ANSIBLE_DOCKER_HUB_PASSWORD}}"
+                
 #Build the container and push it to the docker registry
       - name: Build and push Debian-Ansible image
         uses: docker/build-push-action@v3.3.0
