@@ -39,7 +39,7 @@
   # Download Ubisoft Connect with win_package
   - name: Download the Ubisoft Connect 
     win_get_url:
-      url: https://ubi.li/4vxt9
+      url: https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe
       dest: C:\temp\UbisoftConnect.exe
     when: UbisoftConnect_installed.exists == false
 
@@ -81,7 +81,7 @@
   #Download GoG
   - name: Download GoG Galaxy
     win_get_url:
-      url: https://cdn.gog.com/open/galaxy/client/2.0.55.99/setup_galaxy_2.0.55.99.exe
+      url: https://cdn.gog.com/open/galaxy/client/2.0.55.99/setup_galaxy_2.0.67.2.exe
       dest: C:\temp\GoG.exe
     when: GoG_installed.exists == false
 
@@ -127,7 +127,7 @@
   #Download CrystalDiskInfo
   - name: Download CrystalDiskinfo
     win_get_url:
-      url: https://osdn.net/frs/redir.php?m=rwthaachen&f=crystaldiskinfo%2F77950%2FCrystalDiskInfo8_17_11.exe
+      url: https://crystalmark.info/download/zz/CrystalDiskInfo9_1_1.exe
       dest: C:\temp\Crystaldiskinfo.exe
       #follow_redirects: yes
     #when: ansible_facts['architecture'] == "arm64"

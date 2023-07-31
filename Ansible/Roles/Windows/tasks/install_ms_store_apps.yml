@@ -1,0 +1,5 @@
+---
+    - name: Install "Xbox Accessories"
+      ansible.windows.win_powershell:
+        script: |
+          winget install --id "{{XboxAccessoires_id}}" --silent --accept-package-agreements --accept-source-agreements 

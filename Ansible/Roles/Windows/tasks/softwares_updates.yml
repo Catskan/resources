@@ -1,6 +1,6 @@
 ---
   #Download GoG
-  - name: Download GoG Galaxy
+  - name: Download GoG Galaxy 2
     win_get_url:
       url: https://cdn.gog.com/open/galaxy/client/{{ gog_galaxy_version }}/setup_galaxy_{{ gog_galaxy_version }}.exe
       dest: C:\temp\GoG-{{ gog_galaxy_version }}.exe

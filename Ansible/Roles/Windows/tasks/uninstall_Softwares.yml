@@ -13,7 +13,7 @@
       - Microsoft.WindowsCamera
       - Microsoft.YourPhone
       - Microsoft.WindowsAlarms
-      - Microsoft.BingWeathe
+      - Microsoft.BingWeather
       - Microsoft.Todos
       - Microsoft.BingNews
 #      - Microsoft.MicrosoftEdge*
@@ -24,7 +24,6 @@
       - Microsoft.MicrosoftSolitaireCollection
       - Microsoft.Getstarted
       - Microsoft.WindowsFeedbackHub
-      - microsoft.windowscommunicationsapps
 
 
 

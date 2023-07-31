@@ -76,6 +76,16 @@ common_templates_directory: 'M:\ProgramData\Microsoft\Windows\Templates'
 oemLinks_reg_key_name: 'OEM Links'
 oemLinks_directory: 'M:\ProgramData\OEM\Links'
 
+#Microsot Store app locations
+new_WindowsApps_directory: 'M:\WindowsApps'
+ms_store_app_location_reg_key_name: 'PackageRoot'
+ms_store_app_location: 'M:\WindowsApps'
+ms_store_app_location_package_repository_reg_key_name: 'PackageRepositoryRoot'
+ms_store_app_location_package_repository: 'M:\ProgramData\Microsoft\Windows\AppRepository'
+
 
 aurel_gaming_computer_hostname: 'Aurel-Gaming'
 games_directory: 'M:\Games'
+
+## MS Store Apps
+XboxAccessoires_id: "9NBLGGH30XJ3"
