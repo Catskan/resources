@@ -89,3 +89,6 @@ games_directory: 'M:\Games'
 
 ## MS Store Apps
 XboxAccessoires_id: "9NBLGGH30XJ3"
+
+#SynologyDrive Variables
+nas_url: "nas.eonelia.cloud"

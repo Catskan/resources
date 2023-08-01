@@ -104,16 +104,16 @@
       block:
       - name: Save the network credentials required for the mapped drive
         community.windows.win_credential:
-          name: nas.mapn.fr
+          name: nas.eonelia.cloud
           type: generic_password
-          username: '{{ webdav_username }}'
-          secret: '{{ webdav_password }}'
+          username: '{{ nas_username }}'
+          secret: '{{ nas_password }}'
           state: present
           persistence: enterprise
       # - name: Create a mapped drive that requires authentication
       #   win_mapped_drive:
-      #     letter: M
-      #     path: '\\nas.mapn.fr@SSL@8171\Aurelien'
+      #     letter: W
+      #     path: '\\{{ nas_url }}@SSL@8171\Aurelien'
       #     state: present
       vars:
         # become is required to save and retrieve the credentials in the tasks
@@ -128,8 +128,8 @@
         community.windows.win_credential:
           name: 'MicrosoftAccount:user=aurel130492@gmail.com'
           type: generic_password
-          username: aurel130492@gmail.com
-          secret: "{{ microsoft_account_password }}"
+          username: '{{ microsoft_account_email }}'
+          secret: '{{ microsoft_account_password }}'
           state: present
           persistence: local
       vars:

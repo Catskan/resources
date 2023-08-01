@@ -1,10 +1,10 @@
 ---
-  - name: Import Bitwarden conf
-    ansible.builtin.template:
-        src: /share/git/resources/softwares_configs/config-files/bitwarden/data.json
-        dest: '{{ appData_user_directory }}\Bitwarden'
-        force: false
-    when: ansible_facts['system'] == "Win32NT" and ansible_hostname == "Aurel-Gaming"
+  # - name: Import Bitwarden conf
+  #   ansible.builtin.template:
+  #       src: /share/git/resources/softwares_configs/config-files/bitwarden/data.json
+  #       dest: '{{ appData_user_directory }}\Bitwarden'
+  #       force: false
+  #   when: ansible_facts['system'] == "Win32NT" and ansible_hostname == "Aurel-Gaming"
 
   - name: Create Firefox/Distribution directory
     ansible.windows.win_file:
@@ -27,13 +27,6 @@
   #       type: expandstring
   #   when: ansible_facts['system'] == "Win32NT"
 
-  - name: Import Bitwarden conf
-    ansible.builtin.template:
-        src: /share/git/resources/softwares_configs/config-files/bitwarden/data.json
-        dest: /home/aurel/.config/Bitwarden
-        force: false
-    when: ansible_facts['system'] == "Linux"
-
   - name: Import Firefox Policies
     ansible.builtin.template:
         src: /share/git/resources/softwares_configs/config-files/Firefox/policies.json
@@ -44,24 +37,17 @@
       ansible_become_password: "{{ sudo_pwd }}"
     when: ansible_facts['system'] == "Linux"
 
-
-  - name: Import GoG conf
-    ansible.builtin.template:
-        src: /share/git/resources/softwares_configs/config-files/GoGGalaxy/config.json
-        dest: '{{ localAppData_user_directory }}\GOG.com\Galaxy\Configuration'
-        force: false
-    when: ansible_facts['hostname'] == "Aurel-Gaming"
+  # - name: Import GoG conf
+  #   ansible.builtin.template:
+  #       src: /share/git/resources/softwares_configs/config-files/GoGGalaxy/config.json
+  #       dest: '{{ localAppData_user_directory }}\GOG.com\Galaxy\Configuration'
+  #       force: false
+  #   when: ansible_facts['hostname'] == "Aurel-Gaming"
     
-  - name: Import Ubisoft Connect Config
-    ansible.builtin.template:
-        src: /share/git/resources/softwares_configs/config-files/UbisoftConnect/settings.yaml
-        dest: '{{ localAppData_user_directory }}\Ubisoft Game Launcher'
-        force: false
-    when: ansible_facts['hostname'] == "Aurel-Gaming"
+  # - name: Import Ubisoft Connect Config
+  #   ansible.builtin.template:
+  #       src: /share/git/resources/softwares_configs/config-files/UbisoftConnect/settings.yaml
+  #       dest: '{{ localAppData_user_directory }}\Ubisoft Game Launcher'
+  #       force: false
+  #   when: ansible_facts['hostname'] == "Aurel-Gaming"
 
-  - name: Import RDP Remina Conf
-    ansible.builtin.template:
-        src: /share/git/resources/softwares_configs/config-files/Remmina/rdp.remmina
-        dest: /home/aurel/.local/share/remmina/group_rdp_rdp-{{ ansible_facts.hostname }}.remmina
-        force: false
-    when: ansible_facts['system'] == "Linux"

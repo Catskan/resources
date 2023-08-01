@@ -8,10 +8,6 @@
           "installation_mode": "normal_installed",
           "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
         },
-        "{{ firefox_extension_id_bitwarden }}": {
-            "installation_mode": "normal_installed",
-            "install_url": "https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi"
-        },
         "{{ firefox_extension_id_videoDownloadHelper }}": {
             "installation_mode": "normal_installed",
             "install_url": "https://addons.mozilla.org/firefox/downloads/file/3804074/video_downloadhelper-7.6.0.xpi"
@@ -23,11 +19,6 @@
       },
     "3rdparty": {
       "Extensions": {
-        "{{ firefox_extension_id_bitwarden }}": {
-          "environment": {
-            "base": "{{ bitwarden_server_url }}"
-          }
-        }
       }
     }
   }

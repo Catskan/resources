@@ -2,7 +2,7 @@ all:
   children:
     linux_hosts:
       hosts:
-        nas.mapn.fr:
+        nas.eonelia.cloud:
           ansible_connection: ssh
           ansible_host: 192.168.2.114
           ansible_port: 3434

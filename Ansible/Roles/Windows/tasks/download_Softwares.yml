@@ -67,7 +67,7 @@
   #Download Synology Drive Client 
   - name: Download the Synology Drive Client
     win_get_url:
-      url: https://global.download.synology.com/download/Utility/SynologyDriveClient/3.2.0-13238/Windows/Installer/Synology%20Drive%20Client-3.2.0-13238.msi?model=DS716%2BII&bays=2&dsm_version=7.1.1&build_number=42962
+      url: https://global.synologydownload.com/download/Utility/SynologyDriveClient/3.3.0-15082/Windows/Installer/Synology%20Drive%20Client-3.3.0-15082.msi?model=DS716%2BII&bays=2&dsm_version=7.2&build_number=64570
       dest: C:\temp\SynologyDrive.msi
     when: SynoDriveClient_installed.exists == false
 

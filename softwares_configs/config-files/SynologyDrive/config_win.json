@@ -1,0 +1,39 @@
+{
+    "connections": [
+        {
+            "server_address": "#{nas_url}#",
+            "username": "#{nas_username}#",
+            "password": "#{nas_password}#",
+            "enable_ssl": true,
+            "sync_sessions": [
+                {
+                    "sharefolder": "home",
+                    "remote_path": "/Vault",
+                    "local_path": "#{sync_local_path}#",
+                    "sync_direction": 0,
+                    "use_on_demand_sync": true
+                }
+            ],
+            "backup_task": {
+                    "backup_mode": 0,
+                    "ignore_local_remove" : true,
+                    "backup_temp_file" : false,
+                    "enable_backup_dot_prefix" : false,
+                    "backup_source":  [
+                        "#{backup_root_directory}#"
+                    ],
+                    "backup_destination": {
+                            "sharefolder": "home",
+                            "remote_path": "/Backup"
+                        }
+                }
+        }
+    ],
+    "global_settings" : {
+        "general" : {
+           "enable_startup" : true,
+           "relink_policy" : 0,
+           "conflict_policy" : 0
+        }
+}
+}

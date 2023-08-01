@@ -60,9 +60,23 @@
     win_command: C:\temp\bitwarden.exe /allusers /S
     when: Bitwarden_installed.exists == false
 
+  - name: Replace Synology Config
+    ansible.windows.win_powershell:
+      script: |
+        $original_file = /share/git/resources/softwares_configs/config-files/SynologyDrive/config_win.json
+        $destination_file =  /share/git/resources/softwares_configs/config-files/SynologyDrive/config_win_prepared.json
+        (Get-Content $original_file) | Foreach-Object {
+            $_ -replace '#{nas_url}#', '{{ nas_username }}' `
+              -replace '#{nas_username}#', '{{ nas_username }}' `
+              -replace '#{nas_password}#', '{{ nas_password }}' `
+              -replace '#{sync_local_path}#', '{{ root_user_directory }}\Vault' `
+              -replace '#{backup_root_directory}#', '{{ root_user_directory }}' `
+            } | Set-Content $destination_file
+        Get-Content $destination_file
+
 #Install Synology Drive Client
   - name: Install Synology Drive Client
-    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\SynologyDrive.msi /qb /norestart
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\SynologyDrive.msi /qn CONFIGPATH="/share/git/resources/softwares_configs/config-files/SynologyDrive/config_win_prepared.json" /norestart
     when: SynoDriveClient_installed.exists == false
 
 #Install Steam

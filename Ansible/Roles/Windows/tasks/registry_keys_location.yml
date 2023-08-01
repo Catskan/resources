@@ -274,24 +274,6 @@
         data: "{{ savedGames_user_directory }}"
         type: expandstring
 
-    - name: Change location of Microsoft Store Apps (Appx/PackageRoot)
-      ansible.windows.win_regedit:
-        path: HKLM:\ANSIBLE\Microsoft\Windows\CurrentVersion\Appx
-        name: "{{ ms_store_app_location_reg_key_name }}"
-        data: "{{ ms_store_app_location }}"
-        type: string
-        state: present
-        hive: C:\Windows\System32\config\SOFTWARE
-
-    - name: Change location of Microsoft Store Apps (Appx/ProgramData)
-      ansible.windows.win_regedit:
-        path: HKLM:\ANSIBLE\Microsoft\Windows\CurrentVersion\Appx
-        name: "{{ ms_store_app_location_package_repository_reg_key_name }}"
-        data: "{{ ms_store_app_location_package_repository }}"
-        type: string
-        state: present
-        hive: C:\Windows\System32\config\SOFTWARE
-
 
 ###########################################Change location in HKCU:User Shell Folders###########################################
     - name: Change location of User\Downloads (User Shell Folder)
