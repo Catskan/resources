@@ -519,3 +519,17 @@
       community.windows.win_shortcut:
         src: D:\Playnite\Playnite.DesktopApp.exe
         dest: '{{ desktop_user_directory }}\Playnite.lnk'
+
+    - name: Create System VSS
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Services\VSS\VssAccessControl
+        name: 'NT Authority\System'
+        data: 1
+        type: dword
+
+    - name: Create Aurel VSS
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Services\VSS\VssAccessControl
+        name: .\{{ ansible_user }}
+        data: 1
+        type: dword
