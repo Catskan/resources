@@ -17,7 +17,7 @@ RUN tar xzf /tmp/Python-$python_version.tgz -C /tmp/ && cd /tmp/Python-$python_v
 FROM python as main
 
 RUN apt update && apt install openssh-client \
-    curl iputils-ping netcat iproute2 nano unzip npm jq -y
+    curl iputils-ping iproute2 nano unzip npm jq -y
 
 ENV ANSIBLE_CONFIG="/share/git/resources/Ansible/ansible.cfg"
 # #Add user /bin directory to the PATH
