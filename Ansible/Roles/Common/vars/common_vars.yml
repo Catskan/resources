@@ -1,7 +1,6 @@
 aurelien_gaming_name: "Aurel-Gaming"
 aurelien_gaming_ip: "192.168.1.4"
 remote_desktop_port: "3535"
-firefox_extension_id_bitwarden: "{446900e4-71c2-419f-a6a7-df9c091e268b}"
 firefox_extension_id_videoDownloadHelper: "{b9db16a4-6edc-47ec-a1f4-b86292ed211d}"
 firefox_extension_id_uBlockOrigin: "uBlock0@raymondhill.net"
 firefox_extension_id_downThemAll: "{DDC359D1-844A-42a7-9AA1-88A850A938A8}"

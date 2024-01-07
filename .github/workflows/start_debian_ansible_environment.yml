@@ -106,12 +106,10 @@ jobs:
             cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && vagrant up
 
       - name: Start ansible on ${{ github.event.inputs.target_os }} hosts
-        env:
-          ANSIBLE_INVENTORY: /share/git/resources/Ansible/Inventory/hosts.yaml
         #if: ${{ github.event.inputs.target_os }} == 'Windows'
         run: |
           cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }}
-          sudo vagrant docker-exec -t ${{ env.CONTAINER_NAME }} -- ansible-playbook /share/git/resources/Ansible/main_${{ github.event.inputs.target_os }}_playbook.yml
+          sudo vagrant docker-exec -t ${{ env.CONTAINER_NAME }} -- ansible-playbook -i /share/git/resources/Ansible/Inventory/hosts.yaml /share/git/resources/Ansible/main_${{ github.event.inputs.target_os }}_playbook.yml
 
       - name: Delete ${{ env.CONTAINER_NAME }} container
         if: always()

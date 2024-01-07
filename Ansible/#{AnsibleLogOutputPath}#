@@ -2162,3 +2162,16 @@
 2023-08-13 10:20:17,799 p=618 u=aurelien n=botocore.credentials | Found credentials in environment variables.
 2023-08-13 10:20:18,281 p=388 u=aurelien n=ansible |  [ERROR]: User interrupted execution
 
+2024-01-07 14:43:12,806 p=10 u=aurelien n=ansible | [WARNING]: Unable to parse
+/share/git/resources/Ansible/#{AnsibleInventoryFile}# as an inventory source
+
+2024-01-07 14:43:12,807 p=10 u=aurelien n=ansible | [WARNING]: No inventory was parsed, only implicit localhost is available
+
+2024-01-07 14:43:12,815 p=10 u=aurelien n=ansible | [WARNING]: provided hosts list is empty, only localhost is available. Note that
+the implicit localhost does not match 'all'
+
+2024-01-07 14:43:13,307 p=10 u=aurelien n=ansible | [WARNING]: Could not match supplied host pattern, ignoring: windows_hosts
+
+2024-01-07 14:43:13,330 p=10 u=aurelien n=ansible | PLAY [Main Aurelien Gaming Playbook] *******************************************
+2024-01-07 14:43:13,330 p=10 u=aurelien n=ansible | skipping: no hosts matched
+2024-01-07 14:43:13,331 p=10 u=aurelien n=ansible | PLAY RECAP *********************************************************************

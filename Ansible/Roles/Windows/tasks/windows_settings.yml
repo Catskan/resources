@@ -2,6 +2,7 @@
   ##########################################Aurel-Gaming##########################################
     - name: Force ProgramData
       win_shell:
+        mkdir "M:\ProgramData"
         robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramData"
         mklink /J "C:\ProgramData" "M:\ProgramData"
       vars:
