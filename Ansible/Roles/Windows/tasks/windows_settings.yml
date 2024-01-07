@@ -1,28 +1,22 @@
 ---
   ##########################################Aurel-Gaming##########################################- name: Create directory structure
     - name: Create ProgramData structure
-      ansible.windows.win_file:
+      ansible.builtin.file:
         path: M:\ProgramDataTest
         state: directory
+        mode: '0755'
 
-    - name: Force COPY ProgramData
-      win_shell:
-        robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramDataTest"
-      vars:
-        # become is required to save and retrieve the credentials in the tasks
-        ansible_become: yes
-        ansible_become_user: '{{ ansible_user }}'
-        ansible_become_pass: '{{ ansible_password }}'
+    - name: Sync the contents of one directory to another, and remove any files/directories found in destination that do not exist in the source
+      community.windows.win_robocopy:
+        src: C:\ProgramData
+        dest: M:\ProgramDataTest
+        recurse: yes
+        flags: /XJ /MIR
 
-    - name: Create ProgramData structure
-      ansible.windows.win_file:
+    - name: Delete ProgramData
+      ansible.builtin.file:
         path: C:\ProgramData
         state: absent
-      vars:
-        # become is required to save and retrieve the credentials in the tasks
-        ansible_become: yes
-        ansible_become_user: '{{ ansible_user }}'
-        ansible_become_pass: '{{ ansible_password }}'
 
     - name: Force NTFS Link
       win_shell:
