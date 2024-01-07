@@ -9,9 +9,9 @@
       community.windows.win_robocopy:
         src: C:\ProgramData
         dest: M:\ProgramData
-        purge: yes
         flags: /XJ /MIR
-        ignore_errors: true
+        register: robocopy_output
+        failed_when: '"FEHLER" in robocopy_output.output|join'
 
     - name: Delete ProgramData
       ansible.windows.win_file:
