@@ -21,7 +21,7 @@ RUN apt update && apt install openssh-client \
 
 ENV ANSIBLE_CONFIG="/share/git/resources/Ansible/ansible.cfg"
 # #Add user /bin directory to the PATH
-ENV PATH="${PATH}:/home/aurelien/.local/bin"
+ENV PATH="${PATH}:/home/aurel/.local/bin"
 
 COPY ./Containers/Linux/Debian-Ansible/entrypoint.sh /etc/bin/entrypoint.sh
 
