@@ -2,3 +2,4 @@
 **/.vagrant
 Containers/Linux/Debian-Ansible/.ssh
 Vagrant/Ansible/*/.env
+*}#

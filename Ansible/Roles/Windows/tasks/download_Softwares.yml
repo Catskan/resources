@@ -4,13 +4,13 @@
       path: C:\Temp
       state: directory
 
-  # Install/uninstall with win_package
-  - name: Download the 7-Zip
-    win_get_url:
-      url: https://www.7-zip.org/a/7z2201-x64.msi
-      dest: C:\temp\7z.msi
-      force: no
-    when: Sevenzip_installed.exists == false
+  # # Install/uninstall with win_package
+  # - name: Download the 7-Zip
+  #   win_get_url:
+  #     url: https://www.7-zip.org/a/7z2201-x64.msi
+  #     dest: C:\temp\7z.msi
+  #     force: no
+  #   when: Sevenzip_installed.exists == false
   
   # Download Firefox with win_package
   - name: Download the Firefox 
@@ -81,7 +81,7 @@
   #Download GoG
   - name: Download GoG Galaxy
     win_get_url:
-      url: https://cdn.gog.com/open/galaxy/client/2.0.55.99/setup_galaxy_2.0.67.2.exe
+      url: https://cdn.gog.com/open/galaxy/client/2.0.73.27/setup_galaxy_2.0.73.27.exe
       dest: C:\temp\GoG.exe
     when: GoG_installed.exists == false
 

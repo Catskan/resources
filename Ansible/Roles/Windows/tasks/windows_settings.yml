@@ -1,5 +1,15 @@
 ---
   ##########################################Aurel-Gaming##########################################
+    - name: Force ProgramData
+      win_shell:
+        robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramData"
+        mklink /J "C:\ProgramData" "M:\ProgramData"
+      vars:
+        # become is required to save and retrieve the credentials in the tasks
+        ansible_become: yes
+        ansible_become_user: '{{ ansible_user }}'
+        ansible_become_pass: '{{ ansible_password }}'
+
     - name: Ensure WinRM starts when the system has settled and is ready to work reliably
       win_service:
         name: WinRM
@@ -191,7 +201,3 @@
     - name: Reboot to apply UAC Turned off
       win_reboot:
       when: output_uac is changed
-
-
-
-

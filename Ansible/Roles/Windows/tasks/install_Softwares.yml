@@ -1,7 +1,7 @@
 ---
-  - name: Install 7Zip
-    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
-    when: Sevenzip_installed.exists == false
+  # - name: Install 7Zip
+  #   win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
+  #   when: Sevenzip_installed.exists == false
 
   - name: Install Firefox
     win_command: C:\Windows\System32\msiexec.exe /i C:\temp\Firefox.msi /qb /norestart
@@ -12,7 +12,7 @@
     register: result
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_installed.exists == false
 
-  - name: Install Nvidia Drivers
+  - name: Install Nvidia Geforce Experience
     win_command: C:\temp\NvidiaGeforceExperience.exe /s
     register: result
     when: ansible_hostname == "Aurel-Gaming" and Nvidia_Geforce_Experience_installed == false
@@ -55,10 +55,10 @@
     win_command: C:\Windows\System32\msiexec.exe /i C:\temp\Epic.msi /qb /norestart
     when: Epic_installed.exists == false
 
-#Install Bitwarden
-  - name: Install Bitwarden
-    win_command: C:\temp\bitwarden.exe /allusers /S
-    when: Bitwarden_installed.exists == false
+# #Install Bitwarden
+#   - name: Install Bitwarden
+#     win_command: C:\temp\bitwarden.exe /allusers /S
+#     when: Bitwarden_installed.exists == false
 
   - name: Replace Synology Config
     ansible.windows.win_powershell:
@@ -122,7 +122,8 @@
 #Install VLC
   - name: Install VLC
     win_command: C:\temp\vlc.exe /S
-# #Install Rockstar Game Social Club
-#   - name: Install RockStar Game Social Club
-#     win_command: C:\temp\Rockstar.exe /S
+
+#Install Rockstar Game Social Club
+  - name: Install RockStar Game Social Club
+    win_command: C:\temp\Rockstar.exe /S
 
