@@ -8,8 +8,8 @@
     - name: Sync the contents of one directory to another, and remove any files/directories found in destination that do not exist in the source
       community.windows.win_robocopy:
         src: C:\ProgramData
-        dest: M:\ProgramDataTest
-        recurse: yes
+        dest: M:\ProgramData
+        purge: yes
         flags: /XJ /MIR
 
     - name: Delete ProgramData
