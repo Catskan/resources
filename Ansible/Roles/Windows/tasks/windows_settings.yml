@@ -2,10 +2,10 @@
   ##########################################Aurel-Gaming##########################################
     - name: Force ProgramData
       win_shell:
-        mkdir "M:\ProgramData"
+        mkdir "M:\ProgramData1"
         robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramData"
         rmdir "C:\ProgramData"
-        mklink /J "C:\ProgramData" "M:\ProgramData"
+        mklink /J "C:\ProgramData" "M:\ProgramData1"
       vars:
         # become is required to save and retrieve the credentials in the tasks
         ansible_become: yes
