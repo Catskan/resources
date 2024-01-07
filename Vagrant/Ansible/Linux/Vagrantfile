@@ -14,7 +14,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "Ansible" do
   config.vm.provider "docker" do |d, docker|
     d.name = "Ansible"
-    d.image = "catskan/debian-ansible:3"
+    d.image = ENV['image_tag']
     d.env = {
       "ANSIBLE_CONFIG" => "/share/git/resources/Ansible/ansible.cfg"
             }

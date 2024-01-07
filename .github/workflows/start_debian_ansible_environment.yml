@@ -110,7 +110,8 @@ jobs:
           ANSIBLE_INVENTORY: /share/git/resources/Ansible/Inventory/hosts.yaml
         #if: ${{ github.event.inputs.target_os }} == 'Windows'
         run: |
-          cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }} && sudo vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook /share/git/resources/Ansible/main_${{ github.event.inputs.target_os }}_playbook.yml
+          cd ${{ github.workspace }}/Vagrant/Ansible/${{ runner.os }}
+          sudo vagrant docker-exec ${{ env.CONTAINER_NAME }} -- ansible-playbook /share/git/resources/Ansible/main_${{ github.event.inputs.target_os }}_playbook.yml
 
       - name: Delete ${{ env.CONTAINER_NAME }} container
         if: always()
