@@ -11,6 +11,7 @@
         dest: M:\ProgramData
         purge: yes
         flags: /XJ /MIR
+        ignore_errors: true
 
     - name: Delete ProgramData
       ansible.windows.win_file:
