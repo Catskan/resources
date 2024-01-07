@@ -1,6 +1,14 @@
 #Softwares versions
-nvidia_driver_version: '528.24'
-gog_galaxy_version: '2.0.58.4'
+nvidia_driver: '528.24'
+nvidia_geforce_experience: '3.27.0.120'
+synology_drive_client: '3.4.0-15724'
+gog_galaxy: '2.0.73.27'
+captvty: '2.10.6'
+notepad++: '8.6.1'
+crystal_disk_info: '9_2_1'
+keepass: '2.55'
+vlc: '3.0.20'
+
 #Common variables can be used by all Windows hosts
 adk_silent_argument: "/quiet"
 adk_install_dir: 'C:\ADK'

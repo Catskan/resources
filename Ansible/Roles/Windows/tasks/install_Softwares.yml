@@ -55,11 +55,6 @@
     win_command: C:\Windows\System32\msiexec.exe /i C:\temp\Epic.msi /qb /norestart
     when: Epic_installed.exists == false
 
-# #Install Bitwarden
-#   - name: Install Bitwarden
-#     win_command: C:\temp\bitwarden.exe /allusers /S
-#     when: Bitwarden_installed.exists == false
-
   - name: Replace Synology Config
     ansible.windows.win_powershell:
       script: |
@@ -126,4 +121,8 @@
 #Install Rockstar Game Social Club
   - name: Install RockStar Game Social Club
     win_command: C:\temp\Rockstar.exe /S
+
+#Install Keepass
+  - name: Install Keepass
+    win_command: C:\temp\keepass.exe /VERYSILENT
 

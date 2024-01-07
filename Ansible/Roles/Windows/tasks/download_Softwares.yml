@@ -31,7 +31,7 @@
   # Download Nvidia Geforce Experience with win_package
   - name: Download Nvidia Geforce Experience
     win_get_url:
-      url: https://fr.download.nvidia.com/GFE/GFEClient/3.26.0.154/GeForce_Experience_v3.26.0.154.exe
+      url: https://fr.download.nvidia.com/GFE/GFEClient/{{ nvidia_geforce_experience }}/GeForce_Experience_v{{ nvidia_geforce_experience }}.exe
       dest: C:\temp\NvidiaGeforceExperience.exe
       force: yes
     when: ansible_hostname == "Aurel-Gaming"
@@ -57,17 +57,10 @@
       dest: C:\temp\Epic.msi
     when: Epic_installed.exists == false
 
-  #Download Bitwarden 
-  - name: Download the Bitwarden
-    win_get_url:
-      url: https://vault.bitwarden.com/download/?app=desktop&platform=windows
-      dest: C:\temp\bitwarden.exe
-    when: Bitwarden_installed.exists == false
-
   #Download Synology Drive Client 
   - name: Download the Synology Drive Client
     win_get_url:
-      url: https://global.synologydownload.com/download/Utility/SynologyDriveClient/3.3.0-15082/Windows/Installer/Synology%20Drive%20Client-3.3.0-15082.msi?model=DS716%2BII&bays=2&dsm_version=7.2&build_number=64570
+      url: https://global.synologydownload.com/download/Utility/SynologyDriveClient/{{ synology_drive_client }}/Windows/Installer/i686/Synology%20Drive%20Client-{{ synology_drive_client }}-x86.msi
       dest: C:\temp\SynologyDrive.msi
     when: SynoDriveClient_installed.exists == false
 
@@ -81,7 +74,7 @@
   #Download GoG
   - name: Download GoG Galaxy
     win_get_url:
-      url: https://cdn.gog.com/open/galaxy/client/2.0.73.27/setup_galaxy_2.0.73.27.exe
+      url: https://cdn.gog.com/open/galaxy/client/{{ gog_galaxy }}/setup_galaxy_{{ gog_galaxy }}.exe
       dest: C:\temp\GoG.exe
     when: GoG_installed.exists == false
 
@@ -95,7 +88,7 @@
   #Download Captvty
   - name: Download CaptvTY
     win_get_url:
-      url: https://releases.captvty.fr/151836a79873f8f6e6313205bf7f7cbfd0c1655a/captvty-2.9.9.zip
+      url: https://releases.captvty.fr/151836a79873f8f6e6313205bf7f7cbfd0c1655a/captvty-{{ captvty }}.zip
       dest: C:\temp\Captvty.zip
       follow_redirects: yes
     when: ansible_hostname == "W11-VM-Aurel" and Captvty_downloaded.exists == true
@@ -111,7 +104,7 @@
   #Download Notepad++ x64
   - name: Download Notepad++ x64
     win_get_url:
-      url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.4.7/npp.8.4.7.Installer.x64.exe
+      url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v{{ notepad++ }}/npp.{{ notepad++ }}.Installer.x64.exe
       dest: C:\temp\Notepad++.exe
       #follow_redirects: yes
     when: ansible_facts['architecture'] == "64-bit"
@@ -119,7 +112,7 @@
   #Download Notepad++ arm64
   - name: Download Notepad++ arm64
     win_get_url:
-      url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.4.7/npp.8.4.7.Installer.arm64.exe
+      url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v{{ notepad++ }}/npp.{{ notepad++ }}.Installer.arm64.exe
       dest: C:\temp\Notepad++.exe
       #follow_redirects: yes
     when: ansible_facts['architecture'] == "arm64"
@@ -127,7 +120,7 @@
   #Download CrystalDiskInfo
   - name: Download CrystalDiskinfo
     win_get_url:
-      url: https://crystalmark.info/download/zz/CrystalDiskInfo9_1_1.exe
+      url: https://crystalmark.info/download/zz/CrystalDiskInfo{{ crystal_disk_info }}.exe
       dest: C:\temp\Crystaldiskinfo.exe
       #follow_redirects: yes
     #when: ansible_facts['architecture'] == "arm64"
@@ -136,8 +129,12 @@
   #Download VLC
   - name: Download VLC
     win_get_url:
-      url: https://mirror.cyberbits.eu/videolan/vlc/3.0.17.4/win64/vlc-3.0.17.4-win64.exe
+      url: https://opencolo.mm.fcix.net/videolan-ftp/vlc/{{ vlc }}/win64/vlc-{{ vlc }}-win64.exe
       dest: C:\temp\vlc.exe
       #follow_redirects: yes
-
-
+  
+  #Download Keepass
+  - name: Keepass
+    win_get_url:
+      url: https://deac-riga.dl.sourceforge.net/project/keepass/KeePass%202.x/{{ keepass }}/KeePass-{{ keepass}}-Setup.exe
+      dest: C:\temp\keepass.exe
