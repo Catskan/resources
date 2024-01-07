@@ -2,7 +2,7 @@
   ##########################################Aurel-Gaming##########################################- name: Create directory structure
     - name: Create ProgramData structure
       ansible.windows.win_file:
-        path: M:\ProgramDataTest
+        path: M:\ProgramData
         state: directory
 
     - name: Sync the contents of one directory to another, and remove any files/directories found in destination that do not exist in the source
