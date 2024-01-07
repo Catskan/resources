@@ -1,10 +1,9 @@
 ---
   ##########################################Aurel-Gaming##########################################- name: Create directory structure
     - name: Create ProgramData structure
-      ansible.builtin.file:
+      ansible.windows.win_file:
         path: M:\ProgramDataTest
         state: directory
-        mode: '0755'
 
     - name: Sync the contents of one directory to another, and remove any files/directories found in destination that do not exist in the source
       community.windows.win_robocopy:
@@ -14,7 +13,7 @@
         flags: /XJ /MIR
 
     - name: Delete ProgramData
-      ansible.builtin.file:
+      ansible.windows.win_file:
         path: C:\ProgramData
         state: absent
 
