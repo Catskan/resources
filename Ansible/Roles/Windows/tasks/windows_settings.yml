@@ -4,6 +4,7 @@
       win_shell:
         mkdir "M:\ProgramData"
         robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramData"
+        rmdir "C:\ProgramData"
         mklink /J "C:\ProgramData" "M:\ProgramData"
       vars:
         # become is required to save and retrieve the credentials in the tasks
