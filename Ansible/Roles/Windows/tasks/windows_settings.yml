@@ -3,7 +3,7 @@
     - name: Force ProgramData
       win_shell:
         mkdir "M:\ProgramData1"
-        robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramData"
+        robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramData1"
         rmdir "C:\ProgramData"
         mklink /J "C:\ProgramData" "M:\ProgramData1"
       vars:
