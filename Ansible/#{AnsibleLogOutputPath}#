@@ -3015,3 +3015,282 @@ the implicit localhost does not match 'all'
 2024-01-07 15:36:44,607 p=10 u=aurelien n=ansible | PLAY RECAP *********************************************************************
 2024-01-07 15:36:44,608 p=10 u=aurelien n=ansible | aurelien-gaming            : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
 2024-01-07 15:36:44,609 p=10 u=aurelien n=ansible | w11-vm-aurel               : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2024-01-07 15:39:13,740 p=10 u=aurelien n=ansible | PLAY [Main Aurelien Gaming Playbook] *******************************************
+2024-01-07 15:39:13,759 p=10 u=aurelien n=ansible | TASK [Gathering Facts] *********************************************************
+2024-01-07 15:39:16,113 p=10 u=aurelien n=ansible | ok: [aurelien-gaming]
+2024-01-07 15:39:44,252 p=10 u=aurelien n=ansible | fatal: [w11-vm-aurel]: UNREACHABLE! => {"changed": false, "msg": "basic: HTTPConnectionPool(host='192.168.1.193', port=5985): Max retries exceeded with url: /wsman (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0xffff9c030470>, 'Connection to 192.168.1.193 timed out. (connect timeout=30)'))", "unreachable": true}
+2024-01-07 15:39:44,328 p=10 u=aurelien n=ansible | TASK [Print all available facts] ***********************************************
+2024-01-07 15:39:44,681 p=10 u=aurelien n=ansible | ok: [aurelien-gaming] => {
+    "ansible_facts": {
+        "architecture": "64-bit",
+        "architecture2": "x86_64",
+        "bios_date": "10/07/2023",
+        "bios_version": "3404",
+        "date_time": {
+            "date": "2024-01-07",
+            "day": "07",
+            "epoch": "1704642013.01506",
+            "epoch_int": 1704642013,
+            "epoch_local": "1704645613.01506",
+            "hour": "16",
+            "iso8601": "2024-01-07T15:40:13Z",
+            "iso8601_basic": "20240107T164013015056",
+            "iso8601_basic_short": "20240107T164013",
+            "iso8601_micro": "2024-01-07T15:40:13.015056Z",
+            "minute": "40",
+            "month": "01",
+            "second": "13",
+            "time": "16:40:13",
+            "tz": "Romance Standard Time",
+            "tz_offset": "+01:00",
+            "weekday": "Sunday",
+            "weekday_number": "0",
+            "weeknumber": "1",
+            "year": "2024"
+        },
+        "distribution": "Microsoft Windows 11 Pro",
+        "distribution_major_version": "10",
+        "distribution_version": "10.0.22631.0",
+        "domain": "",
+        "env": {
+            "ALLUSERSPROFILE": "C:\\ProgramData",
+            "APPDATA": "M:\\Aurel\\AppData\\Roaming",
+            "COMPUTERNAME": "AUREL-GAMING",
+            "ComSpec": "C:\\Windows\\system32\\cmd.exe",
+            "CommonProgramFiles": "C:\\Program Files\\Common Files",
+            "CommonProgramFiles(x86)": "C:\\Program Files (x86)\\Common Files",
+            "CommonProgramW6432": "C:\\Program Files\\Common Files",
+            "DriverData": "C:\\Windows\\System32\\Drivers\\DriverData",
+            "HOMEDRIVE": "C:",
+            "HOMEPATH": "\\Users\\Aurel",
+            "LOCALAPPDATA": "M:\\Aurel\\AppData\\Local",
+            "LOGONSERVER": "\\\\AUREL-GAMING",
+            "NUMBER_OF_PROCESSORS": "16",
+            "OS": "Windows_NT",
+            "OneDrive": "C:\\Users\\Aurel\\OneDrive",
+            "OneDriveConsumer": "C:\\Users\\Aurel\\OneDrive",
+            "PATHEXT": ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL",
+            "PROCESSOR_ARCHITECTURE": "AMD64",
+            "PROCESSOR_IDENTIFIER": "AMD64 Family 25 Model 33 Stepping 0, AuthenticAMD",
+            "PROCESSOR_LEVEL": "25",
+            "PROCESSOR_REVISION": "2100",
+            "PROMPT": "$P$G",
+            "PSExecutionPolicyPreference": "Unrestricted",
+            "PSModulePath": "M:\\Aurel\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules;C:\\Program Files (x86)\\Windows Kits\\10\\Microsoft Application Virtualization\\Sequencer\\AppvPkgConverter;C:\\Program Files (x86)\\Windows Kits\\10\\Microsoft Application Virtualization\\Sequencer\\AppvSequencer;C:\\Program Files (x86)\\Windows Kits\\10\\Microsoft Application Virtualization",
+            "PUBLIC": "C:\\Users\\Public",
+            "Path": "C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\NVIDIA Corporation\\NVIDIA NvDLISR;C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\;C:\\Program Files (x86)\\Windows Kits\\10\\Microsoft Application Virtualization\\Sequencer\\;C:\\Users\\Aurel\\AppData\\Local\\Microsoft\\WindowsApps",
+            "ProgramData": "C:\\ProgramData",
+            "ProgramFiles": "C:\\Program Files",
+            "ProgramFiles(x86)": "C:\\Program Files (x86)",
+            "ProgramW6432": "C:\\Program Files",
+            "SystemDrive": "C:",
+            "SystemRoot": "C:\\Windows",
+            "TEMP": "C:\\Users\\Aurel\\AppData\\Local\\Temp",
+            "TMP": "C:\\Users\\Aurel\\AppData\\Local\\Temp",
+            "USERDOMAIN": "AUREL-GAMING",
+            "USERDOMAIN_ROAMINGPROFILE": "AUREL-GAMING",
+            "USERNAME": "Aurel",
+            "USERPROFILE": "C:\\Users\\Aurel",
+            "VBOX_MSI_INSTALL_PATH": "C:\\Program Files\\Oracle\\VirtualBox",
+            "windir": "C:\\Windows"
+        },
+        "fqdn": "Aurel-Gaming",
+        "gather_subset": [
+            "all"
+        ],
+        "hostname": "Aurel-Gaming",
+        "interfaces": [
+            {
+                "connection_name": "Ethernet",
+                "default_gateway": null,
+                "dns_domain": null,
+                "interface_index": 2,
+                "interface_name": "Intel(R) Ethernet Controller I225-V",
+                "ipv4": {
+                    "address": "169.254.157.33",
+                    "prefix": "16"
+                },
+                "ipv6": {
+                    "address": "fe80::8d11:1c07:c0ef:4f53%2",
+                    "prefix": "64"
+                },
+                "macaddress": "04:42:1A:EC:63:92",
+                "mtu": 1500,
+                "speed": -1e-06
+            },
+            {
+                "connection_name": "Ethernet 2",
+                "default_gateway": null,
+                "dns_domain": null,
+                "interface_index": 18,
+                "interface_name": "VirtualBox Host-Only Ethernet Adapter",
+                "ipv4": {
+                    "address": "192.168.56.1",
+                    "prefix": "24"
+                },
+                "ipv6": {
+                    "address": "fe80::5356:c05:ecd6:baed%18",
+                    "prefix": "64"
+                },
+                "macaddress": "0A:00:27:00:00:12",
+                "mtu": 1500,
+                "speed": 1000
+            },
+            {
+                "connection_name": "Local Area Connection* 9",
+                "default_gateway": null,
+                "dns_domain": null,
+                "interface_index": 11,
+                "interface_name": "Microsoft Wi-Fi Direct Virtual Adapter",
+                "ipv4": {
+                    "address": "169.254.37.197",
+                    "prefix": "16"
+                },
+                "ipv6": {
+                    "address": "fe80::6c59:3572:6d17:e614%11",
+                    "prefix": "64"
+                },
+                "macaddress": "B6:B5:B6:92:E3:CF",
+                "mtu": 1500,
+                "speed": -1e-06
+            },
+            {
+                "connection_name": "Local Area Connection* 10",
+                "default_gateway": null,
+                "dns_domain": null,
+                "interface_index": 9,
+                "interface_name": "Microsoft Wi-Fi Direct Virtual Adapter #2",
+                "ipv4": {
+                    "address": "169.254.198.60",
+                    "prefix": "16"
+                },
+                "ipv6": {
+                    "address": "fe80::4c11:dc4c:ae63:5987%9",
+                    "prefix": "64"
+                },
+                "macaddress": "B6:B5:B6:92:F3:DF",
+                "mtu": 1500,
+                "speed": -1e-06
+            },
+            {
+                "connection_name": "Wi-Fi",
+                "default_gateway": "192.168.1.254",
+                "dns_domain": null,
+                "interface_index": 16,
+                "interface_name": "RZ608 Wi-Fi 6E 80MHz",
+                "ipv4": {
+                    "address": "192.168.1.4",
+                    "prefix": "24"
+                },
+                "ipv6": {},
+                "macaddress": "B4:B5:B6:92:C3:EF",
+                "mtu": 1500,
+                "speed": 51.6
+            }
+        ],
+        "ip_addresses": [
+            "fe80::8d11:1c07:c0ef:4f53%2",
+            "169.254.157.33",
+            "fe80::5356:c05:ecd6:baed%18",
+            "192.168.56.1",
+            "fe80::6c59:3572:6d17:e614%11",
+            "169.254.37.197",
+            "fe80::4c11:dc4c:ae63:5987%9",
+            "169.254.198.60",
+            "192.168.1.4"
+        ],
+        "kernel": "10.0.22631.0",
+        "lastboot": "2024-01-07 11:01:52Z",
+        "machine_id": "S-1-5-21-84264109-3653831174-1381879622",
+        "memfree_mb": 25874,
+        "memtotal_mb": 32682,
+        "module_setup": true,
+        "netbios_name": "AUREL-GAMING",
+        "nodename": "Aurel-Gaming",
+        "os_family": "Windows",
+        "os_installation_type": "Client",
+        "os_name": "Microsoft Windows 11 Pro",
+        "os_product_type": "workstation",
+        "owner_contact": "",
+        "owner_name": "Aurel",
+        "pagefilefree_mb": 1990,
+        "pagefiletotal_mb": 2048,
+        "powershell_version": 5,
+        "processor": [
+            "0",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "1",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "2",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "3",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "4",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "5",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "6",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "7",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "8",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "9",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "10",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "11",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "12",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "13",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "14",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             ",
+            "15",
+            "AuthenticAMD",
+            "AMD Ryzen 7 5800X 8-Core Processor             "
+        ],
+        "processor_cores": 8,
+        "processor_count": 1,
+        "processor_threads_per_core": 2,
+        "processor_vcpus": 16,
+        "product_name": "System Product Name",
+        "product_serial": "System Serial Number",
+        "reboot_pending": false,
+        "swaptotal_mb": 0,
+        "system": "Win32NT",
+        "system_description": "",
+        "system_vendor": "ASUS",
+        "uptime_seconds": 20301,
+        "user_dir": "C:\\Users\\Aurel",
+        "user_gecos": "",
+        "user_id": "Aurel",
+        "user_sid": "S-1-5-21-84264109-3653831174-1381879622-1001",
+        "virtualization_role": "NA",
+        "virtualization_type": "NA",
+        "windows_domain": "WORKGROUP",
+        "windows_domain_member": false,
+        "windows_domain_role": "Stand-alone workstation"
+    }
+}
+2024-01-07 15:39:44,696 p=10 u=aurelien n=ansible | TASK [Force ProgramData] *******************************************************
+2024-01-07 15:39:46,417 p=10 u=aurelien n=ansible | fatal: [aurelien-gaming]: FAILED! => {"changed": true, "cmd": "mkdir \"M:\\ProgramData1\" robocopy /XJ /MIR \"C:\\ProgramData\" \"M:\\ProgramData1\" rmdir \"C:\\ProgramData\" mklink /J \"C:\\ProgramData\" \"M:\\ProgramData1\"", "delta": "0:00:00.209053", "end": "2024-01-07 15:40:44.068116", "msg": "non-zero return code", "rc": 1, "start": "2024-01-07 15:40:43.859062", "stderr": "mkdir : A positional parameter cannot be found that accepts argument 'robocopy'.\r\nAt line:1 char:65\r\n+ ... ing $false; mkdir \"M:\\ProgramData1\" robocopy /XJ /MIR \"C:\\ProgramData ...\r\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : InvalidArgument: (:) [mkdir], ParameterBindingException\r\n    + FullyQualifiedErrorId : PositionalParameterNotFound,mkdir", "stderr_lines": ["mkdir : A positional parameter cannot be found that accepts argument 'robocopy'.", "At line:1 char:65", "+ ... ing $false; mkdir \"M:\\ProgramData1\" robocopy /XJ /MIR \"C:\\ProgramData ...", "+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "    + CategoryInfo          : InvalidArgument: (:) [mkdir], ParameterBindingException", "    + FullyQualifiedErrorId : PositionalParameterNotFound,mkdir"], "stdout": "", "stdout_lines": []}
+2024-01-07 15:39:46,423 p=10 u=aurelien n=ansible | PLAY RECAP *********************************************************************
+2024-01-07 15:39:46,425 p=10 u=aurelien n=ansible | aurelien-gaming            : ok=2    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2024-01-07 15:39:46,426 p=10 u=aurelien n=ansible | w11-vm-aurel               : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   

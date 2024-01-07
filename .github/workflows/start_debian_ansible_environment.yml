@@ -6,7 +6,7 @@ on:
       image_tag:
         description: Tag of the Debian-Ansible image to deploy
         type: string
-        default: 'catskan/debian-ansible:3'
+        default: 'catskan/debian-ansible:ARM64-35'
         required: true
       target_os:
         description: Target OS to use ansible

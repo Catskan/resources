@@ -1,9 +1,13 @@
 ---
-  ##########################################Aurel-Gaming##########################################
+  ##########################################Aurel-Gaming##########################################- name: Create directory structure
+    - name: Create ProgramData structure
+      ansible.windows.win_file:
+        path: M:\ProgramDataTest
+        state: directory
+        
     - name: Force ProgramData
       win_shell:
-        mkdir "M:\ProgramData1"
-        robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramData1"
+        robocopy /XJ /MIR "C:\ProgramData" "M:\ProgramDataTest"
         rmdir "C:\ProgramData"
         mklink /J "C:\ProgramData" "M:\ProgramData1"
       vars:
