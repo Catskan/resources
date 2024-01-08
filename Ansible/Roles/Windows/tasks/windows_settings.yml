@@ -1,5 +1,5 @@
 ---
-  ##########################################Aurel-Gaming##########################################- name: Create directory structure
+  ##########################################Aurel-Gaming##########################################
     - name: Create ProgramData structure
       ansible.windows.win_file:
         path: M:\ProgramData
