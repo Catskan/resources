@@ -42,13 +42,6 @@
         - "{{ common_templates_directory }}"
         - "{{ oemLinks_directory }}"
 
-    - name: Create new ProgramData
-      ansible.windows.win_file:
-        path: "{{ new_WindowsApps_directory}}"
-        state: directory
-      
-
-
 ###########################################Change location in HKCU:Shell Folders###########################################
     - name: Change location of User\Desktop
       ansible.windows.win_regedit:
