@@ -24,19 +24,6 @@
         - "{{ savedGames_user_directory }}"
         - "{{ appData_user_directory }}"
 
-    - name: Create new ProgramData
-      ansible.windows.win_file:
-        path: "{{ item }}"
-        state: directory
-      loop:
-        - "{{ common_adminTools_directory }}"
-        - "{{ common_appData_directory }}"
-        - "{{ common_programs_directory }}"
-        - "{{ common_startMenu_directory }}"
-        - "{{ common_Startup_directory }}"
-        - "{{ common_templates_directory }}"
-        - "{{ oemLinks_directory }}"
-
 ###########################################Change location in HKCU:User Shell Folders###########################################
     - name: Change location of User\Desktop
       ansible.windows.win_regedit:
