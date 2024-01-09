@@ -132,7 +132,7 @@
 
   - name: Create Keepass Shortcut
     community.windows.win_shortcut:
-      src: D:\Keepass\Keepass.exe
+      src: C:\Keepass\Keepass.exe
       dest: '{{ startMenu_user_directory }}\Keepass.lnk'
 
   - name: Create an Playnite shortcut
