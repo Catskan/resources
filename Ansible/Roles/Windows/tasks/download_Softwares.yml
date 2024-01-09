@@ -137,4 +137,4 @@
   - name: Keepass
     win_get_url:
       url: https://kumisystems.dl.sourceforge.net/project/keepass/KeePass%202.x/{{ keepass }}/KeePass-{{ keepass }}}}.zip
-      dest: C:\temp\keepass.exe
+      dest: C:\temp\keepass.zip
