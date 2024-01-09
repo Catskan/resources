@@ -504,3 +504,9 @@
         name: .\{{ ansible_user }}
         data: 1
         type: dword
+
+#Reboot computer
+    - name: Reboot Gaming
+      ansible.windows.win_reboot:
+          test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+      when: inventory_hostname == "aurelien-gaming" and old_hostname.changed == true
