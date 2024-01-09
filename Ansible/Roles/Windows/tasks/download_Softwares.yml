@@ -136,5 +136,5 @@
   #Download Keepass
   - name: Keepass
     win_get_url:
-      url: https://deac-riga.dl.sourceforge.net/project/keepass/KeePass%202.x/{{ keepass }}/KeePass-{{ keepass}}-Setup.exe
-      dest: C:\temp\keepass.exe
+      url: https://kumisystems.dl.sourceforge.net/project/keepass/KeePass%202.x/{{ keepass }}/KeePass-{{ keepass }}}}.zip
+      dest: D:\temp\keepass.exe

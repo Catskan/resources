@@ -39,8 +39,8 @@
     - name: Include settings_softwares
       ansible.builtin.import_tasks: Roles/Common/tasks/settings_softwares.yml
 
-    - name: Include uninstall_softwares
-      ansible.builtin.import_tasks: Roles/Windows/tasks/uninstall_Softwares.yml
+    # - name: Include uninstall_softwares
+    #   ansible.builtin.import_tasks: Roles/Windows/tasks/uninstall_Softwares.yml
 
     - name: Include Check_Softwares_versions
       ansible.builtin.import_tasks: Roles/Windows/tasks/check_softwares_versions.yml

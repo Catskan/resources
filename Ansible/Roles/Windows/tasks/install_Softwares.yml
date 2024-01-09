@@ -123,9 +123,22 @@
 #     win_command: C:\temp\Rockstar.exe /S
 
 #Install Keepass
-  - name: Install Keepass
-    win_command: C:\temp\keepass.exe /VERYSILENT
+  - name: Unzip Keepass
+    community.windows.win_unzip:
+      src: C:\temp\Keepass.zip
+      dest: D:\Keepass
+      recurse: yes
+      delete_archive: yes
 
+  - name: Create Keepass Shortcut
+    community.windows.win_shortcut:
+      src: D:\Keepass\Keepass.exe
+      dest: '{{ startMenu_user_directory }}\Keepass.lnk'
+
+  - name: Create an Playnite shortcut
+    community.windows.win_shortcut:
+      src: M:\Playnite\Playnite.DesktopApp.exe
+      dest: '{{ startMenu_user_directory }}\Playnite.lnk'
 
   - name: Remove Temp directory
     ansible.windows.win_file:

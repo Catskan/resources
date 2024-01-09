@@ -42,220 +42,220 @@
         - "{{ common_templates_directory }}"
         - "{{ oemLinks_directory }}"
 
-###########################################Change location in HKCU:Shell Folders###########################################
+###########################################Change location in HKCU:User Shell Folders###########################################
     - name: Change location of User\Desktop
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ desktop_user_directory_reg_key_name }}"
         data: "{{ desktop_user_directory }}"
         type: expandstring
         
     - name: Change location of User\Documents
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ documents_user_directory_reg_key_name }}"
         data: "{{ documents_user_directory }}"
         type: expandstring
 
     - name: Change location of User\Music
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ myMusic_user_directory_reg_key_name }}"
         data: "{{ myMusic_user_directory }}"
         type: expandstring
 
     - name: Change location of User\Pictures
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ myPictures_user_directory_reg_key_name }}"
         data: "{{ myPictures_user_directory }}"
         type: expandstring
 
     - name: Change location of User\Videos
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ myVideos_user_directory_reg_key_name }}"
         data: "{{ myVideos_user_directory }}"
         type: expandstring
 
     - name: Change location of User\Saved Games
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ savedGames_user_directory_reg_key_name }}"
         data: "{{ savedGames_user_directory }}"
         type: expandstring
     
     - name: Change location of User\AppData
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ appData_user_directory_reg_key_name }}"
         data: "{{ appData_user_directory }}"
         type: expandstring
 
     - name: Change location of User\AppData\Local
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ localAppData_user_directory_reg_key_name }}"
         data: "{{ localAppData_user_directory }}"
         type: expandstring
 
-    - name: Change location of CD Burning
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ cdBurning_user_directory_reg_key_name }}"
-        data: "{{ cdBurning_user_directory }}"
-        type: expandstring
+    # - name: Change location of CD Burning
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ cdBurning_user_directory_reg_key_name }}"
+    #     data: "{{ cdBurning_user_directory }}"
+    #     type: expandstring
 
-    - name: Change location of User\Libraries
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ libraries_user_directory_reg_key_name }}"
-        data: "{{ libraries_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Libraries
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ libraries_user_directory_reg_key_name }}"
+    #     data: "{{ libraries_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\History
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ history_user_directory_reg_key_name }}"
         data: "{{ history_user_directory }}"
         type: expandstring
 
     - name: Change location of User\NetHood
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ netHood_user_directory_reg_key_name }}"
         data: "{{ netHood_user_directory }}"
         type: expandstring
 
-    - name: Change location of User\Contacts
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ contacts_user_directory_reg_key_name }}"
-        data: "{{ contacts_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Contacts
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ contacts_user_directory_reg_key_name }}"
+    #     data: "{{ contacts_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\Send To
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ sendTo_user_directory_reg_key_name }}"
         data: "{{ sendTo_user_directory }}"
         type: expandstring
 
-    - name: Change location of User\RoamingTiles
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ roamingTiles_user_directory_reg_key_name }}"
-        data: "{{ roamingTiles_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\RoamingTiles
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+    #     name: "{{ roamingTiles_user_directory_reg_key_name }}"
+    #     data: "{{ roamingTiles_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\Cookies
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ cookies_user_directory_reg_key_name }}"
         data: "{{ cookies_user_directory }}"
         type: expandstring
 
     - name: Change location of User\Favorites
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ favorites_user_directory_reg_key_name }}"
         data: "{{ favorites_user_directory }}"
         type: expandstring
 
     - name: Change location of User\My Music
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ myMusic_user_directory_reg_key_name }}"
         data: "{{ myMusic_user_directory }}"
         type: expandstring
 
-    - name: Change location of User\Start Menu\Programs
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ startMenu_Programs_user_directory_reg_key_name }}"
-        data: "{{ startMenu_Programs_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Start Menu\Programs
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ startMenu_Programs_user_directory_reg_key_name }}"
+    #     data: "{{ startMenu_Programs_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\Start Menu
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ startMenu_user_directory_reg_key_name }}"
         data: "{{ startMenu_user_directory }}"
         type: expandstring
 
     - name: Change location of User\Recent
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ recent_user_directory_reg_key_name }}"
         data: "{{ recent_user_directory }}"
         type: expandstring
 
     - name: Change location of User\PrintHood
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ printHood_user_directory_reg_key_name }}"
         data: "{{ printHood_user_directory }}"
         type: expandstring
 
-    - name: Change location of User\Searches
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ searches_user_directory_reg_key_name }}"
-        data: "{{ searches_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Searches
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ searches_user_directory_reg_key_name }}"
+    #     data: "{{ searches_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\Downloads
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ downloads_user_directory_reg_key_name }}"
         data: "{{ downloads_user_directory }}"
         type: expandstring
 
-    - name: Change location of User\Local Low
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ appdata_local_Low_reg_key_name }}"
-        data: "{{ appData_Local_Low_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Local Low
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ appdata_local_Low_reg_key_name }}"
+    #     data: "{{ appData_Local_Low_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\Startup
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ startup_user_directory_reg_key_name }}"
         data: "{{ startup_user_directory }}"
         type: expandstring
 
-    - name: Change location of User\adminTools
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ adminTools_user_directory_reg_key_name }}"
-        data: "{{ adminTools_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\adminTools
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ adminTools_user_directory_reg_key_name }}"
+    #     data: "{{ adminTools_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\Documents
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ documents_user_directory_reg_key_name }}"
         data: "{{ documents_user_directory }}"
         type: expandstring
 
-    - name: Change location of User\Link
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ links_user_directory_reg_key_name }}"
-        data: "{{ links_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Link
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ links_user_directory_reg_key_name }}"
+    #     data: "{{ links_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\Cache
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ cache_user_directory_reg_key_name }}"
         data: "{{ cache_user_directory }}"
         type: expandstring
 
     - name: Change location of User\Templates
       ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
         name: "{{ templates_user_directory_reg_key_name }}"
         data: "{{ templates_user_directory }}"
         type: expandstring
@@ -268,250 +268,246 @@
         type: expandstring
 
 
-###########################################Change location in HKCU:User Shell Folders###########################################
-    - name: Change location of User\Downloads (User Shell Folder)
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ downloads_user_directory_reg_key_name }}"
-        data: "{{ downloads_user_directory }}"
-        type: expandstring
+# ###########################################Change location in HKCU:User User Shell Folders###########################################
+#     - name: Change location of User\Downloads (User Shell Folder)
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ downloads_user_directory_reg_key_name }}"
+#         data: "{{ downloads_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\AppData(User Shell Folder)
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ appData_user_directory_reg_key_name }}"
-        data: "{{ appData_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\AppData(User Shell Folder)
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ appData_user_directory_reg_key_name }}"
+#         data: "{{ appData_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Cache
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ cache_user_directory_reg_key_name }}"
-        data: "{{ cache_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Cache
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ cache_user_directory_reg_key_name }}"
+#         data: "{{ cache_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Cookies
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ cookies_user_directory_reg_key_name }}"
-        data: "{{ cookies_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Cookies
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ cookies_user_directory_reg_key_name }}"
+#         data: "{{ cookies_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Desktop
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ desktop_user_directory_reg_key_name }}"
-        data: "{{ desktop_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Desktop
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ desktop_user_directory_reg_key_name }}"
+#         data: "{{ desktop_user_directory }}"
+#         type: expandstring
         
-    - name: Change location of User\Documents
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ documents_user_directory_reg_key_name }}"
-        data: "{{ documents_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Documents
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ documents_user_directory_reg_key_name }}"
+#         data: "{{ documents_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Music
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ myMusic_user_directory_reg_key_name }}"
-        data: "{{ myMusic_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Music
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ myMusic_user_directory_reg_key_name }}"
+#         data: "{{ myMusic_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Pictures
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ myPictures_user_directory_reg_key_name }}"
-        data: "{{ myPictures_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Pictures
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ myPictures_user_directory_reg_key_name }}"
+#         data: "{{ myPictures_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Videos
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ myVideos_user_directory_reg_key_name }}"
-        data: "{{ myVideos_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Videos
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ myVideos_user_directory_reg_key_name }}"
+#         data: "{{ myVideos_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\AppData\Local
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ localAppData_user_directory_reg_key_name }}"
-        data: "{{ localAppData_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\AppData\Local
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ localAppData_user_directory_reg_key_name }}"
+#         data: "{{ localAppData_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\History
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ history_user_directory_reg_key_name }}"
-        data: "{{ history_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\History
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ history_user_directory_reg_key_name }}"
+#         data: "{{ history_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Favorites
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ favorites_user_directory_reg_key_name }}"
-        data: "{{ favorites_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Favorites
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ favorites_user_directory_reg_key_name }}"
+#         data: "{{ favorites_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\PrintHood
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ printHood_user_directory_reg_key_name }}"
-        data: "{{ printHood_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\PrintHood
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ printHood_user_directory_reg_key_name }}"
+#         data: "{{ printHood_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\NetHood
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ netHood_user_directory_reg_key_name }}"
-        data: "{{ netHood_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\NetHood
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ netHood_user_directory_reg_key_name }}"
+#         data: "{{ netHood_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Start Menu\Programs
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ startMenu_Programs_user_directory_reg_key_name }}"
-        data: "{{ startMenu_Programs_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Start Menu\Programs
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ startMenu_Programs_user_directory_reg_key_name }}"
+#         data: "{{ startMenu_Programs_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Start Menu
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ startMenu_user_directory_reg_key_name }}"
-        data: "{{ startMenu_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Start Menu
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ startMenu_user_directory_reg_key_name }}"
+#         data: "{{ startMenu_user_directory }}"
+#         type: expandstring
   
-    - name: Change location of User\Recent
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ recent_user_directory_reg_key_name }}"
-        data: "{{ recent_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Recent
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ recent_user_directory_reg_key_name }}"
+#         data: "{{ recent_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Send To
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ sendTo_user_directory_reg_key_name }}"
-        data: "{{ sendTo_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Send To
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ sendTo_user_directory_reg_key_name }}"
+#         data: "{{ sendTo_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Startup
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ startup_user_directory_reg_key_name }}"
-        data: "{{ startup_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Startup
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ startup_user_directory_reg_key_name }}"
+#         data: "{{ startup_user_directory }}"
+#         type: expandstring
 
-    - name: Change location of User\Templates
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ templates_user_directory_reg_key_name }}"
-        data: "{{ templates_user_directory }}"
-        type: expandstring
+#     - name: Change location of User\Templates
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ templates_user_directory_reg_key_name }}"
+#         data: "{{ templates_user_directory }}"
+#         type: expandstring
 
-    - name: Enable Windows Explorer Libraries
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Classes\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}
-        name: System.IsPinnedToNameSpaceTree
-        data: 1
-        type: dword
-###########################################Change location in HKLM:Shell Folders###########################################
-    - name: Change location of Common Administrative Tools
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ common_adminTools_reg_key_name }}"
-        data: "{{ common_adminTools_directory }}"
-        type: expandstring
+#     - name: Enable Windows Explorer Libraries
+#       ansible.windows.win_regedit:
+#         path: HKCU:\Software\Classes\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}
+#         name: System.IsPinnedToNameSpaceTree
+#         data: 1
+#         type: dword
 
-    - name: Change location of Program Data
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ common_appData_reg_key_name }}"
-        data: "{{ common_appData_directory }}"
-        type: expandstring
+# ###########################################Change location in HKLM:User Shell Folders###########################################
+#     - name: Change location of Common Administrative Tools
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+#         name: "{{ common_adminTools_reg_key_name }}"
+#         data: "{{ common_adminTools_directory }}"
+#         type: expandstring
 
-    - name: Change location of Common Programs
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ common_programs_reg_key_name }}"
-        data: "{{ common_programs_directory }}"
-        type: expandstring
+#     - name: Change location of Program Data
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+#         name: "{{ common_appData_reg_key_name }}"
+#         data: "{{ common_appData_directory }}"
+#         type: expandstring
 
-    - name: Change location of Common  StartMenu
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ common_startMenu_reg_key_name }}"
-        data: "{{ common_startMenu_directory }}"
-        type: expandstring
+#     - name: Change location of Common Programs
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+#         name: "{{ common_programs_reg_key_name }}"
+#         data: "{{ common_programs_directory }}"
+#         type: expandstring
 
-    - name: Change location of Common Startup
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ common_startup_reg_key_name }}"
-        data: "{{ common_Startup_directory }}"
-        type: expandstring
+#     - name: Change location of Common  StartMenu
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+#         name: "{{ common_startMenu_reg_key_name }}"
+#         data: "{{ common_startMenu_directory }}"
+#         type: expandstring
 
-    - name: Change location of Common Templates
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ common_templates_reg_key_name }}"
-        data: "{{ common_templates_directory }}"
-        type: expandstring
+#     - name: Change location of Common Startup
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+#         name: "{{ common_startup_reg_key_name }}"
+#         data: "{{ common_Startup_directory }}"
+#         type: expandstring
 
-    - name: Change location of OEM Links
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
-        name: "{{ oemLinks_reg_key_name }}"
-        data: "{{ oemLinks_directory }}"
-        type: expandstring
+#     - name: Change location of Common Templates
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+#         name: "{{ common_templates_reg_key_name }}"
+#         data: "{{ common_templates_directory }}"
+#         type: expandstring
 
-###########################################Change location in HKLM:User Shell Folders###########################################
-    - name: Change location of Common Administrative Tools
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ common_adminTools_reg_key_name }}"
-        data: "{{ common_adminTools_directory }}"
-        type: expandstring
+#     - name: Change location of OEM Links
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+#         name: "{{ oemLinks_reg_key_name }}"
+#         data: "{{ oemLinks_directory }}"
+#         type: expandstring
 
-    - name: Change location of Program Data
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ common_appData_reg_key_name }}"
-        data: "{{ common_appData_directory }}"
-        type: expandstring
+# ###########################################Change location in HKLM:User User Shell Folders###########################################
+#     - name: Change location of Common Administrative Tools
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ common_adminTools_reg_key_name }}"
+#         data: "{{ common_adminTools_directory }}"
+#         type: expandstring
 
-    - name: Change location of Common Programs
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ common_programs_reg_key_name }}"
-        data: "{{ common_programs_directory }}"
-        type: expandstring
+#     - name: Change location of Program Data
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ common_appData_reg_key_name }}"
+#         data: "{{ common_appData_directory }}"
+#         type: expandstring
 
-    - name: Change location of Common StartMenu
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ common_startMenu_reg_key_name }}"
-        data: "{{ common_startMenu_directory }}"
-        type: expandstring
+#     - name: Change location of Common Programs
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ common_programs_reg_key_name }}"
+#         data: "{{ common_programs_directory }}"
+#         type: expandstring
 
-    - name: Change location of Common Startup
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ common_startup_reg_key_name }}"
-        data: "{{ common_Startup_directory }}"
-        type: expandstring
+#     - name: Change location of Common StartMenu
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ common_startMenu_reg_key_name }}"
+#         data: "{{ common_startMenu_directory }}"
+#         type: expandstring
 
-    - name: Change location of Common Templates
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ common_templates_reg_key_name }}"
-        data: "{{ common_templates_directory }}"
-        type: expandstring
+#     - name: Change location of Common Startup
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ common_startup_reg_key_name }}"
+#         data: "{{ common_Startup_directory }}"
+#         type: expandstring
 
-    - name: Create an application shortcut for an executable in PATH to your desktop
-      community.windows.win_shortcut:
-        src: D:\Playnite\Playnite.DesktopApp.exe
-        dest: '{{ desktop_user_directory }}\Playnite.lnk'
+#     - name: Change location of Common Templates
+#       ansible.windows.win_regedit:
+#         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User User Shell Folders
+#         name: "{{ common_templates_reg_key_name }}"
+#         data: "{{ common_templates_directory }}"
+#         type: expandstring
 
     - name: Create System VSS
       ansible.windows.win_regedit:

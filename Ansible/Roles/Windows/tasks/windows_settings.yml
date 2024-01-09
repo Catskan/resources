@@ -99,34 +99,34 @@
       when: inventory_hostname == "w11-vm-aurel" and old_hostname.changed == true
 
 
-  ##########################################Mount WebDAV##########################################
-    - name: Create mapped drive with credentials and save the username and password
-      block:
-      - name: Save the network credentials required for the mapped drive
-        community.windows.win_credential:
-          name: nas.eonelia.cloud
-          type: generic_password
-          username: '{{ nas_username }}'
-          secret: '{{ nas_password }}'
-          state: present
-          persistence: enterprise
-      # - name: Create a mapped drive that requires authentication
-      #   win_mapped_drive:
-      #     letter: W
-      #     path: '\\{{ nas_url }}@SSL@8171\Aurelien'
-      #     state: present
-      vars:
-        # become is required to save and retrieve the credentials in the tasks
-        ansible_become: yes
-        ansible_become_method: runas
-        ansible_become_user: '{{ ansible_user }}'
-        ansible_become_pass: '{{ ansible_password }}'
+  # ##########################################Mount WebDAV##########################################
+  #   - name: Create mapped drive with credentials and save the username and password
+  #     block:
+  #     - name: Save the network credentials required for the mapped drive
+  #       community.windows.win_credential:
+  #         name: nas.eonelia.cloud
+  #         type: generic_password
+  #         username: '{{ nas_username }}'
+  #         secret: '{{ nas_password }}'
+  #         state: present
+  #         persistence: enterprise
+  #     # - name: Create a mapped drive that requires authentication
+  #     #   win_mapped_drive:
+  #     #     letter: W
+  #     #     path: '\\{{ nas_url }}@SSL@8171\Aurelien'
+  #     #     state: present
+  #     vars:
+  #       # become is required to save and retrieve the credentials in the tasks
+  #       ansible_become: yes
+  #       ansible_become_method: runas
+  #       ansible_become_user: '{{ ansible_user }}'
+  #       ansible_become_pass: '{{ ansible_password }}'
 
     - name: Save Microsoft Account Credentials to Credentials Store
       block:
       - name: Save the network credentials required for the mapped drive
         community.windows.win_credential:
-          name: 'MicrosoftAccount:user=aurel130492@gmail.com'
+          name: 'MicrosoftAccount:user=a.busutil@icloud.com'
           type: generic_password
           username: '{{ microsoft_account_email }}'
           secret: '{{ microsoft_account_password }}'
