@@ -122,19 +122,6 @@
 #   - name: Install RockStar Game Social Club
 #     win_command: C:\temp\Rockstar.exe /S
 
-#Install Keepass
-  - name: Unzip Keepass
-    community.windows.win_unzip:
-      src: C:\temp\Keepass.zip
-      dest: D:\Keepass
-      recurse: yes
-      delete_archive: yes
-
-  - name: Create Keepass Shortcut
-    community.windows.win_shortcut:
-      src: C:\Keepass\Keepass.exe
-      dest: '{{ startMenu_user_directory }}\Keepass.lnk'
-
   - name: Create an Playnite shortcut
     community.windows.win_shortcut:
       src: M:\Playnite\Playnite.DesktopApp.exe

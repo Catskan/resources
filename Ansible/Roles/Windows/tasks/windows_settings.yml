@@ -5,38 +5,11 @@
         name: WinRM
         start_mode: delayed
 
-#Change hostname
-    - name: Change Gaming computer hostname
-      ansible.windows.win_hostname:
-        name: "{{ aurel_gaming_computer_hostname }}"
-      register: old_hostname
-      when: inventory_hostname == "aurelien-gaming"
-      
-#Reboot computer
-    - name: Reboot Gaming
-      ansible.windows.win_reboot:
-          test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
-      when: inventory_hostname == "aurelien-gaming" and old_hostname.changed == true
-
 #Change power plan
     - name: Change power plan to high performance
       community.windows.win_power_plan:
         name: high performance
       when: inventory_hostname == "aurelien-gaming"
-
-#Set auto logon
-    - name: Set autologon for Aurel
-      community.windows.win_auto_logon:
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_password }}"
-      #when: inventory_hostname == "aurelien-gaming"
-
-#Disable password expiration
-    - name: Disable password expiration of "{{ ansible_user }}"
-      ansible.windows.win_user:
-        name: "{{ ansible_user }}"
-        password_never_expires: yes
-
 
 #Set RDP
     - name: Allow RDP TSConnection
@@ -122,21 +95,21 @@
   #       ansible_become_user: '{{ ansible_user }}'
   #       ansible_become_pass: '{{ ansible_password }}'
 
-    - name: Save Microsoft Account Credentials to Credentials Store
-      block:
-      - name: Save the network credentials required for the mapped drive
-        community.windows.win_credential:
-          name: 'MicrosoftAccount:user=a.busutil@icloud.com'
-          type: generic_password
-          username: '{{ microsoft_account_email }}'
-          secret: '{{ microsoft_account_password }}'
-          state: present
-          persistence: local
-      vars:
-        ansible_become: yes
-        ansible_become_method: runas
-        ansible_become_user: '{{ ansible_user }}'
-        ansible_become_pass: '{{ ansible_password }}'
+    # - name: Save Microsoft Account Credentials to Credentials Store
+    #   block:
+    #   - name: Save the network credentials required for the mapped drive
+    #     community.windows.win_credential:
+    #       name: 'MicrosoftAccount:user=a.busutil@icloud.com'
+    #       type: generic_password
+    #       username: '{{ microsoft_account_email }}'
+    #       secret: '{{ microsoft_account_password }}'
+    #       state: present
+    #       persistence: local
+    #   vars:
+    #     ansible_become: yes
+    #     ansible_become_method: runas
+    #     ansible_become_user: '{{ ansible_user }}'
+    #     ansible_become_pass: '{{ ansible_password }}'
 
     - name: Enable WakeOnMagic Packet
       win_shell:
