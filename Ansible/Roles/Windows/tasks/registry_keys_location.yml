@@ -67,19 +67,19 @@
         data: "{{ savedGames_user_directory }}"
         type: expandstring
     
-    - name: Change location of User\AppData
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ appData_user_directory_reg_key_name }}"
-        data: "{{ appData_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\AppData
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ appData_user_directory_reg_key_name }}"
+    #     data: "{{ appData_user_directory }}"
+    #     type: expandstring
 
-    - name: Change location of User\AppData\Local
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ localAppData_user_directory_reg_key_name }}"
-        data: "{{ localAppData_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\AppData\Local
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ localAppData_user_directory_reg_key_name }}"
+    #     data: "{{ localAppData_user_directory }}"
+    #     type: expandstring
 
     # - name: Change location of CD Burning
     #   ansible.windows.win_regedit:
@@ -102,12 +102,12 @@
         data: "{{ history_user_directory }}"
         type: expandstring
 
-    - name: Change location of User\NetHood
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ netHood_user_directory_reg_key_name }}"
-        data: "{{ netHood_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\NetHood
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ netHood_user_directory_reg_key_name }}"
+    #     data: "{{ netHood_user_directory }}"
+    #     type: expandstring
 
     # - name: Change location of User\Contacts
     #   ansible.windows.win_regedit:
@@ -116,12 +116,12 @@
     #     data: "{{ contacts_user_directory }}"
     #     type: expandstring
 
-    - name: Change location of User\Send To
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ sendTo_user_directory_reg_key_name }}"
-        data: "{{ sendTo_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Send To
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ sendTo_user_directory_reg_key_name }}"
+    #     data: "{{ sendTo_user_directory }}"
+    #     type: expandstring
 
     # - name: Change location of User\RoamingTiles
     #   ansible.windows.win_regedit:
@@ -158,26 +158,26 @@
     #     data: "{{ startMenu_Programs_user_directory }}"
     #     type: expandstring
 
-    - name: Change location of User\Start Menu
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ startMenu_user_directory_reg_key_name }}"
-        data: "{{ startMenu_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Start Menu
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ startMenu_user_directory_reg_key_name }}"
+    #     data: "{{ startMenu_user_directory }}"
+    #     type: expandstring
 
-    - name: Change location of User\Recent
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ recent_user_directory_reg_key_name }}"
-        data: "{{ recent_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Recent
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ recent_user_directory_reg_key_name }}"
+    #     data: "{{ recent_user_directory }}"
+    #     type: expandstring
 
-    - name: Change location of User\PrintHood
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ printHood_user_directory_reg_key_name }}"
-        data: "{{ printHood_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\PrintHood
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ printHood_user_directory_reg_key_name }}"
+    #     data: "{{ printHood_user_directory }}"
+    #     type: expandstring
 
     # - name: Change location of User\Searches
     #   ansible.windows.win_regedit:
@@ -228,19 +228,19 @@
     #     data: "{{ links_user_directory }}"
     #     type: expandstring
 
-    - name: Change location of User\Cache
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ cache_user_directory_reg_key_name }}"
-        data: "{{ cache_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Cache
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ cache_user_directory_reg_key_name }}"
+    #     data: "{{ cache_user_directory }}"
+    #     type: expandstring
 
-    - name: Change location of User\Templates
-      ansible.windows.win_regedit:
-        path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
-        name: "{{ templates_user_directory_reg_key_name }}"
-        data: "{{ templates_user_directory }}"
-        type: expandstring
+    # - name: Change location of User\Templates
+    #   ansible.windows.win_regedit:
+    #     path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+    #     name: "{{ templates_user_directory_reg_key_name }}"
+    #     data: "{{ templates_user_directory }}"
+    #     type: expandstring
 
     - name: Change location of User\Saved Games
       ansible.windows.win_regedit:

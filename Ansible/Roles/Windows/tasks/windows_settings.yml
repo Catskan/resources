@@ -89,21 +89,21 @@
   #       ansible_become_user: '{{ ansible_user }}'
   #       ansible_become_pass: '{{ ansible_password }}'
 
-    # - name: Save Microsoft Account Credentials to Credentials Store
-    #   block:
-    #   - name: Save the network credentials required for the mapped drive
-    #     community.windows.win_credential:
-    #       name: 'MicrosoftAccount:user=a.busutil@icloud.com'
-    #       type: generic_password
-    #       username: '{{ microsoft_account_email }}'
-    #       secret: '{{ microsoft_account_password }}'
-    #       state: present
-    #       persistence: local
-    #   vars:
-    #     ansible_become: yes
-    #     ansible_become_method: runas
-    #     ansible_become_user: '{{ ansible_user }}'
-    #     ansible_become_pass: '{{ ansible_password }}'
+    - name: Save Microsoft Account Credentials to Credentials Store
+      block:
+      - name: Save the network credentials required for the mapped drive
+        community.windows.win_credential:
+          name: 'MicrosoftAccount:user=a.busutil@icloud.com'
+          type: generic_password
+          username: '{{ microsoft_account_email }}'
+          secret: '{{ microsoft_account_password }}'
+          state: present
+          persistence: local
+      vars:
+        ansible_become: yes
+        ansible_become_method: runas
+        ansible_become_user: '{{ ansible_user }}'
+        ansible_become_pass: '{{ ansible_password }}'
 
     - name: Enable WakeOnMagic Packet
       win_shell:
