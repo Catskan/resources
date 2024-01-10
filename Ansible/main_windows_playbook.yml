@@ -27,27 +27,24 @@
       ansible.builtin.import_tasks: Roles/Windows/tasks/registry_keys_location.yml
       when: ansible_hostname == "Aurel-Gaming"
 
-    # - name: Include check_softwares_installed.yml
-    #   ansible.builtin.import_tasks: Roles/Windows/tasks/check_softwares_installed.yml
+    - name: Include check_softwares_installed.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/check_softwares_installed.yml
 
-    # - name: Include download_Softwares.yml
-    #   ansible.builtin.import_tasks: Roles/Windows/tasks/download_Softwares.yml
+    - name: Include download_Softwares.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/download_Softwares.yml
 
-    # - name: Include install_Softwares.yml
-    #   ansible.builtin.import_tasks: Roles/Windows/tasks/install_Softwares.yml
+    - name: Include install_Softwares.yml
+      ansible.builtin.import_tasks: Roles/Windows/tasks/install_Softwares.yml
 
-    # - name: Include settings_softwares
-    #   ansible.builtin.import_tasks: Roles/Common/tasks/settings_softwares.yml
+    - name: Include settings_softwares
+      ansible.builtin.import_tasks: Roles/Common/tasks/settings_softwares.yml
 
-    # # - name: Include uninstall_softwares
-    # #   ansible.builtin.import_tasks: Roles/Windows/tasks/uninstall_Softwares.yml
+    - name: Include uninstall_softwares
+      ansible.builtin.import_tasks: Roles/Windows/tasks/uninstall_Softwares.yml
 
-    # - name: Include Check_Softwares_versions
-    #   ansible.builtin.import_tasks: Roles/Windows/tasks/check_softwares_versions.yml
+    - name: Include Check_Softwares_versions
+      ansible.builtin.import_tasks: Roles/Windows/tasks/check_softwares_versions.yml
 
-    # # - name: Include Update Softwares
-    # #   ansible.builtin.import_tasks: Roles/Windows/tasks/softwares_updates.yml
-
-    # - name: Include install_ms_store_apps
-    #   ansible.builtin.import_tasks: Roles/Windows/tasks/install_ms_store_apps.yml
+    - name: Include install_ms_store_apps
+      ansible.builtin.import_tasks: Roles/Windows/tasks/install_ms_store_apps.yml
     
