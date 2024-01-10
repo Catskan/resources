@@ -53,12 +53,6 @@
         state: present
         enabled: yes
 
-#Reboot computer
-    - name: Reboot Gaming
-      ansible.windows.win_reboot:
-          test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
-      when: inventory_hostname == "aurelien-gaming" and old_hostname.changed == true
-
 ##########################################Change hostname##########################################
     - name: Change W11 VM Aurel hostname
       ansible.windows.win_hostname:
