@@ -139,13 +139,6 @@
   ##########################################Install all Windows Updates##########################################
     # - name: Unregister Scheduled job if one exists
     #   win_shell: 'Start-Process powershell.exe -ArgumentList "-Command  `"&{`Unregister-ScheduledJob  -name ansible-win-updates;}`"" -Wait -verb RunAs'
-
-    - name: Install all updates and reboot as many times as needed
-      ansible.windows.win_updates:
-        category_names: '*'
-        reboot: yes
-        reboot_timeout: 3600
-
     - name: Turn off UAC
       win_regedit:
         path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\policies\system
