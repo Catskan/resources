@@ -71,7 +71,7 @@
 
 #Install Synology Drive Client
   - name: Install Synology Drive Client
-    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\SynologyDrive.msi /qn CONFIGPATH="/share/git/resources/softwares_configs/config-files/SynologyDrive/config_win_prepared.json" /norestart
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\SynologyDrive.msi CONFIGPATH="/share/git/resources/softwares_configs/config-files/SynologyDrive/config_win_prepared.json" /qn /norestart
     when: SynoDriveClient_installed.exists == false
 
 #Install Steam
@@ -90,12 +90,12 @@
     when: CrystalDiskInfo_installed.exists == false
 
 
-  # - name: Uninstall WindowsAppxPackages
-  #   ansible.windows.win_package:
-  #       product_id: "{{ item }}"
-  #       state: present
-  #   loop:
-  #       - Microsoft.GamingServices
+  - name: Uninstall WindowsAppxPackages
+    ansible.windows.win_package:
+        product_id: "{{ item }}"
+        state: present
+    loop:
+        - Microsoft.GamingServices
 
 ##################################W11-VM-Aurel Softwares##################################
 #Unzip Captvty
@@ -124,7 +124,7 @@
 
   - name: Create an Playnite shortcut
     community.windows.win_shortcut:
-      src: M:\Playnite\Playnite.DesktopApp.exe
+      src: T:\Playnite\Playnite.FullscreenApp.exe
       dest: '{{ startMenu_user_directory }}\Playnite.lnk'
 
   - name: Remove Temp directory
