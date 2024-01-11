@@ -124,7 +124,7 @@
 
   - name: Create an Playnite shortcut
     community.windows.win_shortcut:
-      src: T:\Playnite\Playnite.FullscreenApp.exe
+      src: M:\Playnite\Playnite.FullscreenApp.exe
       dest: '{{ startMenu_user_directory }}\Playnite.lnk'
 
   - name: Remove Temp directory
