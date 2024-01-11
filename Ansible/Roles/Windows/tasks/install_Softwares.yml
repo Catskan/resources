@@ -59,7 +59,7 @@
     ansible.windows.win_powershell:
       script: |
         $original_file = /share/git/resources/softwares_configs/config-files/SynologyDrive/config_win.json
-        $destination_file =  /share/git/resources/softwares_configs/config-files/SynologyDrive/config_win_prepared.json
+        $destination_file =  C:\config_win_prepared.json
         (Get-Content $original_file) | Foreach-Object {
             $_ -replace '#{nas_url}#', '{{ nas_username }}' `
               -replace '#{nas_username}#', '{{ nas_username }}' `
@@ -71,7 +71,7 @@
 
 #Install Synology Drive Client
   - name: Install Synology Drive Client
-    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\SynologyDrive.msi CONFIGPATH="/share/git/resources/softwares_configs/config-files/SynologyDrive/config_win_prepared.json" /qn /norestart
+    win_command: C:\Windows\System32\msiexec.exe /i C:\temp\SynologyDrive.msi CONFIGPATH="C:\config_win_prepared.json" /qn /norestart
     when: SynoDriveClient_installed.exists == false
 
 #Install Steam
