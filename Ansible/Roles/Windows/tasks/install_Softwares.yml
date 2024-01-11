@@ -90,12 +90,12 @@
     when: CrystalDiskInfo_installed.exists == false
 
 
-  - name: Uninstall WindowsAppxPackages
-    ansible.windows.win_package:
-        product_id: "{{ item }}"
-        state: present
-    loop:
-        - Microsoft.GamingServices
+  # - name: Uninstall WindowsAppxPackages
+  #   ansible.windows.win_package:
+  #       product_id: "{{ item }}"
+  #       state: present
+  #   loop:
+  #       - Microsoft.GamingServices
 
 ##################################W11-VM-Aurel Softwares##################################
 #Unzip Captvty
