@@ -55,21 +55,21 @@
 
     - name: Enable AdminAutoLogOn
       ansible.windows.win_regedit:
-        path: HLMM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
         name: "AutoAdminLogon"
         data: 1
         type: dword
 
     - name: Set Username
       ansible.windows.win_regedit:
-        path: HLMM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
         name: "DefaultUserName"
         data: "Aurel"
         type: expandstring
 
     - name: Set Password
       ansible.windows.win_regedit:
-        path: HLMM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
         name: "DefaultPassword"
         data: "{{ remote_local_user_name_password }}"
         type: expandstring
