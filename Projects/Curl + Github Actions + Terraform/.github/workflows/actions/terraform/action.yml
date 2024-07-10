@@ -1,0 +1,86 @@
+---
+name: Deploy
+description: Deployment
+inputs:
+  context:
+    description: "Context of the AWS account"
+    type: string
+    required: true
+  environment:
+    description: "Environment related to the AWS account"
+    type: string
+    required: true
+  working_directory:
+    description: "Directory where are stored Terraform files"
+    type: string
+    required: true
+    default: tf
+  api_image_tag:
+    description: "Tag of the CoreAPI image to deploy"
+    type: string
+    required: true
+  rlcu_image_tag:
+    description: "Tag of the RLCU image to deploy"
+    type: string
+    required: true
+  scheduled_task_changes:
+    description: Should be update scheduled tasks resources ?
+    type: string
+    required: false
+    default: false
+  apply:
+    description: "Apply planned changed with Terraform"
+    type: boolean
+    required: false
+    default: false
+  github_app_id:
+    description: "GitHup App Terraform module ID"
+    type: string
+    default: ''
+  github_app_private_key:
+    description: "Github App Terraform module private key"
+    type: string
+    default: ''
+runs:
+  using: composite
+  steps:
+    # Get token to pull Terraform module from another repository
+    - name: "Generate a GitHub token"
+      id: generate_token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ inputs.github_app_id }}
+        private-key: ${{ inputs.github_app_private_key }}
+        owner: ${{ github.repository_owner }}
+
+    - name: "Terraform init"
+      id: init
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        git config --global url."https://oauth2:${{ steps.generate_token.outputs.token }}@github.com".insteadOf \
+                   ssh://git@github.com
+        terraform init -backend-config=bucket=${{ inputs.context }}-${{ inputs.environment }}-tfstate \
+                       -backend-config=dynamodb_table=tfstate-lock-${{ inputs.context }}-${{ inputs.environment }}
+        git config --global \
+                   --remove-section url."https://oauth2:${{ steps.generate_token.outputs.token }}@github.com"
+
+    - name: "Terraform plan"
+      id: plan
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        terraform plan -var-file ./envs/${{ inputs.environment }}.tfvars \
+                        -var-file ./global.tfvars \
+                        -var api_container_image_tag=${{ inputs.api_image_tag }} \
+                        -var rlcu_container_image_tag=${{ inputs.rlcu_image_tag }} \
+                        -var app_version=$(git describe --tags) \
+                        -lock=${{ inputs.apply }} \
+                        -out plan.out
+
+    - name: "Terraform apply"
+      if: inputs.apply == 'true'
+      id: apply
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: terraform apply plan.out

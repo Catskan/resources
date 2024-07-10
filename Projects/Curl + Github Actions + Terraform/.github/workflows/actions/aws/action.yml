@@ -1,0 +1,31 @@
+---
+name: Get secrets from AWS SecretsManager
+inputs:
+  aws_access_key_id:
+    description: AWS CI User Access Key ID
+    type: string
+    default: false
+  aws_secret_access_key:
+    description: AWS CI User secret access key
+    type: string
+    default: false
+  aws_region:
+    description: AWS Default Region
+    type: string
+outputs:
+  ecr_registry:
+    value: ${{ steps.login-ecr.outputs.registry }}
+runs:
+  using: composite
+  steps:
+    - name: "Configure AWS credentials"
+      id: connect-to-aws
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: "Login to Amazon ECR"
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2

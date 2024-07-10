@@ -1,0 +1,43 @@
+---
+name: Reusable build lambda archive
+
+on:
+  workflow_call:
+    inputs:
+      working_directory:
+        required: true
+        type: string
+      function_name:
+        required: true
+        type: string
+
+env:
+  python_version: 3.11.9
+jobs:
+  build:
+    runs-on: [ubuntu_self_hosted, xl]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python_version }}
+
+      - name: Install dependencies
+        run: |
+          cd ${{ inputs.working_directory }}
+          python -m pip install --upgrade pip
+          pip3 install -r requirements.txt --target ./
+
+      - name: Build Lambda archive
+        run: cd ${{ inputs.working_directory }} && zip -r '${{ inputs.function_name }}.zip' ./*
+
+      - name: Store lambda package as artifact
+        id: store-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.function_name }}
+          path: ${{ github.workspace }}/${{ inputs.working_directory }}/${{inputs.function_name}}.zip

@@ -1,0 +1,38 @@
+---
+name: "[Dev] - Release api-scheduling"
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - scheduled_tasks/**
+      - tf/modules/scheduled_tasks/**
+      - .github/workflows/dev_scheduled-tasks.yml
+
+jobs:
+  build-lambda-archive:
+    uses: ./.github/workflows/reusable-lambda-build.yml
+    secrets: inherit
+    with:
+      working_directory: scheduled-tasks/api-scheduling
+      function_name: 'api-scheduling'
+
+  release-scheduled-task:
+    needs: build-lambda-archive
+    uses: ./.github/workflows/reusable-release.yml
+    secrets: inherit
+    with:
+      context: ${{ matrix.context }}
+      environment: ${{ matrix.environment }}
+      function_name: 'api-scheduling'
+      working_directory: tf
+      publish: true
+    strategy:
+      fail-fast: false
+      matrix:
+        context: [account]
+        environment:
+          - sandbox
+          - staging
+        

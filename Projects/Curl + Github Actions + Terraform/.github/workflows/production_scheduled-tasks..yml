@@ -1,0 +1,32 @@
+---
+name: "[Production] - Release api-scheduling"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - scheduled_tasks/**
+      - tf/modules/scheduled_tasks/**
+      - .github/workflows/production_scheduled-tasks.yml
+
+jobs:
+  build-lambda-archive:
+    uses: ./.github/workflows/reusable-lambda-build.yml
+    secrets: inherit
+    with:
+      working_directory: scheduled-tasks/api-scheduling
+      function_name: 'api-scheduling'
+
+  release-scheduled-task:
+    needs: build-lambda-archive
+    uses: ./.github/workflows/reusable-release.yml
+    secrets: inherit
+    with:
+      context: account
+      environment: production
+      api_image_tag: ${{ needs.setup.outputs.majelan_api_image_tag }}
+      rlcu_image_tag: ${{ needs.setup.outputs.majelan_api_rlcu_image_tag }}
+      function_name: 'api-scheduling'
+      working_directory: tf
+      publish: true

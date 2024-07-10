@@ -1,0 +1,30 @@
+---
+name: Get secrets from AWS SecretsManager
+inputs:
+  github_app_id:
+    description: Application ID of the Github App used to allow clone private repositories
+    type: string
+    required: true
+  github_app_private_key:
+    description: Private key of the Github App used to allow clone private repositories
+    type: string
+    required: true
+outputs:
+  token:
+    value: ${{ steps.generate_token.outputs.token }}
+runs:
+  using: composite
+  steps:
+    - name: "Generate a GitHub token"
+      id: generate_token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ inputs.github_app_id }}
+        private-key: ${{ inputs.github_app_private_key }}
+        owner: ${{ github.repository_owner }}
+
+    - name: "Change config to access other repos"
+      run: |
+        git config --global url."https://oauth2:${{ steps.generate_token.outputs.token }}@github.com".insteadOf \
+        "https://github.com"
+      shell: bash

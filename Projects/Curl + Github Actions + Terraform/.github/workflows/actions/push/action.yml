@@ -1,0 +1,63 @@
+---
+name: Build and push image
+description: Build Docker container image and push it to the registry
+inputs:
+  dockerfile:
+    description: Dockerfile name
+    required: false
+  ecr_registry:
+    description: ECR Registry name
+    type: string
+    required: true
+  github_token:
+    description: Token to get modules on private repositories
+    type: string
+    required: true
+  image_repository_name:
+    description: Name of the image repository
+    type: string
+  dockerhub_username:
+    description: Username of the dockerhub account
+    type: string
+  dockerhub_password:
+    description: Password of the dockerhub account
+    type: string
+  push_image:
+    type: boolean
+outputs:
+  image_tag:
+    description: container image tag
+    value: ${{ steps.output-image-tag.outputs.image_tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: "Set up Docker Buildx"
+      id: buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: "Login to Docker Hub"
+      uses: docker/login-action@v3
+      with:
+        username: ${{ inputs.dockerhub_username }}
+        password: ${{ inputs.dockerhub_password }}
+
+    - name: "Build & Push image to ECR"
+      id: build-push-image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: ${{ inputs.push_image }}
+        file: ${{ inputs.dockerfile }}
+        tags: |
+          ${{ inputs.ecr_registry || 'placed_holder' }}/${{ inputs.image_repository_name }}:latest
+          ${{ inputs.ecr_registry || 'placed_holder' }}/${{ inputs.image_repository_name }}:sha-${{ github.sha }}
+        target: release
+        provenance: false
+        build-args: |
+          GITHUB_ORG_TOKEN=${{ inputs.github_token }}
+
+    - name: "Set image_tag as output"
+      id: output-image-tag
+      shell: bash
+      run: echo "image_tag=sha-${{ github.sha }}" >> $GITHUB_OUTPUT

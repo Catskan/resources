@@ -1,0 +1,39 @@
+---
+name: Setup environment
+description: Setup build environment
+inputs:
+  environment:
+    description: Environment target
+    type: string
+    required: true
+  setup_lint:
+    description: "Boolean to setup tflint or not"
+    type: bool
+    required: false
+    default: false
+  terraform_version:
+    description: "Terraform version to use"
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - name: "Setup Terraform"
+      if: inputs.terraform_version != ''
+      id: setup_terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+        terraform_version: ${{ inputs.terraform_version }}
+
+    ## Linter
+    - name: "Setup TFLint"
+      id: setup_tf_lint
+      if: inputs.setup_lint == 'true'
+      uses: terraform-linters/setup-tflint@v4
+
+    - name: "Setup Yamllint"
+      id: setup_yamllint
+      if: inputs.setup_lint == 'true'
+      run: sudo apt install -y yamllint
+      shell: bash
