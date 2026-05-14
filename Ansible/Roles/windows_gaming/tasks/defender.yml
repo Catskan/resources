@@ -1,0 +1,75 @@
+---
+# Microsoft Defender — keep real-time monitoring ON, but exclude game paths
+# and disable cloud sample reporting. Tamper Protection must be disabled
+# manually one-shot in Windows Security before this file can fully apply.
+# See spec §4.1.
+
+- name: Check whether Tamper Protection is enabled
+  ansible.windows.win_powershell:
+    script: |
+      $status = Get-MpComputerStatus
+      $Ansible.Result = @{ tamper_protected = [bool]$status.IsTamperProtected }
+  register: defender_tamper_status
+
+- name: Fail with clear message if Tamper Protection is still ON
+  ansible.builtin.fail:
+    msg: >-
+      Tamper Protection is ON. Disable it manually in Windows Security
+      → Virus & threat protection → Manage settings → Tamper Protection (OFF),
+      then re-run this playbook. Defender exclusions cannot be applied while
+      Tamper Protection is active.
+  when: defender_tamper_status.result.tamper_protected | bool
+
+- name: Add Defender path exclusions
+  ansible.windows.win_powershell:
+    script: |
+      $existing = @((Get-MpPreference).ExclusionPath)
+      $changed = $false
+      foreach ($p in @({{ defender_exclusion_paths | map('to_json') | join(', ') }})) {
+        if ($existing -notcontains $p) {
+          Add-MpPreference -ExclusionPath $p
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+
+- name: Add Defender process exclusions
+  ansible.windows.win_powershell:
+    script: |
+      $existing = @((Get-MpPreference).ExclusionProcess)
+      $changed = $false
+      foreach ($p in @({{ defender_exclusion_processes | map('to_json') | join(', ') }})) {
+        if ($existing -notcontains $p) {
+          Add-MpPreference -ExclusionProcess $p
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+
+- name: Add Defender extension exclusions
+  ansible.windows.win_powershell:
+    script: |
+      $existing = @((Get-MpPreference).ExclusionExtension)
+      $changed = $false
+      foreach ($p in @({{ defender_exclusion_extensions | map('to_json') | join(', ') }})) {
+        if ($existing -notcontains $p) {
+          Add-MpPreference -ExclusionExtension $p
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+
+- name: Configure Defender cloud reporting (off)
+  ansible.windows.win_powershell:
+    script: |
+      $pref = Get-MpPreference
+      $changed = $false
+      if ($pref.MAPSReporting -ne '{{ defender_maps_reporting }}') {
+        Set-MpPreference -MAPSReporting {{ defender_maps_reporting }}
+        $changed = $true
+      }
+      if ($pref.SubmitSamplesConsent -ne '{{ defender_submit_samples }}') {
+        Set-MpPreference -SubmitSamplesConsent {{ defender_submit_samples }}
+        $changed = $true
+      }
+      $Ansible.Changed = $changed

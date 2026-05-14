@@ -16,3 +16,31 @@
       ansible.builtin.debug:
         msg: "=== Verifying gaming optimizations on {{ inventory_hostname }} ==="
       tags: [always]
+
+    - name: Verify Defender exclusions and reporting
+      ansible.windows.win_powershell:
+        script: |
+          $pref = Get-MpPreference
+          $Ansible.Result = @{
+            paths        = $pref.ExclusionPath
+            processes    = $pref.ExclusionProcess
+            extensions   = $pref.ExclusionExtension
+            maps         = [string]$pref.MAPSReporting
+            samples      = [string]$pref.SubmitSamplesConsent
+            realtime_on  = -not $pref.DisableRealtimeMonitoring
+          }
+      register: defender_verify
+      tags: [defender, all]
+
+    - name: Assert Defender state matches spec
+      ansible.builtin.assert:
+        that:
+          - "(defender_exclusion_paths | difference(defender_verify.result.paths | default([]))) | length == 0"
+          - "(defender_exclusion_processes | difference(defender_verify.result.processes | default([]))) | length == 0"
+          - "(defender_exclusion_extensions | difference(defender_verify.result.extensions | default([]))) | length == 0"
+          - "defender_verify.result.maps == defender_maps_reporting"
+          - "defender_verify.result.samples == defender_submit_samples"
+          - "defender_verify.result.realtime_on"
+        fail_msg: "Defender state mismatch — see defender_verify.result above"
+        success_msg: "Defender exclusions and reporting OK"
+      tags: [defender, all]

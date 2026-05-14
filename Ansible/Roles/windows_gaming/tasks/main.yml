@@ -1,0 +1,60 @@
+---
+# Orchestrateur du rôle windows_gaming.
+# Chaque bloc est taggé pour permettre l'exécution sélective :
+#   --tags bootstrap            : préparation système (WinRM, UAC, AutoLogon)
+#   --tags system               : power plan, hostname, services, MS account
+#   --tags rdp                  : configuration RDP
+#   --tags wol                  : Wake-on-LAN
+#   --tags user_folders         : redirection User Shell Folders (M:\Aurel)
+#   --tags softwares            : tout le cycle softs (check + download + install)
+#   --tags softwares_uninstall  : désinstallation des AppX bloatware
+#   --tags ms_store             : installs winget / MS Store
+
+- name: System settings (power plan, RDP, AutoLogon, MS account, WoL, UAC)
+  ansible.builtin.include_tasks: system_settings.yml
+  tags: [bootstrap, system, rdp, wol]
+
+- name: Relocate User Shell Folders to {{ root_user_directory | default('M:\\Aurel') }}
+  ansible.builtin.include_tasks: user_folders.yml
+  tags: [user_folders]
+
+- name: Check which softwares are already installed
+  ansible.builtin.include_tasks: softwares_check.yml
+  tags: [softwares, softwares_check]
+
+- name: Download softwares
+  block:
+    - ansible.builtin.include_tasks: softwares_download.yml
+  rescue:
+    - name: Software download failed — continue with what we have
+      ansible.builtin.debug:
+        msg: >-
+          Un téléchargement a échoué (mirror down, URL périmée, etc.).
+          Vérifiez les URLs versionnées dans group_vars/windows_hosts/main.yml.
+  tags: [softwares, softwares_download]
+
+- name: Install softwares
+  ansible.builtin.include_tasks: softwares_install.yml
+  tags: [softwares, softwares_install]
+
+- name: Apply Firefox policies (cross-platform)
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: firefox_policies.yml
+  tags: [softwares, firefox]
+
+- name: Uninstall AppX bloatware
+  ansible.builtin.include_tasks: softwares_uninstall.yml
+  tags: [softwares_uninstall, cleanup]
+
+- name: Software versions check (no-op until winget migration)
+  ansible.builtin.include_tasks: softwares_check_versions.yml
+  tags: [softwares_versions]
+
+- name: Install MS Store / winget apps
+  ansible.builtin.include_tasks: ms_store_apps.yml
+  tags: [ms_store]
+
+- name: Apply Windows Defender exclusions and tuning
+  ansible.builtin.include_tasks: defender.yml
+  tags: [system, defender]
