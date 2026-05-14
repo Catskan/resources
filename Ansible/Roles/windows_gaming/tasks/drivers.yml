@@ -1,0 +1,79 @@
+---
+# GPU + chipset drivers. See spec §4.4.
+# AMD chipset critical for 9800X3D v-cache aware scheduler.
+# NVIDIA driver: one-shot install via winget by default, user updates manually
+# afterwards. Telemetry services disabled on every run regardless.
+
+# ======================== §4.4.1 AMD chipset ========================
+
+- name: AMD chipset — install via winget if absent
+  ansible.windows.win_powershell:
+    script: |
+      $installed = winget list --id AdvancedMicroDevices.AMDChipsetDrivers --exact 2>$null |
+                   Select-String 'AMDChipsetDrivers'
+      if (-not $installed) {
+        winget install --id AdvancedMicroDevices.AMDChipsetDrivers `
+                       --silent --accept-package-agreements --accept-source-agreements
+        $Ansible.Changed = $true
+        $Ansible.Result = @{ action = 'installed' }
+      } else {
+        $Ansible.Result = @{ action = 'already_present' }
+      }
+  when: amd_chipset_install
+
+# ======================== §4.4.2 NVIDIA driver ========================
+
+- name: NVIDIA — detect existing driver
+  ansible.windows.win_powershell:
+    script: |
+      $nv = Get-PnpDevice -Class Display -ErrorAction SilentlyContinue |
+            Where-Object FriendlyName -match 'NVIDIA'
+      $Ansible.Result = @{ present = [bool]$nv }
+  register: nvidia_check
+  when: nvidia_driver_install_strategy != 'skip'
+
+- name: NVIDIA — install driver via winget (one-shot)
+  ansible.windows.win_powershell:
+    script: |
+      winget install --id Nvidia.GeForceDriver `
+                     --silent --accept-package-agreements --accept-source-agreements
+      $Ansible.Changed = $true
+  when:
+    - nvidia_driver_install_strategy == 'winget'
+    - not (nvidia_check.result.present | default(false))
+
+- name: NVIDIA — install driver via direct URL (one-shot)
+  block:
+    - name: Download NVIDIA driver installer
+      ansible.windows.win_get_url:
+        url: "{{ nvidia_driver_url }}"
+        dest: 'C:\Windows\Temp\nvidia-driver.exe'
+    - name: Run NVIDIA installer silently
+      ansible.windows.win_command:
+        cmd: 'C:\Windows\Temp\nvidia-driver.exe -s -clean'
+  when:
+    - nvidia_driver_install_strategy == 'direct_url'
+    - not (nvidia_check.result.present | default(false))
+    - nvidia_driver_url | length > 0
+
+# ======================== §4.4.3 NVIDIA telemetry cleanup ========================
+
+- name: NVIDIA — disable telemetry services
+  ansible.windows.win_service:
+    name: "{{ item }}"
+    start_mode: disabled
+    state: stopped
+  loop:
+    - NvTelemetryContainer
+    - NvContainerLocalSystem
+    - NvContainerNetworkService
+    - NVDisplay.ContainerLocalSystem
+  failed_when: false
+  when: nvidia_telemetry_cleanup
+
+- name: NVIDIA — remove telemetry crash report scheduled task
+  community.windows.win_scheduled_task:
+    name: NvTmRep_CrashReport
+    state: absent
+  failed_when: false
+  when: nvidia_telemetry_cleanup

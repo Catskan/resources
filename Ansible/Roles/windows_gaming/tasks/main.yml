@@ -66,3 +66,7 @@
 - name: Install MS Store / winget apps
   ansible.builtin.include_tasks: ms_store_apps.yml
   tags: [ms_store]
+
+- name: Install and tune GPU/chipset drivers
+  ansible.builtin.include_tasks: drivers.yml
+  tags: [softwares, drivers]

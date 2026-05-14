@@ -133,3 +133,35 @@
         fail_msg: "console_ux state mismatch — got {{ cux_verify.result }}"
         success_msg: "console_ux state OK (no AppX residuals, Firefox default policy set, OneDrive gone)"
       tags: [console_ux, all]
+
+    - name: Verify NVIDIA telemetry services disabled
+      ansible.windows.win_powershell:
+        script: |
+          $svcNames = @('NvTelemetryContainer','NvContainerLocalSystem','NvContainerNetworkService')
+          $status = @{}
+          foreach ($n in $svcNames) {
+            $s = Get-Service -Name $n -ErrorAction SilentlyContinue
+            if ($s) {
+              $status[$n] = @{ status=[string]$s.Status; start_type=[string]$s.StartType }
+            } else {
+              $status[$n] = $null
+            }
+          }
+          $sched = Get-ScheduledTask -TaskName 'NvTmRep_CrashReport' -ErrorAction SilentlyContinue
+          $Ansible.Result = @{
+            services    = $status
+            crash_task  = [bool]$sched
+          }
+      register: nvidia_verify
+      tags: [drivers, all]
+
+    - name: Assert NVIDIA telemetry cleanup applied
+      ansible.builtin.assert:
+        that:
+          - "(nvidia_verify.result.services.NvTelemetryContainer is none) or (nvidia_verify.result.services.NvTelemetryContainer.start_type == 'Disabled')"
+          - "(nvidia_verify.result.services.NvContainerLocalSystem is none) or (nvidia_verify.result.services.NvContainerLocalSystem.start_type == 'Disabled')"
+          - not nvidia_verify.result.crash_task
+        fail_msg: "NVIDIA telemetry cleanup mismatch — got {{ nvidia_verify.result }}"
+        success_msg: "NVIDIA telemetry services + crash task verified disabled/absent"
+      tags: [drivers, all]
+      when: nvidia_telemetry_cleanup
