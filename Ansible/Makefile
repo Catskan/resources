@@ -44,7 +44,7 @@ uninstall-bloat:
 	./scripts/run.sh ansible-playbook main_remove_softwares.yml $(ARGS)
 
 ping-windows:
-	./scripts/run.sh ansible windows_hosts -m ansible.windows.win_ping
+	./scripts/run.sh ansible windows_hosts -m ansible.windows.win_ping $(ARGS)
 
 check-windows:
 	./scripts/run.sh ansible-playbook main_windows_playbook.yml --check --diff $(ARGS)
