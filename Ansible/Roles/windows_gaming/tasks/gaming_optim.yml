@@ -78,3 +78,83 @@
             try { Set-ItemProperty -Path $k.Path -Name $k.Name -Value 0 -Type DWord -ErrorAction Stop }
             catch { }
           }"
+
+# ======================== §4.2.2 Kernel / multimedia ========================
+
+- name: Kernel — SystemResponsiveness
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile
+    name: SystemResponsiveness
+    data: "{{ system_responsiveness }}"
+    type: dword
+
+- name: Kernel — NetworkThrottlingIndex
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile
+    name: NetworkThrottlingIndex
+    data: "{{ network_throttling_index }}"
+    type: dword
+
+- name: Multimedia Games task — GPU Priority
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games
+    name: GPU Priority
+    data: 8
+    type: dword
+
+- name: Multimedia Games task — Priority
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games
+    name: Priority
+    data: 6
+    type: dword
+
+- name: Multimedia Games task — Scheduling Category
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games
+    name: Scheduling Category
+    data: High
+    type: string
+
+- name: Multimedia Games task — SFIO Priority
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games
+    name: SFIO Priority
+    data: High
+    type: string
+
+# ======================== §4.2.3 Network (Nagle OFF) ========================
+
+- name: Network — disable Nagle on all Ethernet NICs (Up + 802.3)
+  # Applies to all 802.3 adapters Up — same selection pattern as the WOL task
+  # in system_settings.yml. On the B850 Max Gaming Wifi W there's only one
+  # Ethernet port (Realtek 8125 2.5GbE). The WiFi NIC is excluded because
+  # its MediaType is 'Native 802.11', not '802.3'.
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $touched = @()
+      $adapters = Get-NetAdapter -Physical |
+        Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' }
+      if (-not $adapters) {
+        $Ansible.Result = @{ message = 'No Ethernet adapter Up'; touched = @() }
+        return
+      }
+      $desired = @{ TcpAckFrequency = 1; TCPNoDelay = 1; TcpDelAckTicks = 0 }
+      foreach ($a in $adapters) {
+        $guid = $a.InterfaceGuid
+        $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$guid"
+        $adapterChanged = $false
+        foreach ($name in $desired.Keys) {
+          $current = (Get-ItemProperty -Path $path -Name $name -ErrorAction SilentlyContinue).$name
+          if ($current -ne $desired[$name]) {
+            Set-ItemProperty -Path $path -Name $name -Value $desired[$name] -Type DWord
+            $adapterChanged = $true
+          }
+        }
+        if ($adapterChanged) { $changed = $true }
+        $touched += @{ name = $a.Name; speed = [string]$a.LinkSpeed; guid = $guid; changed = $adapterChanged }
+      }
+      $Ansible.Changed = $changed
+      $Ansible.Result = @{ touched = $touched }
+  when: nagle_disable_on_gaming_nic
