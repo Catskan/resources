@@ -156,11 +156,12 @@
 #       ansible_become_user: '{{ ansible_user }}'
 #       ansible_become_pass: '{{ ansible_password }}'
 
-- name: Disable Nahimic Service
+- name: Disable Nahimic Service (no-op if Asus audio driver not installed)
   ansible.windows.win_service:
     name: NahimicService
     start_mode: disabled
     state: stopped
+  failed_when: false
 
 ##########################################Install all Windows Updates##########################################
 # - name: Unregister Scheduled job if one exists
