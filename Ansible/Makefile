@@ -1,7 +1,7 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help windows linux uninstall-bloat ping-windows check-windows check-linux test-keepass inspect-keepass verify-windows lint
+.PHONY: help windows windows-vm linux uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass verify-windows lint
 
 help:
 	@echo "Cibles disponibles :"
@@ -9,6 +9,8 @@ help:
 	@echo "  make verify-windows   — Vérifie l'état post-run des optimisations gaming (offline)"
 	@echo "  make inspect-keepass  — Diagnostic offline : vérifie les paths + dumpe l'arbo de la DB"
 	@echo "  make windows          — Run complet sur aurelien-gaming + w11-vm-aurel"
+	@echo "  make windows-vm       — Run uniquement sur w11-vm-aurel (test sur UTM avant bare-metal)"
+	@echo "  make check-windows-vm — Dry-run sur w11-vm-aurel (--check --diff)"
 	@echo "  make linux            — Run sur arch-linux-laptop"
 	@echo "  make uninstall-bloat  — Désinstalle les AppX bloatware sur aurelien-gaming"
 	@echo "  make ping-windows     — win_ping sur les hosts Windows"
@@ -36,6 +38,12 @@ inspect-keepass:
 
 windows:
 	./scripts/run.sh ansible-playbook main_windows_playbook.yml $(ARGS)
+
+windows-vm:
+	./scripts/run.sh ansible-playbook main_windows_playbook.yml --limit w11-vm-aurel $(ARGS)
+
+check-windows-vm:
+	./scripts/run.sh ansible-playbook main_windows_playbook.yml --limit w11-vm-aurel --check --diff $(ARGS)
 
 linux:
 	./scripts/run.sh ansible-playbook main_linux_playbook.yml $(ARGS)

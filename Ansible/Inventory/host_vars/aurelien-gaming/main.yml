@@ -105,48 +105,12 @@ XboxAccessoires_id: "9NBLGGH30XJ3"
 nas_url: "nas.eonelia.cloud"
 
 # ============================================================================
-# Gaming optimization vars — see docs/superpowers/specs/2026-05-13-windows-gaming-optimization-design.md
+# Hardware-specific vars for aurelien-gaming
+# Generic Win11 gaming optim vars are in group_vars/windows_hosts/main.yml
+# (Phase 0 refactor — see docs/superpowers/specs/2026-05-14-windows-gaming-role-cleanup-design.md)
 # ============================================================================
 
-# --- Defender (defender.yml) ---
-defender_exclusion_paths:
-  - 'C:\Program Files (x86)\Steam\steamapps'
-  - 'C:\Program Files\Epic Games'
-  - 'C:\Program Files (x86)\GOG Galaxy\Games'
-  - 'C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games'
-  - 'C:\Program Files\WindowsApps'
-  - 'C:\XboxGames'
-  - 'C:\Program Files\ModifiableWindowsApps'
-  - 'M:\'
-  - 'M:\XboxGames'
-defender_exclusion_processes:
-  - steam.exe
-  - EpicGamesLauncher.exe
-  - GalaxyClient.exe
-  - UbisoftConnect.exe
-  - gamingservices.exe
-  - XboxAppServices.exe
-  - GameBar.exe
-defender_exclusion_extensions:
-  - .dxvk-cache
-  - .cache
-  - .pak
-defender_maps_reporting: Disabled
-defender_submit_samples: NeverSend
-
-# --- VBS / HVCI (gaming_optim.yml) ---
-vbs_enabled: false
-vbs_weekly_reset:
-  enabled: true
-  day: sunday # monday, tuesday, wednesday, thursday, friday, saturday, sunday
-  time: "04:00"
-
-# --- Kernel & multimedia (gaming_optim.yml) ---
-system_responsiveness: 0
-network_throttling_index: 0xFFFFFFFF
-nagle_disable_on_gaming_nic: true
-
-# --- Storage & power (gaming_optim.yml) ---
+# --- Storage & power (gaming_optim.yml) — sized for 32 GB RAM bare metal ---
 hibernation_enabled: false
 page_file:
   strategy: fixed # fixed | system_managed
@@ -155,44 +119,9 @@ page_file:
 usb_selective_suspend: false
 pcie_link_state_power_off: true
 
-# --- Game DVR / Mode (gaming_optim.yml) ---
-game_dvr_disabled: true
-game_mode_enabled: true
-
-# --- AppX bloatware extended (console_ux.yml) ---
-appx_bloatware_extended:
-  - Microsoft.549981C3F5F10 # Cortana
-  - Microsoft.BingSearch
-  - Microsoft.MicrosoftStickyNotes
-  - Microsoft.MixedReality.Portal
-  - Microsoft.Wallet
-  - Microsoft.WindowsCommunicationsApps # Mail + Calendar
-  - MicrosoftCorporationII.QuickAssist
-  - Microsoft.OutlookForWindows
-  - Microsoft.Windows.DevHome
-
-# --- Console UX policies (console_ux.yml) ---
-cortana_disabled: true
-bing_search_disabled: true
-widgets_disabled: true
-onedrive_uninstall: true
-edge_neutralize: true
-notifications_globally_off: true
-background_apps_force_deny: true
-recommended_files_off: true
-startup_apps_disable:
-  - MSEdgeUpdate
-  - "Adobe ARM"
-  - iTunesHelper
-  - iCloudDrive
-  - Cortana
-telemetry_minimum: true
-firefox_set_default: true
-
-# --- Drivers (drivers.yml) ---
+# --- Drivers (drivers.yml) — bare metal only ---
 amd_chipset_install: true
-nvidia_driver_install_strategy: winget # winget | direct_url | skip
-nvidia_telemetry_cleanup: true
+nvidia_driver_install_strategy: winget # winget | direct_url | skip (Phase 3 winget only)
 # Used only when nvidia_driver_install_strategy == "direct_url"
 nvidia_driver_url: ""
 nvidia_driver_version: ""
