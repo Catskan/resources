@@ -124,6 +124,7 @@
     ansible_become_method: runas
     ansible_become_user: "{{ ansible_user }}"
     ansible_become_pass: "{{ ansible_password }}"
+  when: inventory_hostname == "aurelien-gaming"
 
 - name: Enable Wake-on-LAN (Magic Packet) on all wired Ethernet adapters
   ansible.windows.win_powershell:
