@@ -310,7 +310,7 @@ winget_packages:
   - Microsoft.PowerShell
 
   # --- MS Store (ex-ms_store_apps.yml) ---
-  - 9NBLGGH4TXTC # Xbox Accessories (winget retrouve via Store ID)
+  - Microsoft.XboxAccessories
 ```
 
 **Note sur les drivers** : `Nvidia.GeForceDriver` via winget installe **uniquement le driver, pas GeForce Experience** — ce qui aligne avec le choix Q6a (NVCleanstall style). L'idempotence est garantie par le check `winget list --id $id --exact` au début de chaque itération.
@@ -383,7 +383,7 @@ Justification : sémantiquement, retirer les AppX bloatware est du **debloat con
 | Winget package indisponible (`Synology.DriveClient`)                     | 3     | Vérifier disponibilité avant migration via `winget search`. Si absent : retirer de la liste et installer manuellement. La stratégie `direct_url` est explicitement abandonnée pour rester full-winget.                                                        |
 | Migration winget casse les paths d'install attendus par d'autres scripts | 3     | Winget installe dans des paths standardisés (`C:\Program Files\<App>\`). Audit Playnite, etc. avant.                                                                                                                                                          |
 | `Nvidia.GeForceDriver` via winget tire-t-il GFE en sneaky ?              | 3     | Vérifier sur un host de test : `winget show Nvidia.GeForceDriver` indique l'installer flags. À documenter dans le commit. Si GFE arrive en bundle, fallback : retirer NVIDIA du `winget_packages` et garder le driver install manuel (NVCleanstall une fois). |
-| Xbox Accessories via Store ID `9NBLGGH4TXTC`                             | 3     | Vérifier que winget accepte les Store IDs (alphanumériques) en plus des publisher.app IDs. Si non : utiliser `Microsoft.XboxAccessories` (vérifier la disponibilité). Sinon : remettre `ms_store_apps.yml` minimal pour ce seul cas.                          |
+| `Microsoft.XboxAccessories` indisponible dans winget                     | 3     | Vérifier avec `winget search XboxAccessories` avant migration. Fallback : Store ID `9NBLGGH4TXTC`. Dernier recours : remettre `ms_store_apps.yml` minimal pour ce seul cas.                                                                                   |
 
 ---
 
