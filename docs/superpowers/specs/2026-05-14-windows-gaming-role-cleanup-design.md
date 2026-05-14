@@ -13,14 +13,14 @@ Le rôle a accumulé du legacy depuis la migration "GitHub Actions → Vagrant D
 
 - **Bugs idempotence** (Firefox check version-pinné, reboot non-coordonné, etc.) qui peuvent faire planter le run réel à venir
 - **Inconsistance modules / FQCN** que `make lint` flagge déjà
-- **Dette pattern** (`win_command` partout au lieu de `win_package`, GUIDs hardcodés au lieu de winget)
+- **Dette pattern** (modules non-FQCN, GUIDs hardcodés au lieu de winget)
 
 Trois phases indépendantes pour découpler livraison et risque :
 
 | Phase                  | Effort | Bloque Task 17 ? | Bénéfice                                                                          |
 | ---------------------- | ------ | ---------------- | --------------------------------------------------------------------------------- |
 | 1 — Critical fixes     | ~1h    | **Oui**          | Run réel propre, plus de reboot fantôme, GFE pas réinstallé                       |
-| 2 — Important refactor | ~3h    | Non              | Code lint-clean, idempotence native                                               |
+| 2 — Important refactor | ~1h    | Non              | Code lint-clean, idempotence native                                               |
 | 3 — Vision winget      | ~5h    | Non              | Maintenance triviale, suppression progressive de softwares_check/download/install |
 
 **Ordre de livraison recommandé** : Phase 1 → run Task 17 → Phase 2 → Phase 3.
@@ -115,56 +115,36 @@ Inconditionnel : reboot à CHAQUE run de user_folders sur aurelien-gaming, même
 
 ---
 
-## 3. Phase 2 — Important refactor
+## 3. Phase 2 — Important refactor (réduite — items redondants avec Phase 3 retirés)
 
-### 3.1 I1 — Migration `win_package` au lieu de `win_command`
+**Note de scope** (mise à jour 2026-05-14) : Phase 3 supprime entièrement `softwares_check.yml`, `softwares_download.yml`, `softwares_install.yml`, `softwares_uninstall.yml`, `ms_store_apps.yml`, `drivers.yml`. Tous les refactors qui visaient à les nettoyer (migration `win_package`, rescue blocks, cleanup tag) sont donc **inutiles** — ils seraient appliqués pour ensuite supprimer les fichiers. Phase 2 se réduit aux items qui survivent Phase 3 : nettoyage `user_folders.yml` et FQCN sur les fichiers qui ne sont **pas** supprimés en Phase 3.
 
-**Fichiers** : `softwares_install.yml`
+Effort estimé révisé : ~1h (vs 3h initial).
 
-Pattern actuel :
+### 3.1 I2 — FQCN sur les fichiers qui survivent Phase 3
 
-```yaml
-- name: Install Firefox
-  win_command: C:\Windows\System32\msiexec.exe /i C:\temp\Firefox.msi /qb /norestart
-  when: Firefox_installed.exists == false
-```
+**Fichiers concernés** :
 
-Pattern cible :
+- `Ansible/roles/windows_gaming/tasks/main.yml`
+- `Ansible/roles/windows_gaming/tasks/system_settings.yml`
+- `Ansible/roles/windows_gaming/tasks/user_folders.yml`
 
-```yaml
-- name: Install Firefox
-  ansible.windows.win_package:
-    path: C:\temp\Firefox.msi
-    state: present
-    arguments: /qb /norestart
-```
-
-`win_package` est idempotent natif (vérifie via `product_id` ou MSI ProductCode si fourni), tracke uninstall, supporte `--check` mode. Plus besoin du check.yml registre pour les MSI.
-
-À migrer : Firefox, Synology Drive, Epic, Ubisoft Connect, Steam (EXE pas MSI mais `win_package` supporte aussi via `creates:` ou `product_id`).
-
-**Cas spéciaux** : NVIDIA driver (EXE silencieux), Steam (EXE), CrystalDiskInfo (EXE) — soit on garde `win_command` avec `creates:` (path d'install attendu), soit on bascule sur winget directement (Phase 3).
-
-### 3.2 I2 — FQCN partout
-
-**Fichiers concernés** : `softwares_*.yml`, `user_folders.yml`, `ms_store_apps.yml`, `system_settings.yml`
+(Les autres fichiers — `softwares_*.yml`, `ms_store_apps.yml`, `drivers.yml` — étant supprimés en Phase 3, on ne perd pas son temps à les FQCN-ifier.)
 
 Pattern remplacement :
-| Ancien | Nouveau |
-|---|---|
+
+| Ancien         | Nouveau                        |
+| -------------- | ------------------------------ |
 | `win_reg_stat` | `ansible.windows.win_reg_stat` |
-| `win_get_url` | `ansible.windows.win_get_url` |
-| `win_command` | `ansible.windows.win_command` |
-| `win_shell` | `ansible.windows.win_shell` |
-| `win_service` | `ansible.windows.win_service` |
-| `win_regedit` | `ansible.windows.win_regedit` |
-| `win_template` | `ansible.windows.win_template` |
-| `win_unzip` | `community.windows.win_unzip` |
-| `win_reboot` | `ansible.windows.win_reboot` |
+| `win_shell`    | `ansible.windows.win_shell`    |
+| `win_service`  | `ansible.windows.win_service`  |
+| `win_regedit`  | `ansible.windows.win_regedit`  |
+| `win_reboot`   | `ansible.windows.win_reboot`   |
+| `win_file`     | `ansible.windows.win_file`     |
 
-Effort : ~15 minutes de search/replace + 1 lint pass.
+Effort : ~10 minutes de search/replace + 1 lint pass.
 
-### 3.3 I3 — Cleanup `user_folders.yml`
+### 3.2 I3 — Cleanup `user_folders.yml`
 
 **Avant** : 513 lignes dont ~80% commentées.
 
@@ -179,37 +159,25 @@ Actions :
 - Supprimer le reboot inline (déjà fait en Phase 1 C5)
 - Re-indenter au top-level standard (2 spaces, pas 4)
 - Déplacer les 2 tasks VSS access control vers `system_settings.yml` (ou nouveau `vss.yml`)
+- Appliquer FQCN (en même temps que I2 ci-dessus)
 
-### 3.4 I4 — `softwares_download.yml` : rescue/failed_when manquants
+### 3.3 Phase 2 — Critères d'acceptation
 
-Wrap chaque download dans un block avec rescue, ou ajouter `failed_when: false` + `register:` pour permettre au playbook de continuer même si un mirror est down. Le main.yml a déjà un `rescue:` block sur l'include — c'est partiel.
+1. `make lint` : zéro erreur sur les 3 fichiers ciblés (main.yml, system_settings.yml, user_folders.yml)
+2. `user_folders.yml` ≤ 120 lignes (vs 513 actuellement)
+3. Aucun module non-FQCN dans les 3 fichiers ciblés (grep `^\s*win_` négatif sauf à l'intérieur de strings/commentaires)
+4. 2 runs successifs de `make windows` (sans Phase 3 encore appliquée) → `changed=0` au second run sur ces 3 fichiers
 
-Pattern :
+### 3.4 Items NON inclus dans Phase 2 (redondants avec Phase 3)
 
-```yaml
-- name: Download softwares
-  block:
-    - include_tasks: softwares_download.yml
-  rescue:
-    - debug: msg: "Un download a échoué — voir log"
-```
+Pour mémoire — ne PAS implémenter :
 
-Existe déjà. Mais à l'intérieur de `softwares_download.yml`, on peut ajouter `ignore_errors: true` + register sur chaque `win_get_url` individuel pour que UNE URL morte ne plante pas TOUS les downloads.
+- ~~I1 win_package migration~~ → `softwares_install.yml` supprimé en Phase 3
+- ~~FQCN sur softwares\_\*.yml / ms_store_apps.yml / drivers.yml~~ → fichiers supprimés en Phase 3
+- ~~Rescue blocks dans softwares_download.yml~~ → fichier supprimé en Phase 3
+- ~~Cleanup tag sur Remove Temp directory~~ → softwares_install.yml supprimé en Phase 3
 
-### 3.5 I5 — Soigner `Remove Temp directory`
-
-**Fichier** : `softwares_install.yml` lignes 121-124
-
-**Avant** : `state: absent` à la fin, supprime même si tout a réussi.
-
-**Après** : tagger `[cleanup]` pour permettre `make windows ARGS='--skip-tags cleanup'`, qui garde C:\temp pour debug.
-
-### 3.6 Phase 2 — Critères d'acceptation
-
-1. `make lint` : zéro erreur (pas juste "no new" — vraiment zéro)
-2. `softwares_install.yml` n'utilise plus `win_command` pour les MSI (exception NVIDIA EXE conservée si pas migré winget)
-3. `user_folders.yml` ≤ 120 lignes (vs 513 actuellement)
-4. 2 runs successifs de `make windows` → `changed=0` au second run, partout
+Si pour une raison X on doit ship Phase 2 sans Phase 3 (ex : winget pose problème inattendu), revisiter le spec et restaurer ces items.
 
 ---
 
@@ -347,8 +315,8 @@ Justification : sémantiquement, retirer les AppX bloatware est du **debloat con
 | Risque                                                                   | Phase | Mitigation                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Firefox check Mozilla path différent selon ESR vs Release                | 1     | Tester sur les deux types. Fallback : check via `Get-ItemProperty HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\CurrentVersion`.                                                                                                                                     |
-| `win_package` ne détecte pas le product_id sans le fournir               | 2     | Pour les MSI, lire le ProductCode via `msiexec /a` ou via PowerShell `Get-Package`. Pour les EXE non-MSI, garder `win_command` avec `creates:` path.                                                                                                          |
 | Suppression de `user_folders.yml` commenté = perte d'historique          | 2     | Tous les blocs sont dans git history. `git log -p user_folders.yml` reste accessible.                                                                                                                                                                         |
+| Tasks VSS access control déplacées depuis user_folders.yml               | 2     | Verifier que la nouvelle location dans `system_settings.yml` (ou nouveau `vss.yml`) reste correctement appliquée. Tester avec `make verify-windows`.                                                                                                          |
 | Winget package indisponible (`Synology.DriveClient`)                     | 3     | Vérifier disponibilité avant migration via `winget search`. Si absent : retirer de la liste et installer manuellement. La stratégie `direct_url` est explicitement abandonnée pour rester full-winget.                                                        |
 | Migration winget casse les paths d'install attendus par d'autres scripts | 3     | Winget installe dans des paths standardisés (`C:\Program Files\<App>\`). Audit Playnite, etc. avant.                                                                                                                                                          |
 | `Nvidia.GeForceDriver` via winget tire-t-il GFE en sneaky ?              | 3     | Vérifier sur un host de test : `winget show Nvidia.GeForceDriver` indique l'installer flags. À documenter dans le commit. Si GFE arrive en bundle, fallback : retirer NVIDIA du `winget_packages` et garder le driver install manuel (NVCleanstall une fois). |
