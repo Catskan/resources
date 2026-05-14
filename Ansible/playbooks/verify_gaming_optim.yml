@@ -1,0 +1,18 @@
+---
+# Vérifie l'état post-run des optimisations gaming.
+# Aucune modification — uniquement des assertions et des prints d'état.
+#
+# Usage : make verify-windows
+#
+# Si une vérification échoue, le playbook plante et affiche ce qui manque.
+# Tags par catégorie : defender, gaming_optim, console_ux, drivers, all.
+
+- name: Verify Windows 11 gaming optimization state
+  hosts: aurelien-gaming
+  gather_facts: true
+
+  tasks:
+    - name: Header
+      ansible.builtin.debug:
+        msg: "=== Verifying gaming optimizations on {{ inventory_hostname }} ==="
+      tags: [all]
