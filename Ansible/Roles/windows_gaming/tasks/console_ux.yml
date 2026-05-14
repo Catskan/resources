@@ -1,0 +1,32 @@
+---
+# Console-style UX hardening — debloat, debrand, deinterrupt.
+# See spec §4.3.
+#
+# Conceptual split:
+#   §4.3.1 AppX bloatware extended    ← below
+#   §4.3.2 Cortana / Bing / Widgets    ← Task 9
+#   §4.3.3 OneDrive uninstall          ← Task 10
+#   §4.3.4 Edge neutralization         ← Task 11
+#   §4.3.5 Firefox default             ← Task 12
+#   §4.3.6 Telemetry minimum           ← Task 13
+#   §4.3.7 Notifications/bg/startup    ← Task 13
+
+# ======================== §4.3.1 AppX bloatware extended ========================
+
+- name: Uninstall extended AppX bloatware
+  ansible.windows.win_powershell:
+    script: |
+      $names = @({{ appx_bloatware_extended | map('to_json') | join(', ') }})
+      $changed = $false
+      foreach ($n in $names) {
+        $pkg = Get-AppxPackage -AllUsers -Name "*$n*" -ErrorAction SilentlyContinue
+        if ($pkg) {
+          $pkg | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+          $prov = Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like "*$n*"
+          if ($prov) {
+            $prov | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null
+          }
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
