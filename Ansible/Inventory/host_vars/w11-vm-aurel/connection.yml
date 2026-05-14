@@ -1,6 +1,6 @@
 # Lookup KeePass → adapte le path à l'emplacement réel.
 ansible_hostname: W11-VM-Aurel
-ansible_password: "{{ lookup('viczem.keepass.keepass', 'ansible/w11-vm-aurel/local_user', 'password') }}"
+ansible_password: "{{ lookup('viczem.keepass.keepass', 'Local/w11-vm-user', 'password') }}"
 ansible_host: 192.168.64.16
 ansible_user: Aurel
 
