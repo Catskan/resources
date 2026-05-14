@@ -18,6 +18,10 @@
   ansible.builtin.include_tasks: user_folders.yml
   tags: [user_folders]
 
+- name: Apply Windows Defender exclusions and tuning
+  ansible.builtin.include_tasks: defender.yml
+  tags: [system, defender]
+
 - name: Check which softwares are already installed
   ansible.builtin.include_tasks: softwares_check.yml
   tags: [softwares, softwares_check]
@@ -54,7 +58,3 @@
 - name: Install MS Store / winget apps
   ansible.builtin.include_tasks: ms_store_apps.yml
   tags: [ms_store]
-
-- name: Apply Windows Defender exclusions and tuning
-  ansible.builtin.include_tasks: defender.yml
-  tags: [system, defender]

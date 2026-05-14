@@ -64,11 +64,11 @@
     script: |
       $pref = Get-MpPreference
       $changed = $false
-      if ($pref.MAPSReporting -ne '{{ defender_maps_reporting }}') {
+      if ([string]$pref.MAPSReporting -ne '{{ defender_maps_reporting }}') {
         Set-MpPreference -MAPSReporting {{ defender_maps_reporting }}
         $changed = $true
       }
-      if ($pref.SubmitSamplesConsent -ne '{{ defender_submit_samples }}') {
+      if ([string]$pref.SubmitSamplesConsent -ne '{{ defender_submit_samples }}') {
         Set-MpPreference -SubmitSamplesConsent {{ defender_submit_samples }}
         $changed = $true
       }
