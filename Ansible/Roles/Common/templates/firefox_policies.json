@@ -1,0 +1,28 @@
+{
+  "policies": {
+    "PasswordManagerEnabled": false,
+
+    "ExtensionSettings": {
+      "{{ firefox_extension_id_uBlockOrigin }}": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+      },
+      "{{ firefox_extension_id_videoDownloadHelper }}": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/file/3804074/video_downloadhelper-7.6.0.xpi"
+      },
+      "{{ firefox_extension_id_downThemAll }}": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/file/3983650/downthemall-4.5.2.xpi"
+      },
+      "{{ firefox_extension_id_keepassxc }}": {
+        "installation_mode": "force_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser/latest.xpi",
+        "default_area": "navbar"
+      }
+    },
+    "3rdparty": {
+      "Extensions": {}
+    }
+  }
+}
