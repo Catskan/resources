@@ -19,7 +19,13 @@
       } else {
         $Ansible.Result = @{ action = 'already_present' }
       }
+  register: amd_install_result
   when: amd_chipset_install
+
+- name: Flag reboot after AMD chipset install
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: amd_install_result.changed | default(false)
 
 # ======================== §4.4.2 NVIDIA driver ========================
 
@@ -38,9 +44,15 @@
       winget install --id Nvidia.GeForceDriver `
                      --silent --accept-package-agreements --accept-source-agreements
       $Ansible.Changed = $true
+  register: nvidia_install_result
   when:
     - nvidia_driver_install_strategy == 'winget'
     - not (nvidia_check.result.present | default(false))
+
+- name: Flag reboot after NVIDIA winget install
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: nvidia_install_result.changed | default(false)
 
 - name: NVIDIA — install driver via direct URL (one-shot)
   block:
@@ -51,6 +63,11 @@
     - name: Run NVIDIA installer silently
       ansible.windows.win_command:
         cmd: 'C:\Windows\Temp\nvidia-driver.exe -s -clean'
+      register: nvidia_directurl_install
+    - name: Flag reboot after NVIDIA direct_url install
+      ansible.builtin.set_fact:
+        reboot_required: true
+      when: nvidia_directurl_install.changed | default(false)
   when:
     - nvidia_driver_install_strategy == 'direct_url'
     - not (nvidia_check.result.present | default(false))

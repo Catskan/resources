@@ -138,7 +138,7 @@ defender_submit_samples: NeverSend
 vbs_enabled: false
 vbs_weekly_reset:
   enabled: true
-  day: SUN # MON, TUE, WED, THU, FRI, SAT, SUN
+  day: sunday # monday, tuesday, wednesday, thursday, friday, saturday, sunday
   time: "04:00"
 
 # --- Kernel & multimedia (gaming_optim.yml) ---
