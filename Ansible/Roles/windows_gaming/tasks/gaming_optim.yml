@@ -219,3 +219,36 @@
       $Ansible.Changed = $true
   when: pcie_link_state_power_off
   changed_when: false
+
+# ======================== §4.2.5 Game DVR / Mode ========================
+
+- name: Game DVR — HKLM policy off
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR
+    name: AllowGameDVR
+    data: "{{ 0 if game_dvr_disabled else 1 }}"
+    type: dword
+
+- name: Game DVR & Mode — HKCU (user-level)
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $entries = @(
+        @{Path='HKCU:\System\GameConfigStore';                Name='GameDVR_Enabled';         Value={{ 0 if game_dvr_disabled else 1 }}},
+        @{Path='HKCU:\Software\Microsoft\GameBar';            Name='AllowAutoGameMode';        Value={{ 1 if game_mode_enabled else 0 }}},
+        @{Path='HKCU:\Software\Microsoft\GameBar';            Name='AutoGameModeEnabled';      Value={{ 1 if game_mode_enabled else 0 }}}
+      )
+      foreach ($e in $entries) {
+        if (-not (Test-Path $e.Path)) { New-Item -Path $e.Path -Force | Out-Null }
+        $cur = (Get-ItemProperty -Path $e.Path -Name $e.Name -ErrorAction SilentlyContinue).($e.Name)
+        if ($cur -ne $e.Value) {
+          Set-ItemProperty -Path $e.Path -Name $e.Name -Value $e.Value -Type DWord
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"

@@ -44,3 +44,64 @@
         fail_msg: "Defender state mismatch — see defender_verify.result above"
         success_msg: "Defender exclusions and reporting OK"
       tags: [defender, all]
+
+    - name: Verify VBS / DeviceGuard status
+      ansible.windows.win_powershell:
+        script: |
+          $dg = Get-CimInstance -ClassName Win32_DeviceGuard -ErrorAction SilentlyContinue
+          $vbs_running = ($dg.VirtualizationBasedSecurityStatus -eq 2)
+          $hvci_running = ($dg.SecurityServicesRunning -contains 2)
+          $sched = Get-ScheduledTask -TaskName 'VBS-Safety-Reset' -ErrorAction SilentlyContinue
+          $Ansible.Result = @{
+            vbs_running  = [bool]$vbs_running
+            hvci_running = [bool]$hvci_running
+            sched_exists = [bool]$sched
+          }
+      register: vbs_verify
+      tags: [gaming_optim, all]
+
+    - name: Assert VBS state matches spec
+      ansible.builtin.assert:
+        that:
+          - vbs_verify.result.vbs_running == vbs_enabled
+          - vbs_verify.result.hvci_running == vbs_enabled
+          - vbs_verify.result.sched_exists == vbs_weekly_reset.enabled
+        fail_msg: "VBS state mismatch — got {{ vbs_verify.result }}"
+        success_msg: "VBS state OK"
+      tags: [gaming_optim, all]
+
+    - name: Verify kernel multimedia keys
+      ansible.windows.win_powershell:
+        script: |
+          $base = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile'
+          $Ansible.Result = @{
+            sys_resp = (Get-ItemProperty -Path $base -Name SystemResponsiveness -ErrorAction SilentlyContinue).SystemResponsiveness
+            throttle = (Get-ItemProperty -Path $base -Name NetworkThrottlingIndex -ErrorAction SilentlyContinue).NetworkThrottlingIndex
+          }
+      register: kernel_verify
+      tags: [gaming_optim, all]
+
+    - name: Assert kernel multimedia keys match spec
+      ansible.builtin.assert:
+        that:
+          - kernel_verify.result.sys_resp == system_responsiveness
+          - kernel_verify.result.throttle == network_throttling_index
+        fail_msg: "Kernel multimedia keys mismatch — got {{ kernel_verify.result }}"
+        success_msg: "Kernel multimedia OK"
+      tags: [gaming_optim, all]
+
+    - name: Verify hibernation disabled
+      ansible.windows.win_powershell:
+        script: |
+          $out = (powercfg /a) -join ' '
+          $Ansible.Result = @{ hibernation_disabled = $out -match "L'hibernation n'a pas été activée|Hibernation has not been enabled" }
+      register: hibern_verify
+      tags: [gaming_optim, all]
+
+    - name: Assert hibernation status matches spec
+      ansible.builtin.assert:
+        that:
+          - hibern_verify.result.hibernation_disabled == (not hibernation_enabled)
+        fail_msg: "Hibernation state mismatch — got {{ hibern_verify.result }}"
+        success_msg: "Hibernation state OK"
+      tags: [gaming_optim, all]

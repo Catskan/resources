@@ -22,6 +22,10 @@
   ansible.builtin.include_tasks: defender.yml
   tags: [system, defender]
 
+- name: Apply gaming optimizations (VBS off, kernel, network, Game DVR)
+  ansible.builtin.include_tasks: gaming_optim.yml
+  tags: [system, gaming_optim]
+
 - name: Check which softwares are already installed
   ansible.builtin.include_tasks: softwares_check.yml
   tags: [softwares, softwares_check]
