@@ -158,3 +158,64 @@
       $Ansible.Changed = $changed
       $Ansible.Result = @{ touched = $touched }
   when: nagle_disable_on_gaming_nic
+
+# ======================== §4.2.4 Storage / power ========================
+
+- name: Storage — disable hibernation
+  ansible.windows.win_powershell:
+    script: |
+      $info = powercfg /a
+      $hibern = ($info -join ' ') -match 'L''hibernation a été activée|Hibernation has been enabled'
+      if ($hibern) {
+        powercfg /h off
+        $Ansible.Changed = $true
+      }
+  when: not hibernation_enabled
+
+- name: Storage — configure fixed page file
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $cs = Get-CimInstance Win32_ComputerSystem
+      if ($cs.AutomaticManagedPagefile) {
+        Set-CimInstance -InputObject $cs -Property @{ AutomaticManagedPagefile = $false } | Out-Null
+        $changed = $true
+      }
+      $pf = Get-CimInstance Win32_PageFileSetting -Filter "Name like 'C:%'"
+      $desiredInit = {{ page_file.initial_size_mb }}
+      $desiredMax  = {{ page_file.max_size_mb }}
+      if ($null -eq $pf) {
+        New-CimInstance -ClassName Win32_PageFileSetting -Property @{
+          Name = 'C:\pagefile.sys'; InitialSize = $desiredInit; MaximumSize = $desiredMax
+        } | Out-Null
+        $changed = $true
+      } elseif ($pf.InitialSize -ne $desiredInit -or $pf.MaximumSize -ne $desiredMax) {
+        Set-CimInstance -InputObject $pf -Property @{ InitialSize = $desiredInit; MaximumSize = $desiredMax } | Out-Null
+        $changed = $true
+      }
+      $Ansible.Changed = $changed
+  when: page_file.strategy == 'fixed'
+
+- name: Power — disable USB selective suspend
+  ansible.windows.win_powershell:
+    script: |
+      # GUIDs documented in powercfg /q output
+      $sub  = '2a737441-1930-4402-8d77-b2bebba308a3'  # USB settings
+      $set  = '48e6b7a6-50f5-4782-a5d4-53bb8f07e226'  # USB selective suspend
+      powercfg /setacvalueindex SCHEME_CURRENT $sub $set 0
+      powercfg /setdcvalueindex SCHEME_CURRENT $sub $set 0
+      powercfg /setactive SCHEME_CURRENT
+      $Ansible.Changed = $true   # idempotent in effect; powercfg is silent
+  when: not usb_selective_suspend
+  changed_when: false
+
+- name: Power — disable PCIe Link State Power Management
+  ansible.windows.win_powershell:
+    script: |
+      $sub  = '501a4d13-42af-4429-9fd1-a8218c268e20'  # PCI Express
+      $set  = 'ee12f906-d277-404b-b6da-e5fa1a576df5'  # Link State Power Mgmt
+      powercfg /setacvalueindex SCHEME_CURRENT $sub $set 0
+      powercfg /setactive SCHEME_CURRENT
+      $Ansible.Changed = $true
+  when: pcie_link_state_power_off
+  changed_when: false
