@@ -46,14 +46,14 @@ Each task ends with a fast-loop verification and a commit. Slow-loop verificatio
 
 ### Files modified
 
-| Path                                                   | Change                                                                                    |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `Ansible/roles/windows_gaming/tasks/main.yml`          | Add 4 include_tasks (defender, gaming_optim, console_ux, drivers) + final reboot block    |
-| `Ansible/inventory/host_vars/aurelien-gaming/main.yml` | Add ~30 new variables (defender*\*, vbs*_, hibernation\__, appx_bloatware_extended, etc.) |
-| `Ansible/inventory/group_vars/all/main.yml`            | Add `firefox_extension_id_keepassxc`                                                      |
-| `Ansible/roles/common/templates/firefox_policies.json` | Add KeePassXC extension entry (no Bitwarden to remove — confirmed not present)            |
-| `Ansible/Makefile`                                     | Add `verify-windows` target + help entry                                                  |
-| `CLAUDE.md`                                            | Add new tags to the table in "Tags (rôle `windows_gaming`)" section                       |
+| Path                                                   | Change                                                                                      |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `Ansible/roles/windows_gaming/tasks/main.yml`          | Add 4 include_tasks (defender, gaming_optim, console_ux, drivers) + final reboot block      |
+| `Ansible/inventory/host_vars/aurelien-gaming/main.yml` | Add ~30 new variables (defender*\*, vbs*\_, hibernation\_\_, appx_bloatware_extended, etc.) |
+| `Ansible/inventory/group_vars/all/main.yml`            | Add `firefox_extension_id_keepassxc`                                                        |
+| `Ansible/roles/common/templates/firefox_policies.json` | Add KeePassXC extension entry (no Bitwarden to remove — confirmed not present)              |
+| `Ansible/Makefile`                                     | Add `verify-windows` target + help entry                                                    |
+| `CLAUDE.md`                                            | Add new tags to the table in "Tags (rôle `windows_gaming`)" section                         |
 
 ---
 
@@ -623,29 +623,38 @@ Append to `Ansible/roles/windows_gaming/tasks/gaming_optim.yml`:
 
 # ======================== §4.2.3 Network (Nagle OFF) ========================
 
-- name: Network — disable Nagle on gaming NIC
+- name: Network — disable Nagle on all Ethernet NICs (Up + 802.3)
+  # Applies to all 802.3 adapters Up — same selection pattern as the WOL task
+  # in system_settings.yml. On the B850 Max Gaming Wifi W there's only one
+  # Ethernet port (Realtek 8125 2.5GbE). The WiFi NIC is excluded because
+  # its MediaType is 'Native 802.11', not '802.3'.
   ansible.windows.win_powershell:
     script: |
       $changed = $false
-      $adapter = Get-NetAdapter -Physical |
-        Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' } |
-        Select-Object -First 1
-      if (-not $adapter) {
-        $Ansible.Result = @{ message = 'No Ethernet adapter Up' }
+      $touched = @()
+      $adapters = Get-NetAdapter -Physical |
+        Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' }
+      if (-not $adapters) {
+        $Ansible.Result = @{ message = 'No Ethernet adapter Up'; touched = @() }
         return
       }
-      $guid = $adapter.InterfaceGuid
-      $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$guid"
       $desired = @{ TcpAckFrequency = 1; TCPNoDelay = 1; TcpDelAckTicks = 0 }
-      foreach ($name in $desired.Keys) {
-        $current = (Get-ItemProperty -Path $path -Name $name -ErrorAction SilentlyContinue).$name
-        if ($current -ne $desired[$name]) {
-          Set-ItemProperty -Path $path -Name $name -Value $desired[$name] -Type DWord
-          $changed = $true
+      foreach ($a in $adapters) {
+        $guid = $a.InterfaceGuid
+        $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$guid"
+        $adapterChanged = $false
+        foreach ($name in $desired.Keys) {
+          $current = (Get-ItemProperty -Path $path -Name $name -ErrorAction SilentlyContinue).$name
+          if ($current -ne $desired[$name]) {
+            Set-ItemProperty -Path $path -Name $name -Value $desired[$name] -Type DWord
+            $adapterChanged = $true
+          }
         }
+        if ($adapterChanged) { $changed = $true }
+        $touched += @{ name = $a.Name; speed = [string]$a.LinkSpeed; guid = $guid; changed = $adapterChanged }
       }
       $Ansible.Changed = $changed
-      $Ansible.Result = @{ adapter = $adapter.Name; guid = $guid }
+      $Ansible.Result = @{ touched = $touched }
   when: nagle_disable_on_gaming_nic
 ```
 
