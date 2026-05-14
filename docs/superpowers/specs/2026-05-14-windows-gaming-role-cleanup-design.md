@@ -144,16 +144,15 @@ Pattern remplacement :
 
 Effort : ~10 minutes de search/replace + 1 lint pass.
 
-### 3.2 I3 — Cleanup `user_folders.yml`
+### 3.2 I3 — Cleanup + audit + optimisation `user_folders.yml`
 
-**Avant** : 513 lignes dont ~80% commentées.
+**Avant** : 513 lignes dont ~80% commentées, avec 3 bugs réels (duplications + écriture dans clé legacy).
 
-**Après cible** : ~80-100 lignes actives.
+**Après cible** : ~80-100 lignes actives, redirections explicitement auditées et correctes.
 
-Actions :
+#### 3.2.1 Cleanup mécanique
 
 - Supprimer tous les blocs commentés (HKLM\..., HKCU\...\User User Shell Folders qui est invalide, "Common Administrative Tools", etc.)
-- Dedup `Documents` (2× redirected), `Music` vs `My Music` (2 paths différents pour la même chose)
 - Supprimer `Get-WmiObject Win32_Account ... SID` + le fact `user_name_sid` (jamais utilisé)
 - Supprimer la task `debug: var: user_name_sid` (output de debug oublié)
 - Supprimer le reboot inline (déjà fait en Phase 1 C5)
@@ -161,12 +160,67 @@ Actions :
 - Déplacer les 2 tasks VSS access control vers `system_settings.yml` (ou nouveau `vss.yml`)
 - Appliquer FQCN (en même temps que I2 ci-dessus)
 
+#### 3.2.2 Bugs concrets à corriger (audit du code actif)
+
+- **Bug A — `Documents` redirigé 2 fois** (lignes 35-40 et 217-222) : même key `Personal`, même valeur. Garder UNE seule task.
+- **Bug B — `Music`/`My Music` redirigés 2 fois** (lignes 42-47 et 147-152) : les deux écrivent la registry key `My Music` avec la même valeur. La task nommée "Music" est un duplicate à supprimer.
+- **Bug C — `Saved Games` écrit dans la clé legacy `Shell Folders`** (lignes 245-250) : la clé moderne est `User Shell Folders` (déjà écrite ailleurs). Win11 ignore l'ancienne. Supprimer la task `Shell Folders`.
+
+#### 3.2.3 Audit des redirections — décisions d'optimisation
+
+**Redirections à GARDER actives** (folders user-facing volumineux qui méritent le M:\) :
+
+| Folder      | Registry key            | Cible                |
+| ----------- | ----------------------- | -------------------- |
+| Desktop     | `Desktop`               | `M:\Aurel\Desktop`   |
+| Documents   | `Personal`              | `M:\Aurel\Documents` |
+| Downloads   | `{374DE290-...}` (GUID) | `M:\Aurel\Downloads` |
+| Music       | `My Music`              | `M:\Aurel\Music`     |
+| Pictures    | `My Pictures`           | `M:\Aurel\Pictures`  |
+| Videos      | `My Video`              | `M:\Aurel\Videos`    |
+| Saved Games | `{4C5C32FF-...}` (GUID) | `M:\Saved Games`     |
+| Favorites   | `Favorites`             | `M:\Aurel\Favorites` |
+
+**Redirections actuelles à RETIRER** (folders réseau/cache déplacés sans bénéfice clair) :
+
+- ~~History~~ — utilisé uniquement par IE legacy, ~0 impact sur un système moderne. Le path `M:\Aurel\AppData\Local\Microsoft\Windows\History` n'est jamais utilisé en pratique. Laisser sur C:\.
+- ~~Cookies~~ — idem, legacy IE. Firefox/Edge ont leur propres cookies dans AppData/Profile. Laisser sur C:\.
+- ~~Startup~~ — petit dossier de raccourcis (.lnk). Aucun gain à le déplacer. Laisser sur C:\.
+
+**Redirections JAMAIS faites mais variables définies** (commentées dans le code) — **à supprimer du host_vars** : `appData_user_directory*`, `cache_user_directory*`, `localAppData_user_directory*`, `netHood*`, `printHood*`, `recent*`, `sendTo*`, `startMenu*`, `templates*`, `ms_store_app_location*`, `new_WindowsApps_directory`.
+
+Raison : redirect `AppData` / `LocalAppData` casse de nombreuses apps qui hardcodent `%USERPROFILE%\AppData\...`. Plus de problèmes que de gain. Garder sur C:\ système (Fanxiang NVMe — c'est rapide).
+
+**Cas MS Store apps location** : optionnel et complexe (registre `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\PackageRoot`). Si tu veux installer les jeux Xbox/Forza sur M:\, la **méthode Microsoft officielle** est : Settings → System → Storage → Advanced storage settings → Where new content is saved → New apps will save to: M:\. Beaucoup plus robuste que le tweak registre. **Hors scope de cette tâche.**
+
+#### 3.2.4 Verification post-cleanup
+
+Ajouter à `verify_gaming_optim.yml` (sous tag `[user_folders, all]`) un block qui :
+
+1. Lit `HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders` et vérifie que chaque key des 8 redirections garde la valeur attendue (M:\Aurel\... ou M:\Saved Games).
+2. Asserte que les keys `Shell Folders` legacy ne sont PAS rewritées (cf bug C).
+3. Affiche un récap propre du mapping `key → path` pour debug humain.
+
+#### 3.2.5 Variables host_vars à nettoyer
+
+Après le cleanup, **supprimer** ces blocs du fichier `inventory/host_vars/aurelien-gaming/main.yml` (lignes 9-89 en gros) :
+
+- `appData_user_directory*`, `cache_user_directory*`, `localAppData_user_directory*`
+- `netHood_user_directory*`, `printHood_user_directory*`, `recent_user_directory*`
+- `sendTo_user_directory*`, `startMenu_user_directory*`, `templates_user_directory*`
+- `history_user_directory*`, `cookies_user_directory*`, `startup_user_directory*` (puisqu'on arrête de les rediriger)
+- `ms_store_app_location*`, `new_WindowsApps_directory`
+
+**Garder** : `user_name`, `root_user_directory`, `desktop_*`, `documents_*`, `downloads_*`, `myMusic_*`, `myPictures_*`, `myVideos_*`, `savedGames_*`, `favorites_*`, plus les vars gaming optim ajoutées en Task 1.
+
 ### 3.3 Phase 2 — Critères d'acceptation
 
 1. `make lint` : zéro erreur sur les 3 fichiers ciblés (main.yml, system_settings.yml, user_folders.yml)
-2. `user_folders.yml` ≤ 120 lignes (vs 513 actuellement)
+2. `user_folders.yml` ≤ 120 lignes (vs 513 actuellement) **et** exactement 8 tasks de redirection actives (Desktop, Documents, Downloads, Music, Pictures, Videos, Saved Games, Favorites)
 3. Aucun module non-FQCN dans les 3 fichiers ciblés (grep `^\s*win_` négatif sauf à l'intérieur de strings/commentaires)
 4. 2 runs successifs de `make windows` (sans Phase 3 encore appliquée) → `changed=0` au second run sur ces 3 fichiers
+5. `make verify-windows ARGS='--tags user_folders'` confirme les 8 redirections actives + l'absence d'écriture dans la clé legacy `Shell Folders`
+6. `host_vars/aurelien-gaming/main.yml` ne contient plus les vars `appData_*`, `cache_*`, `localAppData_*`, `netHood_*`, `printHood_*`, `recent_*`, `sendTo_*`, `startMenu_*`, `templates_*`, `history_*`, `cookies_*`, `startup_*` (vars folder-related obsolètes après audit)
 
 ### 3.4 Items NON inclus dans Phase 2 (redondants avec Phase 3)
 
