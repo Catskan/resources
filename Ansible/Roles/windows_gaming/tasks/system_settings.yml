@@ -1,0 +1,178 @@
+---
+##########################################Aurel-Gaming##########################################
+- name: Ensure WinRM starts when the system has settled and is ready to work reliably
+  win_service:
+    name: WinRM
+    start_mode: delayed
+
+#Change power plan
+- name: Change power plan to high performance
+  community.windows.win_power_plan:
+    name: high performance
+  when: inventory_hostname == "aurelien-gaming"
+
+#Set RDP
+- name: Allow RDP TSConnection
+  ansible.windows.win_regedit:
+    path: HKLM:\System\CurrentControlSet\Control\Terminal Server
+    name: fDenyTSConnections
+    data: 0
+    type: dword
+- name: Allow UserAuthentication
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+    name: UserAuthentication
+    data: 1
+    type: dword
+- name: Allow Client Drives
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+    name: fAutoClientDrives
+    data: 1
+    type: dword
+- name: Change RDP Port
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+    name: PortNumber
+    data: "{{ remote_desktop_port }}"
+    type: dword
+- name: Add user to Remote Desktop Group
+  ansible.windows.win_group_membership:
+    name: Remote Desktop Users
+    members:
+      - "{{ user_name }}"
+    state: present
+- name: Enable RDP inside the Firewall
+  community.windows.win_firewall_rule:
+    name: Remote Desktop
+    localport: "{{ remote_desktop_port }}"
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: private
+    state: present
+    enabled: yes
+
+- name: Enable AdminAutoLogOn
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: "AutoAdminLogon"
+    data: 1
+    type: dword
+
+- name: Set Username
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: "DefaultUserName"
+    data: "{{ user_name }}"
+    type: expandstring
+
+- name: Set Password
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: "DefaultPassword"
+    data: "{{ remote_local_user_name_password }}"
+    type: expandstring
+
+##########################################Change hostname##########################################
+- name: Change W11 VM Aurel hostname
+  ansible.windows.win_hostname:
+    name: "{{ w11_vm_computer_hostname }}"
+  register: old_hostname
+  when: inventory_hostname == "w11-vm-aurel"
+
+- name: Reboot W11-VM-Aurel
+  ansible.windows.win_reboot:
+    test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+  when: inventory_hostname == "w11-vm-aurel" and old_hostname.changed == true
+
+# ##########################################Mount WebDAV##########################################
+#   - name: Create mapped drive with credentials and save the username and password
+#     block:
+#     - name: Save the network credentials required for the mapped drive
+#       community.windows.win_credential:
+#         name: nas.eonelia.cloud
+#         type: generic_password
+#         username: '{{ nas_username }}'
+#         secret: '{{ nas_password }}'
+#         state: present
+#         persistence: enterprise
+#     # - name: Create a mapped drive that requires authentication
+#     #   win_mapped_drive:
+#     #     letter: W
+#     #     path: '\\{{ nas_url }}@SSL@8171\Aurelien'
+#     #     state: present
+#     vars:
+#       # become is required to save and retrieve the credentials in the tasks
+#       ansible_become: yes
+#       ansible_become_method: runas
+#       ansible_become_user: '{{ ansible_user }}'
+#       ansible_become_pass: '{{ ansible_password }}'
+
+- name: Save Microsoft Account Credentials to Credentials Store
+  block:
+    - name: Save the network credentials required for the mapped drive
+      community.windows.win_credential:
+        name: "MicrosoftAccount:user=a.busutil@icloud.com"
+        type: generic_password
+        username: "{{ microsoft_account_email }}"
+        secret: "{{ microsoft_account_password }}"
+        state: present
+        persistence: local
+  vars:
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: "{{ ansible_user }}"
+    ansible_become_pass: "{{ ansible_password }}"
+
+- name: Enable Wake-on-LAN (Magic Packet) on all wired Ethernet adapters
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $adapters = Get-NetAdapter -Physical |
+        Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' }
+      foreach ($a in $adapters) {
+        try {
+          Enable-NetAdapterPowerManagement -Name $a.Name -WakeOnMagicPacket -ErrorAction Stop
+          $changed = $true
+        } catch {}
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: "{{ ansible_user }}"
+    ansible_become_pass: "{{ ansible_password }}"
+#     - name: Create a mapped drive that requires authentication
+#       win_mapped_drive:
+#         letter: N
+#         path: 'https://nas.mapn.fr:8171/Aurelien'
+#         state: present
+#     vars:
+#       # become is required to save and retrieve the credentials in the tasks
+#       ansible_become: yes
+#       ansible_become_method: runas
+#       ansible_become_user: '{{ ansible_user }}'
+#       ansible_become_pass: '{{ ansible_password }}'
+
+- name: Disable Nahimic Service
+  ansible.windows.win_service:
+    name: NahimicService
+    start_mode: disabled
+    state: stopped
+
+##########################################Install all Windows Updates##########################################
+# - name: Unregister Scheduled job if one exists
+#   win_shell: 'Start-Process powershell.exe -ArgumentList "-Command  `"&{`Unregister-ScheduledJob  -name ansible-win-updates;}`"" -Wait -verb RunAs'
+- name: Turn off UAC
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\policies\system
+    name: EnableLUA
+    data: 0
+    type: dword
+    state: present
+  register: output_uac
+
+- name: Reboot to apply UAC Turned off
+  win_reboot:
+  when: output_uac is changed
