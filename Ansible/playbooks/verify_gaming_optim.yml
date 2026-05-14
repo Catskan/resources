@@ -105,3 +105,31 @@
         fail_msg: "Hibernation state mismatch — got {{ hibern_verify.result }}"
         success_msg: "Hibernation state OK"
       tags: [gaming_optim, all]
+
+    - name: Verify console_ux state — AppX residuals + Firefox default + OneDrive gone
+      ansible.windows.win_powershell:
+        script: |
+          $appxResiduals = @()
+          foreach ($n in @({{ appx_bloatware_extended | map('to_json') | join(', ') }})) {
+            $found = Get-AppxPackage -Name "*$n*" -ErrorAction SilentlyContinue
+            if ($found) { $appxResiduals += $n }
+          }
+          $ffPolicy = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name DefaultAssociationsConfiguration -ErrorAction SilentlyContinue).DefaultAssociationsConfiguration
+          $oneDrivePresent = Test-Path "$env:LocalAppData\Microsoft\OneDrive\OneDrive.exe"
+          $Ansible.Result = @{
+            appx_residuals    = $appxResiduals
+            firefox_policy    = $ffPolicy
+            onedrive_present  = $oneDrivePresent
+          }
+      register: cux_verify
+      tags: [console_ux, all]
+
+    - name: Assert console_ux state matches spec
+      ansible.builtin.assert:
+        that:
+          - cux_verify.result.appx_residuals | length == 0
+          - cux_verify.result.firefox_policy == 'C:\\ProgramData\\Microsoft\\Windows\\DefaultAssociations.xml'
+          - not cux_verify.result.onedrive_present
+        fail_msg: "console_ux state mismatch — got {{ cux_verify.result }}"
+        success_msg: "console_ux state OK (no AppX residuals, Firefox default policy set, OneDrive gone)"
+      tags: [console_ux, all]

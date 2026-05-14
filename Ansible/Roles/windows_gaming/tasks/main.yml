@@ -26,6 +26,10 @@
   ansible.builtin.include_tasks: gaming_optim.yml
   tags: [system, gaming_optim]
 
+- name: Apply console-style UX hardening
+  ansible.builtin.include_tasks: console_ux.yml
+  tags: [system, console_ux]
+
 - name: Check which softwares are already installed
   ansible.builtin.include_tasks: softwares_check.yml
   tags: [softwares, softwares_check]

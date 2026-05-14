@@ -206,3 +206,109 @@
     data: 'C:\ProgramData\Microsoft\Windows\DefaultAssociations.xml'
     type: string
   when: firefox_set_default
+
+# ======================== §4.3.6 Telemetry minimum ========================
+
+- name: Telemetry — apply DataCollection policy
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection
+    name: "{{ item.name }}"
+    data: "{{ item.value }}"
+    type: dword
+  loop:
+    - { name: AllowTelemetry, value: 1 }
+    - { name: DoNotShowFeedbackNotifications, value: 1 }
+  when: telemetry_minimum
+
+- name: Telemetry — apply AdvertisingInfo policy
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo
+    name: DisabledByGroupPolicy
+    data: 1
+    type: dword
+  when: telemetry_minimum
+
+- name: Telemetry — apply CloudContent policy
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent
+    name: "{{ item.name }}"
+    data: "{{ item.value }}"
+    type: dword
+  loop:
+    - { name: DisableConsumerFeatures, value: 1 }
+    - { name: DisableWindowsConsumerFeatures, value: 1 }
+    - { name: DisableTailoredExperiencesWithDiagnosticData, value: 1 }
+  when: telemetry_minimum
+
+- name: Telemetry — disable DiagTrack service if present
+  ansible.windows.win_service:
+    name: "{{ item }}"
+    start_mode: disabled
+    state: stopped
+  loop:
+    - DiagTrack
+    - dmwappushservice
+  failed_when: false
+  when: telemetry_minimum
+
+# ======================== §4.3.7 Notifications + Background apps + Startup ========================
+
+- name: Notifications — global toggle (HKCU)
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $entries = @(
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\PushNotifications';                       Name='ToastEnabled';                       Value={{ 0 if notifications_globally_off else 1 }}},
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings';                  Name='NOC_GLOBAL_SETTING_TOASTS_ENABLED';   Value={{ 0 if notifications_globally_off else 1 }}}
+      )
+      foreach ($e in $entries) {
+        if (-not (Test-Path $e.Path)) { New-Item -Path $e.Path -Force | Out-Null }
+        $cur = (Get-ItemProperty -Path $e.Path -Name $e.Name -ErrorAction SilentlyContinue).($e.Name)
+        if ($cur -ne $e.Value) {
+          Set-ItemProperty -Path $e.Path -Name $e.Name -Value $e.Value -Type DWord
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
+
+- name: Background apps — Force Deny global policy
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy
+    name: LetAppsRunInBackground
+    data: "{{ 2 if background_apps_force_deny else 0 }}"
+    type: dword
+
+- name: Startup apps — disable explicit list
+  ansible.windows.win_powershell:
+    script: |
+      $names = @({{ startup_apps_disable | map('to_json') | join(', ') }})
+      $changed = $false
+      $runKeys = @(
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run',
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce',
+        'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run',
+        'HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce'
+      )
+      foreach ($k in $runKeys) {
+        if (-not (Test-Path $k)) { continue }
+        $props = (Get-Item -Path $k).Property
+        foreach ($p in $props) {
+          foreach ($n in $names) {
+            if ($p -like "*$n*") {
+              Remove-ItemProperty -Path $k -Name $p -ErrorAction SilentlyContinue
+              $changed = $true
+            }
+          }
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
