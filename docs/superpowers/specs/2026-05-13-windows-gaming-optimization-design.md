@@ -2,7 +2,7 @@
 
 **Date** : 2026-05-13
 **Host cible** : `aurelien-gaming` (PC physique gaming uniquement)
-**Hardware** : Ryzen 9800X3D, Asus B850 Max Gaming Wifi W, DDR5 CL30, Fanxiang NVMe (système) + SSD SATA, NVIDIA RTX 3080 FE, watercooling custom CPU + GPU
+**Hardware** : Ryzen 9800X3D, Asus B850 Max Gaming Wifi W, DDR5 CL30, Fanxiang M.2 NVMe sur C: (système + quelques jeux fréquents) + 2× SSD SATA (M: pour library jeux/data user + un autre), NVIDIA RTX 3080 FE, watercooling custom CPU + GPU
 **Rôle Ansible affecté** : `Ansible/roles/windows_gaming/` (+ une modif `Ansible/roles/common/`)
 
 ---

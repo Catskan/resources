@@ -189,7 +189,16 @@ Effort : ~10 minutes de search/replace + 1 lint pass.
 
 **Redirections JAMAIS faites mais variables définies** (commentées dans le code) — **à supprimer du host_vars** : `appData_user_directory*`, `cache_user_directory*`, `localAppData_user_directory*`, `netHood*`, `printHood*`, `recent*`, `sendTo*`, `startMenu*`, `templates*`, `ms_store_app_location*`, `new_WindowsApps_directory`.
 
-Raison : redirect `AppData` / `LocalAppData` casse de nombreuses apps qui hardcodent `%USERPROFILE%\AppData\...`. Plus de problèmes que de gain. Garder sur C:\ système (Fanxiang NVMe — c'est rapide).
+**Raison double** :
+
+1. **Compatibilité apps** : redirect `AppData` / `LocalAppData` **casse de nombreuses apps** qui hardcodent `%USERPROFILE%\AppData\...` (Discord, Steam launcher, plein de launchers de jeux, settings, etc.). Risque de breakage > gain.
+2. **Performance** : `C:\` est le Fanxiang M.2 NVMe (drive le plus rapide du système). Déplacer AppData vers M:\ (SATA SSD) serait un downgrade de vitesse pour les apps qui lisent leur cache/config en permanence.
+
+**Layout drives** (pour mémoire) :
+
+- **C:** = Fanxiang M.2 NVMe = système Windows + AppData de tous les utilisateurs + quelques jeux joués souvent (le drive le plus rapide)
+- **M:** = SATA SSD = bulk library jeux + data user (Documents, Downloads, Pictures, Videos, Music, Saved Games, Favorites, Desktop redirigés)
+- - 1× SATA SSD additionnel en complément
 
 **Cas MS Store apps location** : optionnel et complexe (registre `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\PackageRoot`). Si tu veux installer les jeux Xbox/Forza sur M:\, la **méthode Microsoft officielle** est : Settings → System → Storage → Advanced storage settings → Where new content is saved → New apps will save to: M:\. Beaucoup plus robuste que le tweak registre. **Hors scope de cette tâche.**
 
