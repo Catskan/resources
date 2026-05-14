@@ -1,0 +1,198 @@
+user_name: "Aurel"
+
+#New User location
+root_user_directory: 'M:\Aurel'
+
+downloads_user_directory_reg_key_name: "{374DE290-123F-4565-9164-39C4925E467B}"
+downloads_user_directory: 'M:\Aurel\Downloads'
+
+appData_user_directory_reg_key_name: "AppData"
+appData_user_directory: 'M:\Aurel\AppData\Roaming'
+
+cache_user_directory_reg_key_name: "Cache"
+cache_user_directory: 'M:\Aurel\AppData\Local\Microsoft\Windows\INetCache'
+
+# roamingTiles_user_directory_reg_key_name: '{00BCFC5A-ED94-4E48-96A1-3F6217F21990}'
+# roamingTiles_user_directory: 'M:\Aurel\AppData\Local\Microsoft\Windows\RoamingTiles'
+
+# libraries_user_directory_reg_key_name: '{1B3EA5DC-B587-4786-B4EF-BD1DC332AEAE}'
+# libraries_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Libraries'
+
+savedGames_user_directory_reg_key_name: "{4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4}"
+savedGames_user_directory: 'M:\Saved Games'
+
+# contacts_user_directory_reg_key_name: '{56784854-C6CB-462B-8169-88E350ACB882}'
+# contacts_user_directory: 'M:\Aurel\Contacts'
+
+# searches_user_directory_reg_key_name: '{7D1D3A04-DEBB-4115-95CF-2F29DA2920DA}'
+# searches_user_directory: 'M:\Aurel\Searches'
+
+# appdata_local_Low_reg_key_name: '{A520A1A4-1780-4FF6-BD18-167343C5AF16}'
+# appData_Local_Low_user_directory: 'M:\Aurel\AppData\LocalLow'
+
+# links_user_directory_reg_key_name: '{BFB9D5E0-C6A9-404C-B2B2-AE6DB6AF4968}'
+# links_user_directory: 'M:\Aurel\Links'
+
+# adminTools_user_directory_reg_key_name: 'Administrative Tools'
+# adminTools_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Administrative Tools'
+
+# cdBurning_user_directory_reg_key_name: 'CD Burning'
+# cdBurning_user_directory: 'M:\Aurel\AppData\Local\Microsoft\Windows\Burn\Burn'
+
+cookies_user_directory_reg_key_name: "Cookies"
+cookies_user_directory: 'M:\Aurel\AppData\Local\Microsoft\Windows\INetCookies'
+
+desktop_user_directory_reg_key_name: "Desktop"
+desktop_user_directory: 'M:\Aurel\Desktop'
+
+favorites_user_directory_reg_key_name: "Favorites"
+favorites_user_directory: 'M:\Aurel\Favorites'
+
+history_user_directory_reg_key_name: "History"
+history_user_directory: 'M:\Aurel\AppData\Local\Microsoft\Windows\History'
+
+localAppData_user_directory_reg_key_name: "Local AppData"
+localAppData_user_directory: 'M:\Aurel\AppData\Local'
+
+myMusic_user_directory_reg_key_name: "My Music"
+myMusic_user_directory: 'M:\Aurel\Music'
+
+myPictures_user_directory_reg_key_name: "My Pictures"
+myPictures_user_directory: 'M:\Aurel\Pictures'
+
+myVideos_user_directory_reg_key_name: "My Video"
+myVideos_user_directory: 'M:\Aurel\Videos'
+
+netHood_user_directory_reg_key_name: "NetHood"
+netHood_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Network Shortcuts'
+
+documents_user_directory_reg_key_name: "Personal"
+documents_user_directory: 'M:\Aurel\Documents'
+
+printHood_user_directory_reg_key_name: "PrintHood"
+printHood_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Printer Shortcuts'
+
+# startMenu_Programs_user_directory_reg_key_name: 'Programs'
+# startMenu_Programs_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu\Programs'
+
+recent_user_directory_reg_key_name: "Recent"
+recent_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Recent'
+
+sendTo_user_directory_reg_key_name: "SendTo"
+sendTo_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\SendTo'
+
+startMenu_user_directory_reg_key_name: "Start Menu"
+startMenu_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu'
+startup_user_directory_reg_key_name: "Startup"
+startup_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
+templates_user_directory_reg_key_name: "Templates"
+templates_user_directory: 'M:\Aurel\AppData\Roaming\Microsoft\Windows\Templates'
+
+#Microsot Store app locations
+new_WindowsApps_directory: 'M:\WindowsApps'
+ms_store_app_location_reg_key_name: "PackageRoot"
+ms_store_app_location: 'M:\WindowsApps'
+ms_store_app_location_package_repository_reg_key_name: "PackageRepositoryRoot"
+ms_store_app_location_package_repository: 'M:\ProgramData\Microsoft\Windows\AppRepository'
+
+aurel_gaming_computer_hostname: "Aurel-Gaming"
+games_directory: 'M:\Games'
+
+## MS Store Apps
+XboxAccessoires_id: "9NBLGGH30XJ3"
+
+#SynologyDrive Variables
+nas_url: "nas.eonelia.cloud"
+
+# ============================================================================
+# Gaming optimization vars — see docs/superpowers/specs/2026-05-13-windows-gaming-optimization-design.md
+# ============================================================================
+
+# --- Defender (defender.yml) ---
+defender_exclusion_paths:
+  - 'C:\Program Files (x86)\Steam\steamapps'
+  - 'C:\Program Files\Epic Games'
+  - 'C:\Program Files (x86)\GOG Galaxy\Games'
+  - 'C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games'
+  - 'C:\Program Files\WindowsApps'
+  - 'C:\XboxGames'
+  - 'C:\Program Files\ModifiableWindowsApps'
+  - 'M:\'
+  - 'M:\XboxGames'
+defender_exclusion_processes:
+  - steam.exe
+  - EpicGamesLauncher.exe
+  - GalaxyClient.exe
+  - UbisoftConnect.exe
+  - gamingservices.exe
+  - XboxAppServices.exe
+  - GameBar.exe
+defender_exclusion_extensions:
+  - .dxvk-cache
+  - .cache
+  - .pak
+defender_maps_reporting: Disabled
+defender_submit_samples: NeverSend
+
+# --- VBS / HVCI (gaming_optim.yml) ---
+vbs_enabled: false
+vbs_weekly_reset:
+  enabled: true
+  day: SUN # MON, TUE, WED, THU, FRI, SAT, SUN
+  time: "04:00"
+
+# --- Kernel & multimedia (gaming_optim.yml) ---
+system_responsiveness: 0
+network_throttling_index: 0xFFFFFFFF
+nagle_disable_on_gaming_nic: true
+
+# --- Storage & power (gaming_optim.yml) ---
+hibernation_enabled: false
+page_file:
+  strategy: fixed # fixed | system_managed
+  initial_size_mb: 32768
+  max_size_mb: 49152
+usb_selective_suspend: false
+pcie_link_state_power_off: true
+
+# --- Game DVR / Mode (gaming_optim.yml) ---
+game_dvr_disabled: true
+game_mode_enabled: true
+
+# --- AppX bloatware extended (console_ux.yml) ---
+appx_bloatware_extended:
+  - Microsoft.549981C3F5F10 # Cortana
+  - Microsoft.BingSearch
+  - Microsoft.MicrosoftStickyNotes
+  - Microsoft.MixedReality.Portal
+  - Microsoft.Wallet
+  - Microsoft.WindowsCommunicationsApps # Mail + Calendar
+  - MicrosoftCorporationII.QuickAssist
+  - Microsoft.OutlookForWindows
+  - Microsoft.Windows.DevHome
+
+# --- Console UX policies (console_ux.yml) ---
+cortana_disabled: true
+bing_search_disabled: true
+widgets_disabled: true
+onedrive_uninstall: true
+edge_neutralize: true
+notifications_globally_off: true
+background_apps_force_deny: true
+recommended_files_off: true
+startup_apps_disable:
+  - MSEdgeUpdate
+  - "Adobe ARM"
+  - iTunesHelper
+  - iCloudDrive
+  - Cortana
+telemetry_minimum: true
+firefox_set_default: true
+
+# --- Drivers (drivers.yml) ---
+amd_chipset_install: true
+nvidia_driver_install_strategy: winget # winget | direct_url | skip
+nvidia_telemetry_cleanup: true
+# Used only when nvidia_driver_install_strategy == "direct_url"
+nvidia_driver_url: ""
+nvidia_driver_version: ""
