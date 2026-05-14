@@ -9,10 +9,10 @@
 
 - name: Verify Windows 11 gaming optimization state
   hosts: aurelien-gaming
-  gather_facts: true
+  gather_facts: false
 
   tasks:
     - name: Header
       ansible.builtin.debug:
         msg: "=== Verifying gaming optimizations on {{ inventory_hostname }} ==="
-      tags: [all]
+      tags: [always]
