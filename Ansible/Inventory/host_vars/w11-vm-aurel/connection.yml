@@ -3,3 +3,9 @@ ansible_hostname: W11-VM-Aurel
 ansible_password: "{{ lookup('viczem.keepass.keepass', 'ansible/w11-vm-aurel/local_user', 'password') }}"
 ansible_host: 192.168.64.16
 ansible_user: Aurel
+
+# UTM VM uses WinRM HTTPS only (self-signed cert from ConfigureRemotingForAnsible.ps1).
+# Overrides the group_vars/windows_hosts/connection.yml HTTP defaults.
+ansible_port: 5986
+ansible_winrm_scheme: https
+ansible_winrm_server_cert_validation: ignore
