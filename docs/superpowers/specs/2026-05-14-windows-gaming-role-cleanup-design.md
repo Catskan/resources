@@ -17,13 +17,169 @@ Le rôle a accumulé du legacy depuis la migration "GitHub Actions → Vagrant D
 
 Trois phases indépendantes pour découpler livraison et risque :
 
-| Phase                  | Effort | Bloque Task 17 ? | Bénéfice                                                                          |
-| ---------------------- | ------ | ---------------- | --------------------------------------------------------------------------------- |
-| 1 — Critical fixes     | ~1h    | **Oui**          | Run réel propre, plus de reboot fantôme, GFE pas réinstallé                       |
-| 2 — Important refactor | ~1h    | Non              | Code lint-clean, idempotence native                                               |
-| 3 — Vision winget      | ~5h    | Non              | Maintenance triviale, suppression progressive de softwares_check/download/install |
+| Phase                   | Effort  | Bloque Task 17 ?              | Bénéfice                                                                              |
+| ----------------------- | ------- | ----------------------------- | ------------------------------------------------------------------------------------- |
+| 0 — VM validation setup | ~30 min | Non (mais sert tout le reste) | Refactor host_vars → group_vars, setup UTM, ajout overrides VM, Makefile target dédié |
+| 1 — Critical fixes      | ~1h     | **Oui**                       | Run réel propre, plus de reboot fantôme, GFE pas réinstallé                           |
+| 2 — Important refactor  | ~1h     | Non                           | Code lint-clean, idempotence native                                                   |
+| 3 — Vision winget       | ~5h     | Non                           | Maintenance triviale, suppression progressive de softwares_check/download/install     |
 
-**Ordre de livraison recommandé** : Phase 1 → run Task 17 → Phase 2 → Phase 3.
+**Ordre de livraison recommandé** : **Phase 0 → tester Phase 1 sur VM → appliquer Phase 1 sur aurelien-gaming → Task 17 → Phase 2 (test VM puis bare-metal) → Phase 3 (idem)**. La VM `w11-vm-aurel` sert de filet de sécurité pour chaque phase avant de toucher au gaming PC.
+
+---
+
+## Phase 0 — VM validation setup (préliminaire, sert toutes les phases suivantes)
+
+**But** : permettre de valider chaque phase sur la VM `w11-vm-aurel` AVANT de la lancer sur `aurelien-gaming`. Inclut :
+
+- Refactor des variables `host_vars/aurelien-gaming/main.yml` → `group_vars/windows_hosts/main.yml` pour qu'elles soient consommées par les deux hosts
+- Ajout d'overrides hardware-specific sur `host_vars/w11-vm-aurel/main.yml`
+- Setup UTM (snapshot stratégique, bridged networking, WinRM)
+- Cible Makefile dédiée `make windows-vm`
+
+### 0.1 Refactor variables : host_vars → group_vars
+
+**Variables à DÉPLACER** de `Ansible/inventory/host_vars/aurelien-gaming/main.yml` vers `Ansible/inventory/group_vars/windows_hosts/main.yml` (vars génériques Win11, applicables aux 2 hosts) :
+
+```yaml
+# === Defender (defender.yml) ===
+defender_exclusion_paths: [...]
+defender_exclusion_processes: [...]
+defender_exclusion_extensions: [...]
+defender_maps_reporting: Disabled
+defender_submit_samples: NeverSend
+
+# === VBS / HVCI ===
+vbs_enabled: false
+vbs_weekly_reset:
+  enabled: true
+  day: sunday
+  time: "04:00"
+
+# === Kernel & multimedia ===
+system_responsiveness: 0
+network_throttling_index: 0xFFFFFFFF
+nagle_disable_on_gaming_nic: true
+
+# === Game DVR / Mode ===
+game_dvr_disabled: true
+game_mode_enabled: true
+
+# === Console UX (toutes les bools + appx_bloatware_extended + startup_apps_disable) ===
+appx_bloatware_extended: [...]
+cortana_disabled: true
+bing_search_disabled: true
+widgets_disabled: true
+onedrive_uninstall: true
+edge_neutralize: true
+notifications_globally_off: true
+background_apps_force_deny: true
+recommended_files_off: true
+startup_apps_disable: [...]
+telemetry_minimum: true
+firefox_set_default: true
+
+# === Drivers (defaults — overridable per host) ===
+nvidia_telemetry_cleanup: true # no-op si pas de service NVIDIA → safe pour VM
+```
+
+**Variables à GARDER** dans `host_vars/aurelien-gaming/main.yml` (hardware-specific) :
+
+```yaml
+# Storage & power — sized for aurelien-gaming RAM (32 GB attendu)
+hibernation_enabled: false
+page_file:
+  strategy: fixed
+  initial_size_mb: 32768
+  max_size_mb: 49152
+usb_selective_suspend: false
+pcie_link_state_power_off: true
+
+# Drivers — bare metal only
+amd_chipset_install: true
+nvidia_driver_install_strategy: winget # winget | direct_url | skip (en Phase 3 winget devient la seule option)
+```
+
+### 0.2 Overrides VM
+
+**Ajouter** dans `Ansible/inventory/host_vars/w11-vm-aurel/main.yml` (qui ne contient actuellement que `w11_vm_computer_hostname`) :
+
+```yaml
+# Hardware overrides pour la VM (pas de GPU NVIDIA, pas de chipset AMD, RAM ~2-4 GB)
+amd_chipset_install: false
+nvidia_driver_install_strategy: skip
+nvidia_telemetry_cleanup: false
+
+# Storage / power — VM-specific
+hibernation_enabled: true # laisser Win11 VM gérer hiberfil — ne pas le supprimer
+page_file:
+  strategy: system_managed # VM RAM petite, laisser Windows ajuster
+usb_selective_suspend: true # aucun périphérique USB à wake
+pcie_link_state_power_off: false # NIC virtuel, irrelevant
+```
+
+Tout le reste (Defender, VBS, Game DVR, Console UX, etc.) est hérité de `group_vars/windows_hosts/main.yml` — donc la VM se comporte EXACTEMENT comme le gaming PC sur les 90% du rôle qui sont OS-level.
+
+### 0.3 Setup UTM (Windows 11 VM)
+
+**Image** :
+
+- **Sur Apple Silicon** (recommandé) : UTM Gallery → Windows 11 ARM. Microsoft fournit l'ISO gratuitement (https://www.microsoft.com/software-download/windowsinsiderpreviewARM64). x64 apps tournent via émulation intégrée Win11 ARM — `winget install Mozilla.Firefox` et consorts marchent.
+- **Sur Intel** : Image Win11 dev x64 officielle Microsoft (90 jours, gratuite) — https://developer.microsoft.com/windows/downloads/virtual-machines/ . Convertir le `.vmdk` en `.qcow2` via `qemu-img convert -f vmdk -O qcow2 input.vmdk output.qcow2` puis import UTM.
+
+**Configuration UTM** :
+
+1. **Networking** : Edit VM → Network → mode **Bridged** (Apple wireless ou Ethernet). La VM obtient une IP LAN. L'inventaire actuel pointe `ansible_host: 192.168.1.193` dans `host_vars/w11-vm-aurel/connection.yml` — ajuste si DHCP donne une autre IP, ou réserve une IP statique dans ton routeur.
+2. **WinRM dans la VM** (PowerShell admin une fois) :
+   ```powershell
+   Invoke-WebRequest -Uri https://raw.githubusercontent.com/ansible/ansible-documentation/devel/examples/scripts/ConfigureRemotingForAnsible.ps1 -OutFile C:\ConfigureRemotingForAnsible.ps1
+   powershell -ExecutionPolicy Bypass -File C:\ConfigureRemotingForAnsible.ps1
+   ```
+   (ou réutilise `Ansible/roles/windows_gaming/files/bootstrap_winrm.ps1` si tu veux)
+3. **KeePass entry** : créer dans ton vault `ansible/w11-vm-aurel/local_user` avec le mot de passe Aurel (le compte local Windows de la VM) — c'est ce que le lookup `viczem.keepass.keepass` ira chercher (cf. `connection.yml`).
+4. **Tamper Protection OFF** : Windows Security → Virus & threat protection → Manage settings → Tamper Protection → OFF. One-shot manuel, comme sur le bare metal.
+5. **Snapshot UTM** "clean-winrm-ready" : UTM → VM → Edit → Drives → New Snapshot. Sert de rollback avant chaque cycle de test (les Phases 1/2/3 modifient l'état Windows ; pouvoir revenir au point zéro fait gagner beaucoup de temps).
+
+**Test de connexion** :
+
+```bash
+cd /Users/abusutil/github-perso/resources/Ansible
+./scripts/run.sh ansible w11-vm-aurel -m ansible.windows.win_ping
+```
+
+Si `pong` → VM prête. Sinon : check IP, firewall Windows, mode UTM networking.
+
+### 0.4 Cible Makefile `make windows-vm`
+
+Ajouter dans `Ansible/Makefile` :
+
+```makefile
+windows-vm:
+	./scripts/run.sh ansible-playbook main_windows_playbook.yml --limit w11-vm-aurel $(ARGS)
+```
+
+Et ajouter `windows-vm` à `.PHONY` + une ligne `@echo` dans le bloc `help:`.
+
+Usage typique :
+
+```bash
+make windows-vm ARGS='--check --diff'                # dry-run complet
+make windows-vm ARGS='--tags console_ux'             # juste console_ux
+make windows-vm ARGS='--tags defender,gaming_optim'  # subset
+make windows-vm                                      # full apply
+```
+
+### 0.5 Phase 0 — Critères d'acceptation
+
+1. Les ~25 vars partagées Win11 sont dans `group_vars/windows_hosts/main.yml` (Defender, VBS, Console UX, etc.)
+2. Les vars hardware-specific aurelien-gaming restent dans `host_vars/aurelien-gaming/main.yml` (page_file, drivers, hibernation, etc.)
+3. `host_vars/w11-vm-aurel/main.yml` contient les overrides VM nécessaires
+4. `make ping-windows` retourne `pong` pour `aurelien-gaming` ET `w11-vm-aurel` (si les 2 sont up)
+5. `make windows-vm ARGS='--check --diff'` ne lève aucune erreur en dry-run
+6. Snapshot UTM "clean-winrm-ready" sauvegardé, prêt à être restauré
+7. `make lint` reste à zéro erreur
+
+Une fois Phase 0 validée, les phases suivantes peuvent être testées sur VM AVANT bare metal.
 
 ---
 
