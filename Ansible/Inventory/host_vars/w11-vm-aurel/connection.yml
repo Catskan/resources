@@ -9,3 +9,9 @@ ansible_user: Aurel
 ansible_port: 5986
 ansible_winrm_scheme: https
 ansible_winrm_server_cert_validation: ignore
+
+# UTM VMs (especially Win11 ARM under x64 emulation) sont lentes —
+# Gathering Facts fait ~30 WMI queries qui peuvent dépasser 60s.
+# On monte les timeouts pour éviter "winrm send_input failed".
+ansible_winrm_operation_timeout_sec: 120
+ansible_winrm_read_timeout_sec: 150
