@@ -1,4 +1,0 @@
-ansible_hostname: W11-VM-Aurel
-ansible_password: "{{ lookup('amazon.aws.aws_secret', 'Ansible.w11_VM_remote_local_user_name_password', nested=true) }}"
-ansible_host: 192.168.1.193
-ansible_user: Aurel
