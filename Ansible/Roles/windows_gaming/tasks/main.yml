@@ -70,3 +70,9 @@
 - name: Install and tune GPU/chipset drivers
   ansible.builtin.include_tasks: drivers.yml
   tags: [softwares, drivers]
+
+- name: Reboot if any task flagged it
+  ansible.windows.win_reboot:
+    reboot_timeout: 600
+    test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+  when: reboot_required | default(false)
