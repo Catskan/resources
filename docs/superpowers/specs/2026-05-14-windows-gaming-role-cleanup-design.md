@@ -215,18 +215,24 @@ Existe déjà. Mais à l'intérieur de `softwares_download.yml`, on peut ajouter
 
 ## 4. Phase 3 — Vision longue : migration winget complète
 
-### 4.1 P3a — Remplacer softwares\_{check,download,install}.yml par softwares_winget.yml
+### 4.1 P3a — Remplacer softwares\_{check,download,install}.yml + drivers.yml par softwares_winget.yml
+
+**Décision** (mise à jour 2026-05-14) : tout passe par winget, **y compris les drivers GPU et chipset**. `drivers.yml` est vidé de sa logique d'install, seule la partie telemetry cleanup NVIDIA est conservée et déplacée vers un nouveau fichier `nvidia_cleanup.yml` (services + scheduled task) car elle n'est pas une opération winget.
 
 **Nouvelle structure** :
 
 ```
 roles/windows_gaming/tasks/
-├── softwares_winget.yml    ← UNIQUE fichier, remplace les 3 ci-dessous
+├── softwares_winget.yml    ← UNIQUE fichier d'install (drivers + apps), remplace les 4 ci-dessous
 ├── softwares_check.yml     ← supprimé
 ├── softwares_download.yml  ← supprimé
-├── softwares_install.yml   ← supprimé (le shortcut Playnite reste à reloger)
-└── softwares_uninstall.yml ← gardé (AppX uninstall, indépendant de winget)
+├── softwares_install.yml   ← supprimé (shortcut Playnite migré vers console_ux.yml ou apps_shortcuts.yml)
+├── softwares_uninstall.yml ← supprimé (AppX bloatware migré dans console_ux.yml — cf. §4.4 P3d)
+├── drivers.yml             ← supprimé (install logic absorbée par winget ; telemetry cleanup → nvidia_cleanup.yml)
+└── nvidia_cleanup.yml      ← NEW — uniquement les services NVIDIA disable + NvTmRep_CrashReport removal
 ```
+
+**Variables consommées par le nouveau `nvidia_cleanup.yml`** : `nvidia_telemetry_cleanup` (bool, déjà dans host_vars). Les variables `nvidia_driver_install_strategy`, `nvidia_driver_url`, `nvidia_driver_version` deviennent obsolètes — à retirer du host_vars dans la même PR (le user veut full winget, pas de fallback direct_url).
 
 **Contenu de `softwares_winget.yml`** (~50 lignes) :
 
@@ -246,16 +252,23 @@ roles/windows_gaming/tasks/
       $Ansible.Changed = $changed
 ```
 
-**Nouvelle variable** dans `host_vars/aurelien-gaming/main.yml` :
+**Nouvelle variable** dans `host_vars/aurelien-gaming/main.yml` (drivers d'abord, puis apps) :
 
 ```yaml
 winget_packages:
-  - Mozilla.Firefox
+  # --- Drivers GPU + chipset (ex-drivers.yml) ---
+  - AdvancedMicroDevices.AMDChipsetDrivers
+  - Nvidia.GeForceDriver
+
+  # --- Launchers de jeux ---
   - Valve.Steam
   - EpicGames.EpicGamesLauncher
   - Ubisoft.Connect
   - GOG.Galaxy
   - ElectronicArts.EADesktop
+
+  # --- Apps user ---
+  - Mozilla.Firefox
   - Notepad++.Notepad++
   - VideoLAN.VLC
   - CrystalDewWorld.CrystalDiskInfo
@@ -264,7 +277,14 @@ winget_packages:
   - Microsoft.WindowsTerminal
   - Microsoft.PowerToys
   - Microsoft.PowerShell
+
+  # --- MS Store (ex-ms_store_apps.yml) ---
+  - 9NBLGGH4TXTC # Xbox Accessories (winget retrouve via Store ID)
 ```
+
+**Note sur les drivers** : `Nvidia.GeForceDriver` via winget installe **uniquement le driver, pas GeForce Experience** — ce qui aligne avec le choix Q6a (NVCleanstall style). L'idempotence est garantie par le check `winget list --id $id --exact` au début de chaque itération.
+
+**Note sur la stratégie `direct_url`** : supprimée. Le full-winget signifie que si un package n'existe pas dans winget, on le retire de la liste et l'install reste manuelle. Plus de complexité multi-stratégies.
 
 ### 4.2 P3b — Migration progressive, pas big-bang
 
@@ -274,8 +294,12 @@ Phase 3 par étapes (chacune un commit, testable indépendamment) :
 2. **3.2** : tester en parallèle (`make windows ARGS='--tags softwares_winget'`) sans casser l'existant
 3. **3.3** : migrer un package à la fois — Firefox d'abord (puisqu'on l'a déjà reverifié en Phase 1), puis Steam, etc.
 4. **3.4** : à chaque migration, supprimer le check/download/install du package dans les 3 anciens fichiers
-5. **3.5** : quand TOUT est migré, supprimer `softwares_check.yml` / `softwares_download.yml` / `softwares_install.yml`
-6. **3.6** : déplacer le shortcut Playnite (la seule task non-winget) vers `console_ux.yml` ou un nouveau `apps_shortcuts.yml`
+5. **3.5** : **migrer les drivers** — ajouter `AdvancedMicroDevices.AMDChipsetDrivers` et `Nvidia.GeForceDriver` à `winget_packages`, créer `nvidia_cleanup.yml` (services + scheduled task), supprimer `drivers.yml`
+6. **3.6** : **migrer Xbox Accessories** — ajouter au `winget_packages`, supprimer `ms_store_apps.yml` du repo et de `main.yml`
+7. **3.7** : quand TOUT est migré, supprimer `softwares_check.yml` / `softwares_download.yml` / `softwares_install.yml`
+8. **3.8** : **migrer la liste AppX** — déplacer la liste hardcoded de `softwares_uninstall.yml` (19 items) dans la var unifiée `appx_bloatware: [28 items]`, faire pointer le loop de `console_ux.yml` dessus, supprimer `softwares_uninstall.yml` du repo
+9. **3.9** : déplacer le shortcut Playnite (la seule task non-winget restante) vers `console_ux.yml` ou un nouveau `apps_shortcuts.yml`
+10. **3.10** : retirer les vars obsolètes de `host_vars` (`nvidia_driver_install_strategy`, `nvidia_driver_url`, `nvidia_driver_version`, `nvidia_geforce_experience` si encore présente, `nvidia_driver` dans group_vars/windows_hosts) et de tout ce qui pointait vers les fichiers supprimés
 
 ### 4.3 P3c — Update `firefox_policies.json` URLs
 
@@ -292,7 +316,21 @@ uBlock et KeePassXC sont déjà sur `latest.xpi` — aucune action.
 
 ### 4.4 P3d — `softwares_uninstall.yml` + `appx_bloatware_extended` unification
 
-Le rôle a deux listes d'AppX à virer : `softwares_uninstall.yml` (19 hardcoded) et `appx_bloatware_extended` (9 dans host_vars). Fusionner en une seule variable `appx_bloatware: [...]` (28 entrées) et un seul fichier `softwares_uninstall.yml` qui boucle dessus.
+Le rôle a deux listes d'AppX à virer : `softwares_uninstall.yml` (19 hardcoded) et `appx_bloatware_extended` (9 dans host_vars).
+
+**Décision** (mise à jour 2026-05-14) : **Option A** — la liste unifiée vit dans `console_ux.yml`. `softwares_uninstall.yml` est entièrement supprimé du repo. Le tag `softwares_uninstall` (et son alias `cleanup`) sont retirés de `main.yml`.
+
+Justification : sémantiquement, retirer les AppX bloatware est du **debloat console UX**, pas un workflow d'install software. Concentrer ça dans `console_ux.yml` rend le rôle plus cohérent : `console_ux.yml` = "tout ce qui rend Windows propre", `softwares_winget.yml` = "tout ce qu'on installe".
+
+**Étapes** :
+
+1. Renommer la var `appx_bloatware_extended` (9 items) → `appx_bloatware` et y ajouter les 19 items hardcoded de `softwares_uninstall.yml` (total 28 items).
+2. Modifier le loop de `console_ux.yml` §4.3.1 pour consommer `appx_bloatware` au lieu de `appx_bloatware_extended`.
+3. Supprimer `Ansible/roles/windows_gaming/tasks/softwares_uninstall.yml`.
+4. Retirer de `main.yml` :
+   - L'include `softwares_uninstall.yml` (tag `softwares_uninstall, cleanup`)
+   - La mention de ces tags dans le commentaire header
+5. Retirer les tags `softwares_uninstall` et `cleanup` du tableau de `CLAUDE.md`.
 
 ### 4.5 Phase 3 — Critères d'acceptation
 
@@ -306,13 +344,15 @@ Le rôle a deux listes d'AppX à virer : `softwares_uninstall.yml` (19 hardcoded
 
 ## 5. Risques & non-régression
 
-| Risque                                                                   | Phase | Mitigation                                                                                                                                           |
-| ------------------------------------------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Firefox check Mozilla path différent selon ESR vs Release                | 1     | Tester sur les deux types. Fallback : check via `Get-ItemProperty HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\CurrentVersion`.                            |
-| `win_package` ne détecte pas le product_id sans le fournir               | 2     | Pour les MSI, lire le ProductCode via `msiexec /a` ou via PowerShell `Get-Package`. Pour les EXE non-MSI, garder `win_command` avec `creates:` path. |
-| Suppression de `user_folders.yml` commenté = perte d'historique          | 2     | Tous les blocs sont dans git history. `git log -p user_folders.yml` reste accessible.                                                                |
-| Winget package indisponible (`Synology.DriveClient`)                     | 3     | Vérifier disponibilité avant migration. Garder l'install direct-URL en fallback pour les manquants.                                                  |
-| Migration winget casse les paths d'install attendus par d'autres scripts | 3     | Winget installe dans des paths standardisés (`C:\Program Files\<App>\`). Audit Playnite, etc. avant.                                                 |
+| Risque                                                                   | Phase | Mitigation                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Firefox check Mozilla path différent selon ESR vs Release                | 1     | Tester sur les deux types. Fallback : check via `Get-ItemProperty HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\CurrentVersion`.                                                                                                                                     |
+| `win_package` ne détecte pas le product_id sans le fournir               | 2     | Pour les MSI, lire le ProductCode via `msiexec /a` ou via PowerShell `Get-Package`. Pour les EXE non-MSI, garder `win_command` avec `creates:` path.                                                                                                          |
+| Suppression de `user_folders.yml` commenté = perte d'historique          | 2     | Tous les blocs sont dans git history. `git log -p user_folders.yml` reste accessible.                                                                                                                                                                         |
+| Winget package indisponible (`Synology.DriveClient`)                     | 3     | Vérifier disponibilité avant migration via `winget search`. Si absent : retirer de la liste et installer manuellement. La stratégie `direct_url` est explicitement abandonnée pour rester full-winget.                                                        |
+| Migration winget casse les paths d'install attendus par d'autres scripts | 3     | Winget installe dans des paths standardisés (`C:\Program Files\<App>\`). Audit Playnite, etc. avant.                                                                                                                                                          |
+| `Nvidia.GeForceDriver` via winget tire-t-il GFE en sneaky ?              | 3     | Vérifier sur un host de test : `winget show Nvidia.GeForceDriver` indique l'installer flags. À documenter dans le commit. Si GFE arrive en bundle, fallback : retirer NVIDIA du `winget_packages` et garder le driver install manuel (NVCleanstall une fois). |
+| Xbox Accessories via Store ID `9NBLGGH4TXTC`                             | 3     | Vérifier que winget accepte les Store IDs (alphanumériques) en plus des publisher.app IDs. Si non : utiliser `Microsoft.XboxAccessories` (vérifier la disponibilité). Sinon : remettre `ms_store_apps.yml` minimal pour ce seul cas.                          |
 
 ---
 
@@ -324,14 +364,17 @@ Le projet de cleanup est considéré terminé quand :
 2. `make windows` complet sur `aurelien-gaming` annonce `changed=0` au 2e run (idempotence parfaite)
 3. `make lint` passe sans aucun warning ni error
 4. `make verify-windows` (le playbook de Task 2 de l'autre plan) confirme l'état final
-5. `Ansible/roles/windows_gaming/tasks/` ne contient plus que :
-   - `main.yml` (orchestrateur)
-   - `system_settings.yml` (nettoyé)
-   - `user_folders.yml` (≤ 120 lignes)
-   - `softwares_winget.yml`
-   - `softwares_uninstall.yml` (liste unifiée)
-   - `defender.yml`, `gaming_optim.yml`, `console_ux.yml`, `drivers.yml` (du spec précédent, intouchés)
-   - `ms_store_apps.yml` (optionnel — peut être absorbé dans softwares_winget.yml)
+5. `Ansible/roles/windows_gaming/tasks/` ne contient plus que (8 fichiers vs 13 actuellement) :
+   - `main.yml` (orchestrateur — tags `softwares_uninstall`, `cleanup`, `ms_store`, `drivers` retirés)
+   - `system_settings.yml` (nettoyé en Phase 2 ; éventuellement +2 tasks VSS migrées depuis user_folders.yml)
+   - `user_folders.yml` (≤ 120 lignes après Phase 2)
+   - `softwares_winget.yml` (NEW — drivers + apps + MS Store unifiés)
+   - `nvidia_cleanup.yml` (NEW — services NVIDIA disable + scheduled task removal, seule logique non-winget)
+   - `defender.yml`, `gaming_optim.yml`, `console_ux.yml` (du spec précédent ; `console_ux.yml` absorbe l'AppX bloatware loop)
+6. **Fichiers supprimés** : `softwares_check.yml`, `softwares_download.yml`, `softwares_install.yml`, `softwares_uninstall.yml`, `ms_store_apps.yml`, `drivers.yml` (6 fichiers en moins)
+7. **Variables supprimées** de `host_vars` et `group_vars` : `nvidia_driver_install_strategy`, `nvidia_driver_url`, `nvidia_driver_version`, `nvidia_driver` (group_vars), `nvidia_geforce_experience`, et tous les `*_installed` registres qu'on n'utilise plus
+8. **Variable renommée** : `appx_bloatware_extended` → `appx_bloatware` (28 items)
+9. **Variable nouvelle** : `winget_packages` (liste des packages winget à installer)
 
 ---
 
