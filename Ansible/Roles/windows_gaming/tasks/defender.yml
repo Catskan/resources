@@ -23,14 +23,30 @@
 
 - name: Add Defender path exclusions
   ansible.windows.win_powershell:
+    # Use PS single-quoted strings here — to_json doubles backslashes,
+    # which Windows then stores literally, producing entries like
+    # 'C:\\Program Files\\...' that match no real path.
     script: |
       $existing = @((Get-MpPreference).ExclusionPath)
       $changed = $false
-      foreach ($p in @({{ defender_exclusion_paths | map('to_json') | join(', ') }})) {
+      foreach ($p in @('{{ defender_exclusion_paths | join("','") }}')) {
         if ($existing -notcontains $p) {
           Add-MpPreference -ExclusionPath $p
           $changed = $true
         }
+      }
+      $Ansible.Changed = $changed
+
+- name: Remove legacy double-backslash Defender path entries (cleanup)
+  # Cleanup task — removes the bad \\-prefixed entries left over from the
+  # previous to_json bug. Safe to keep long-term (no-op once cleaned).
+  ansible.windows.win_powershell:
+    script: |
+      $bad = (Get-MpPreference).ExclusionPath | Where-Object { $_ -match '\\\\' }
+      $changed = $false
+      foreach ($b in $bad) {
+        Remove-MpPreference -ExclusionPath $b
+        $changed = $true
       }
       $Ansible.Changed = $changed
 
