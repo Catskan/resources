@@ -481,6 +481,7 @@ winget_packages:
   - Microsoft.WindowsTerminal
   - Microsoft.PowerToys
   - Microsoft.PowerShell
+  - MSI.Afterburner # GPU monitoring + overclock + fan curves (RTX 3080)
 
   # --- Utilities tierces pour les drivers (PC physique) ---
   - TechPowerUp.NVCleanstall # Outil propre pour installer NVIDIA driver sans GFE/telemetry
