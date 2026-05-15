@@ -1,27 +1,50 @@
 #!/usr/bin/env bash
-# Build an autounattend ISO for fully automated Win11 ARM VM install on UTM.
+# Build an autounattend ISO for fully automated Win11 install (UTM, other
+# hypervisors, or a real USB install media).
 #
 # Reads the password for the Aurel local account interactively (masked,
 # no shell history leak), encodes it the Microsoft way for unattend XML
 # (base64 of UTF-16LE of password + literal "Password"), substitutes into
-# w11-arm-vm.xml, and emits a small ISO via hdiutil.
+# the chosen template, and emits a small ISO via hdiutil.
 #
 # Usage:
-#   ./build-iso.sh                    # output: ./autounattend.iso
-#   ./build-iso.sh /path/to/out.iso   # output: custom path
+#   ./build-iso.sh [arch] [output_iso]
 #
-# Then in UTM:
-#   Edit VM → Drives → New Drive → Interface: USB or IDE, Removable, CD/DVD
-#   Browse to the generated autounattend.iso → Save
-#   Boot with BOTH Win11 ARM ISO AND autounattend.iso mounted.
-#   Windows installer auto-detects autounattend.xml at the root of any
-#   removable media and applies it without intervention.
+#   arch        : "arm64" (default) or "x64"
+#                 - arm64 → w11-arm-vm.xml  (Apple Silicon UTM, HVF accel)
+#                 - x64   → w11-x64-vm.xml  (Intel Mac UTM, VMware, Parallels,
+#                                             Hyper-V, or USB install media)
+#   output_iso  : custom output path (default: ./autounattend-${arch}.iso)
+#
+# Examples:
+#   ./build-iso.sh                     # arm64, ./autounattend-arm64.iso
+#   ./build-iso.sh x64                 # x64, ./autounattend-x64.iso
+#   ./build-iso.sh x64 /tmp/foo.iso    # x64, custom output
+#
+# Mounting in UTM:
+#   Edit VM → Drives → New Drive → Removable, CD/DVD, Interface USB or IDE
+#   Browse to the generated .iso → Save → Boot with Win11 ISO + autounattend ISO
+#   both mounted. Windows installer auto-detects autounattend.xml at the root
+#   of any removable media and applies it without intervention.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TEMPLATE="$SCRIPT_DIR/w11-arm-vm.xml"
-OUTPUT="${1:-$SCRIPT_DIR/autounattend.iso}"
+ARCH="${1:-arm64}"
+OUTPUT="${2:-$SCRIPT_DIR/autounattend-${ARCH}.iso}"
+
+case "$ARCH" in
+  arm64)
+    TEMPLATE="$SCRIPT_DIR/w11-arm-vm.xml"
+    ;;
+  x64|amd64)
+    TEMPLATE="$SCRIPT_DIR/w11-x64-vm.xml"
+    ;;
+  *)
+    echo "Unknown arch: $ARCH (expected: arm64, x64)" >&2
+    exit 1
+    ;;
+esac
 
 if [[ ! -f "$TEMPLATE" ]]; then
   echo "Template missing: $TEMPLATE" >&2
@@ -34,6 +57,9 @@ if ! command -v hdiutil >/dev/null 2>&1; then
 fi
 
 # --- Prompt for password (masked, with confirmation) ---
+echo "Building autounattend ISO for Win11 $ARCH"
+echo "Template: $(basename "$TEMPLATE")"
+echo
 read -rs -p "Password for the Aurel local account: " PASSWORD
 echo
 read -rs -p "Confirm: " PASSWORD_CONFIRM
@@ -70,14 +96,13 @@ hdiutil makehybrid -iso -joliet \
 echo
 echo "✅ Created: $OUTPUT"
 echo
-echo "Next steps in UTM:"
-echo "  1. Create new Win11 ARM VM from UTM Gallery (or your existing Win11 ARM ISO)"
-echo "  2. Edit VM → Drives → New Drive → Removable, CD/DVD, Interface: USB"
-echo "     Path: $OUTPUT"
-echo "  3. Boot the VM. Windows installer auto-applies autounattend.xml."
-echo "  4. After ~10-15 min (depending on host), VM boots into Aurel session,"
-echo "     runs the first-logon commands (WinRM bootstrap + quotas), then restarts."
-echo "  5. Confirm IP via Get-NetIPAddress in the VM or via macOS \`arp -a\`."
-echo "  6. Update host_vars/w11-vm-aurel/connection.yml with the new IP."
-echo "  7. Make sure KeePass entry Local/w11-vm-user holds this same password."
-echo "  8. Test: make ping-windows ARGS='--limit w11-vm-aurel'"
+echo "Next steps:"
+echo "  1. Mount the ISO as a second CD/DVD in your VM (or burn to a USB"
+echo "     install media for bare-metal)"
+echo "  2. Boot. Windows installer auto-applies autounattend.xml."
+echo "  3. After ~10-15 min, VM boots into Aurel session, runs first-logon"
+echo "     commands (WinRM bootstrap + quotas + Tamper off), restarts."
+echo "  4. Confirm IP via Get-NetIPAddress in the VM, or via macOS \`arp -a\`."
+echo "  5. Update Ansible inventory connection.yml with the IP."
+echo "  6. Make sure KeePass entry Local/w11-vm-user holds the same password."
+echo "  7. Test: make ping-windows ARGS='--limit w11-vm-aurel'"
