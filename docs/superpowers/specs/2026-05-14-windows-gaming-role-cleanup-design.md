@@ -402,24 +402,36 @@ Si pour une raison X on doit ship Phase 2 sans Phase 3 (ex : winget pose problè
 
 ## 4. Phase 3 — Vision longue : migration winget complète
 
-### 4.1 P3a — Remplacer softwares\_{check,download,install}.yml + drivers.yml par softwares_winget.yml
+### 4.1 P3a — Remplacer softwares\_{check,download,install}.yml par softwares_winget.yml
 
-**Décision** (mise à jour 2026-05-14) : tout passe par winget, **y compris les drivers GPU et chipset**. `drivers.yml` est vidé de sa logique d'install, seule la partie telemetry cleanup NVIDIA est conservée et déplacée vers un nouveau fichier `nvidia_cleanup.yml` (services + scheduled task) car elle n'est pas une opération winget.
+**Décision initiale** (2026-05-14) : tout passer par winget, y compris les drivers.
+**Décision révisée** (2026-05-15, après vérification `winget search` dans la VM) : AMD chipset drivers et NVIDIA GeForce driver **ne sont pas publiés via winget**. `drivers.yml` reste donc un fichier séparé qui gère :
+
+- AMD chipset → `direct_url` strategy (téléchargement depuis amd.com)
+- NVIDIA → install de **NVCleanstall** (qui IS dans winget : `TechPowerUp.NVCleanstall`) + invocation CLI `NVCleanstall.exe -clean -nogfe -notlm -nophysx` qui télécharge et installe le driver propre
+- Telemetry cleanup post-install (services + scheduled task) : inchangé
 
 **Nouvelle structure** :
 
 ```
 roles/windows_gaming/tasks/
-├── softwares_winget.yml    ← UNIQUE fichier d'install (drivers + apps), remplace les 4 ci-dessous
+├── softwares_winget.yml    ← Apps user + utilities tierces (NVCleanstall inclus), remplace les 3 fichiers softwares ci-dessous
 ├── softwares_check.yml     ← supprimé
 ├── softwares_download.yml  ← supprimé
 ├── softwares_install.yml   ← supprimé (shortcut Playnite migré vers console_ux.yml ou apps_shortcuts.yml)
 ├── softwares_uninstall.yml ← supprimé (AppX bloatware migré dans console_ux.yml — cf. §4.4 P3d)
-├── drivers.yml             ← supprimé (install logic absorbée par winget ; telemetry cleanup → nvidia_cleanup.yml)
-└── nvidia_cleanup.yml      ← NEW — uniquement les services NVIDIA disable + NvTmRep_CrashReport removal
+├── drivers.yml             ← reste — AMD chipset (direct_url) + NVIDIA (NVCleanstall CLI) + telemetry cleanup
+└── ms_store_apps.yml       ← supprimé (Xbox Accessories migré dans msstore_packages, géré par softwares_winget.yml via --source msstore)
 ```
 
-**Variables consommées par le nouveau `nvidia_cleanup.yml`** : `nvidia_telemetry_cleanup` (bool, déjà dans host_vars). Les variables `nvidia_driver_install_strategy`, `nvidia_driver_url`, `nvidia_driver_version` deviennent obsolètes — à retirer du host_vars dans la même PR (le user veut full winget, pas de fallback direct_url).
+**Variables consommées par `drivers.yml` (renouvelées)** :
+
+- `amd_chipset_install` (bool, déjà dans host_vars/aurelien-gaming)
+- `amd_chipset_url` (string, URL stable AMD.com) — NEW car winget n'a pas le package
+- `nvidia_driver_install_strategy` reste mais valeurs : `nvcleanstall` | `direct_url` | `skip` (le `winget` est retiré puisque le driver pur n'est pas dans winget)
+- `nvidia_telemetry_cleanup` (bool, déjà dans host_vars)
+- `nvidia_driver_url` (utilisé uniquement si `strategy: direct_url`)
+- `nvidia_driver_version` (idem)
 
 **Contenu de `softwares_winget.yml`** (~50 lignes) :
 
@@ -439,40 +451,64 @@ roles/windows_gaming/tasks/
       $Ansible.Changed = $changed
 ```
 
-**Nouvelle variable** dans `host_vars/aurelien-gaming/main.yml` (drivers d'abord, puis apps) :
+**Découverte 2026-05-15 (verified via winget search dans VM Win11 ARM)** : ni AMD chipset drivers ni NVIDIA driver ne sont publiés via winget. La décision initiale "tout via winget incluant drivers" était fausse — révisée :
+
+- **`AdvancedMicroDevices.AMDChipsetDrivers`** → ❌ inexistant dans winget. Direct URL fallback obligatoire.
+- **`Nvidia.GeForceDriver`** → ❌ inexistant dans winget. Solutions : `TechPowerUp.NVCleanstall` (utilitaire tiers, IS dans winget, CLI-driven pour install clean sans GFE) OU direct URL.
+- **`Microsoft.XboxAccessories`** → ❌ inexistant. La bonne référence est le Store ID `9NBLGGH30XJ3` via `--source msstore` (qui correspond à la var `XboxAccessoires_id` existante dans host_vars/aurelien-gaming).
+
+**Conséquence** : `drivers.yml` **reste un fichier séparé** en Phase 3 (pas absorbé dans softwares_winget.yml comme initialement prévu). La stratégie `direct_url` redevient nécessaire pour les drivers. Pour NVIDIA spécifiquement, on installe NVCleanstall via winget puis on l'invoque en mode CLI.
+
+**Nouvelle variable** dans `group_vars/windows_hosts/main.yml` (apps uniquement) :
 
 ```yaml
 winget_packages:
-  # --- Drivers GPU + chipset (ex-drivers.yml) ---
-  - AdvancedMicroDevices.AMDChipsetDrivers
-  - Nvidia.GeForceDriver
-
   # --- Launchers de jeux ---
   - Valve.Steam
   - EpicGames.EpicGamesLauncher
   - Ubisoft.Connect
   - GOG.Galaxy
   - ElectronicArts.EADesktop
-  - RockstarGames.Launcher # ex-Social Club, devenu Rockstar Games Launcher (verified via winget search)
+  - RockstarGames.Launcher
 
   # --- Apps user ---
   - Mozilla.Firefox
   - Notepad++.Notepad++
   - VideoLAN.VLC
   - CrystalDewWorld.CrystalDiskInfo
-  - Synology.DriveClient # à vérifier la disponibilité winget
+  - Synology.DriveClient
   - 7zip.7zip
   - Microsoft.WindowsTerminal
   - Microsoft.PowerToys
   - Microsoft.PowerShell
 
-  # --- MS Store (ex-ms_store_apps.yml) ---
-  - Microsoft.XboxAccessories
+  # --- Utilities tierces pour les drivers (PC physique) ---
+  - TechPowerUp.NVCleanstall # Outil propre pour installer NVIDIA driver sans GFE/telemetry
+
+# --- MS Store apps (séparées car nécessitent --source msstore) ---
+msstore_packages:
+  - id: 9NBLGGH30XJ3 # Xbox Accessories (matches existing XboxAccessoires_id)
 ```
 
-**Note sur les drivers** : `Nvidia.GeForceDriver` via winget installe **uniquement le driver, pas GeForce Experience** — ce qui aligne avec le choix Q6a (NVCleanstall style). L'idempotence est garantie par le check `winget list --id $id --exact` au début de chaque itération.
+**drivers.yml** continue à gérer les drivers GPU+chipset avec ce flow :
 
-**Note sur la stratégie `direct_url`** : supprimée. Le full-winget signifie que si un package n'existe pas dans winget, on le retire de la liste et l'install reste manuelle. Plus de complexité multi-stratégies.
+1. AMD chipset : `direct_url` strategy → win_get_url depuis AMD.com (`amd_chipset_url` + `amd_chipset_version` dans host_vars), puis win_command silent install
+2. NVIDIA : install NVCleanstall via winget (présent dans winget_packages), puis invoque `NVCleanstall.exe -clean -nogfe -notlm -nophysx` qui télécharge + installe le driver clean
+3. Telemetry cleanup post-install (services + scheduled task) reste comme déjà spécifié
+
+**Variables host_vars actualisées** :
+
+```yaml
+# Drivers — direct URL pour AMD chipset (winget n'a pas ce package)
+amd_chipset_install: true
+amd_chipset_url: "https://drivers.amd.com/drivers/installer/24.20/whql/amd_chipset_software_8.10.0827.6.exe"
+
+# NVIDIA via NVCleanstall
+nvidia_driver_install_strategy: nvcleanstall # nvcleanstall | direct_url | skip
+nvidia_telemetry_cleanup: true
+```
+
+**Note sur l'idempotence** : pour winget_packages, le check `winget list --id $id --exact` au début de chaque itération évite les re-installs. Pour les drivers AMD direct URL et NVIDIA via NVCleanstall, l'idempotence est gérée par `drivers.yml` (check device présence avant install).
 
 ### 4.2 P3b — Migration progressive, pas big-bang
 
@@ -482,12 +518,12 @@ Phase 3 par étapes (chacune un commit, testable indépendamment) :
 2. **3.2** : tester en parallèle (`make windows ARGS='--tags softwares_winget'`) sans casser l'existant
 3. **3.3** : migrer un package à la fois — Firefox d'abord (puisqu'on l'a déjà reverifié en Phase 1), puis Steam, etc.
 4. **3.4** : à chaque migration, supprimer le check/download/install du package dans les 3 anciens fichiers
-5. **3.5** : **migrer les drivers** — ajouter `AdvancedMicroDevices.AMDChipsetDrivers` et `Nvidia.GeForceDriver` à `winget_packages`, créer `nvidia_cleanup.yml` (services + scheduled task), supprimer `drivers.yml`
-6. **3.6** : **migrer Xbox Accessories** — ajouter au `winget_packages`, supprimer `ms_store_apps.yml` du repo et de `main.yml`
-7. **3.7** : quand TOUT est migré, supprimer `softwares_check.yml` / `softwares_download.yml` / `softwares_install.yml`
+5. **3.5** : **moderniser drivers.yml** (pas supprimer — winget n'a pas les drivers) — réécrire avec 2 chemins : AMD chipset via `direct_url` (depuis `amd_chipset_url`), NVIDIA via `TechPowerUp.NVCleanstall` (qu'on installe d'abord via winget puis qu'on invoque en CLI clean). Telemetry cleanup post-install reste identique.
+6. **3.6** : **migrer Xbox Accessories** — ajouter dans la var `msstore_packages` (pas `winget_packages` direct) avec son Store ID `9NBLGGH30XJ3`, faire que `softwares_winget.yml` boucle aussi sur cette liste avec `winget install --source msstore`. Supprimer `ms_store_apps.yml`.
+7. **3.7** : quand toutes les apps user sont migrées, supprimer `softwares_check.yml` / `softwares_download.yml` / `softwares_install.yml`
 8. **3.8** : **migrer la liste AppX** — déplacer la liste hardcoded de `softwares_uninstall.yml` (19 items) dans la var unifiée `appx_bloatware: [28 items]`, faire pointer le loop de `console_ux.yml` dessus, supprimer `softwares_uninstall.yml` du repo
 9. **3.9** : déplacer le shortcut Playnite (la seule task non-winget restante) vers `console_ux.yml` ou un nouveau `apps_shortcuts.yml`
-10. **3.10** : retirer les vars obsolètes de `host_vars` (`nvidia_driver_install_strategy`, `nvidia_driver_url`, `nvidia_driver_version`, `nvidia_geforce_experience` si encore présente, `nvidia_driver` dans group_vars/windows_hosts) et de tout ce qui pointait vers les fichiers supprimés
+10. **3.10** : retirer les vars obsolètes de `host_vars` (`nvidia_geforce_experience` si encore présente, `nvidia_driver` legacy dans `group_vars/windows_hosts/main.yml`) et de tout ce qui pointait vers les fichiers supprimés. `nvidia_driver_install_strategy` reste mais sa valeur `winget` est retirée des choix.
 
 ### 4.3 P3c — Update `firefox_policies.json` URLs
 
@@ -532,15 +568,16 @@ Justification : sémantiquement, retirer les AppX bloatware est du **debloat con
 
 ## 5. Risques & non-régression
 
-| Risque                                                                   | Phase | Mitigation                                                                                                                                                                                                                                                    |
-| ------------------------------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Firefox check Mozilla path différent selon ESR vs Release                | 1     | Tester sur les deux types. Fallback : check via `Get-ItemProperty HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\CurrentVersion`.                                                                                                                                     |
-| Suppression de `user_folders.yml` commenté = perte d'historique          | 2     | Tous les blocs sont dans git history. `git log -p user_folders.yml` reste accessible.                                                                                                                                                                         |
-| Tasks VSS access control déplacées depuis user_folders.yml               | 2     | Verifier que la nouvelle location dans `system_settings.yml` (ou nouveau `vss.yml`) reste correctement appliquée. Tester avec `make verify-windows`.                                                                                                          |
-| Winget package indisponible (`Synology.DriveClient`)                     | 3     | Vérifier disponibilité avant migration via `winget search`. Si absent : retirer de la liste et installer manuellement. La stratégie `direct_url` est explicitement abandonnée pour rester full-winget.                                                        |
-| Migration winget casse les paths d'install attendus par d'autres scripts | 3     | Winget installe dans des paths standardisés (`C:\Program Files\<App>\`). Audit Playnite, etc. avant.                                                                                                                                                          |
-| `Nvidia.GeForceDriver` via winget tire-t-il GFE en sneaky ?              | 3     | Vérifier sur un host de test : `winget show Nvidia.GeForceDriver` indique l'installer flags. À documenter dans le commit. Si GFE arrive en bundle, fallback : retirer NVIDIA du `winget_packages` et garder le driver install manuel (NVCleanstall une fois). |
-| `Microsoft.XboxAccessories` indisponible dans winget                     | 3     | Vérifier avec `winget search XboxAccessories` avant migration. Fallback : Store ID `9NBLGGH4TXTC`. Dernier recours : remettre `ms_store_apps.yml` minimal pour ce seul cas.                                                                                   |
+| Risque                                                                   | Phase | Mitigation                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Firefox check Mozilla path différent selon ESR vs Release                | 1     | Tester sur les deux types. Fallback : check via `Get-ItemProperty HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\CurrentVersion`.                                                                                                                            |
+| Suppression de `user_folders.yml` commenté = perte d'historique          | 2     | Tous les blocs sont dans git history. `git log -p user_folders.yml` reste accessible.                                                                                                                                                                |
+| Tasks VSS access control déplacées depuis user_folders.yml               | 2     | Verifier que la nouvelle location dans `system_settings.yml` (ou nouveau `vss.yml`) reste correctement appliquée. Tester avec `make verify-windows`.                                                                                                 |
+| Winget package indisponible (`Synology.DriveClient`)                     | 3     | Vérifié OK via `winget search` dans VM (2026-05-15). Sinon retirer de la liste et installer manuellement.                                                                                                                                            |
+| Migration winget casse les paths d'install attendus par d'autres scripts | 3     | Winget installe dans des paths standardisés (`C:\Program Files\<App>\`). Audit Playnite, etc. avant.                                                                                                                                                 |
+| AMD chipset + NVIDIA driver pas dans winget (vérifié 2026-05-15)         | 3     | **Accepté** : `drivers.yml` reste un fichier séparé. AMD chipset → `direct_url` depuis `amd_chipset_url` (lien stable AMD.com). NVIDIA → `TechPowerUp.NVCleanstall` installé via winget puis invoqué en CLI clean (`-clean -nogfe -notlm -nophysx`). |
+| NVCleanstall CLI flags changent entre versions                           | 3     | NVCleanstall est tiers — un update major peut casser les flags. Mitigation : pin la version dans winget (`winget install --id TechPowerUp.NVCleanstall --version X.Y.Z`) ou rester sur les flags stables `-clean -nogfe`.                            |
+| Xbox Accessories Store ID — vérification                                 | 3     | Verified 2026-05-15 via `winget search Xbox` : `9NBLGGH30XJ3` source `msstore`. Install via `winget install --id 9NBLGGH30XJ3 --source msstore`. Aucune entrée publisher.app pour cette app.                                                         |
 
 ---
 
@@ -553,16 +590,16 @@ Le projet de cleanup est considéré terminé quand :
 3. `make lint` passe sans aucun warning ni error
 4. `make verify-windows` (le playbook de Task 2 de l'autre plan) confirme l'état final
 5. `Ansible/roles/windows_gaming/tasks/` ne contient plus que (8 fichiers vs 13 actuellement) :
-   - `main.yml` (orchestrateur — tags `softwares_uninstall`, `cleanup`, `ms_store`, `drivers` retirés)
+   - `main.yml` (orchestrateur — tags `softwares_uninstall`, `cleanup`, `ms_store` retirés ; `drivers` conservé)
    - `system_settings.yml` (nettoyé en Phase 2 ; éventuellement +2 tasks VSS migrées depuis user_folders.yml)
    - `user_folders.yml` (≤ 120 lignes après Phase 2)
-   - `softwares_winget.yml` (NEW — drivers + apps + MS Store unifiés)
-   - `nvidia_cleanup.yml` (NEW — services NVIDIA disable + scheduled task removal, seule logique non-winget)
+   - `softwares_winget.yml` (NEW — apps user + utilities tierces, dont NVCleanstall ; via `winget_packages` + `msstore_packages` avec `--source msstore`)
+   - `drivers.yml` (reste — AMD chipset direct_url + NVIDIA via NVCleanstall CLI + telemetry cleanup)
    - `defender.yml`, `gaming_optim.yml`, `console_ux.yml` (du spec précédent ; `console_ux.yml` absorbe l'AppX bloatware loop)
-6. **Fichiers supprimés** : `softwares_check.yml`, `softwares_download.yml`, `softwares_install.yml`, `softwares_uninstall.yml`, `ms_store_apps.yml`, `drivers.yml` (6 fichiers en moins)
-7. **Variables supprimées** de `host_vars` et `group_vars` : `nvidia_driver_install_strategy`, `nvidia_driver_url`, `nvidia_driver_version`, `nvidia_driver` (group_vars), `nvidia_geforce_experience`, et tous les `*_installed` registres qu'on n'utilise plus
+6. **Fichiers supprimés** : `softwares_check.yml`, `softwares_download.yml`, `softwares_install.yml`, `softwares_uninstall.yml`, `ms_store_apps.yml` (5 fichiers en moins ; `drivers.yml` n'est pas supprimé contrairement à la décision initiale du 2026-05-14, parce que AMD/NVIDIA drivers ne sont pas dans winget — vérifié le 2026-05-15)
+7. **Variables supprimées** de `host_vars` et `group_vars` : `nvidia_driver` legacy (group_vars/windows_hosts/main.yml), `nvidia_geforce_experience`, et tous les `*_installed` registres qu'on n'utilise plus. `nvidia_driver_install_strategy` reste mais sans la valeur `winget` (valeurs valides : `nvcleanstall` | `direct_url` | `skip`).
 8. **Variable renommée** : `appx_bloatware_extended` → `appx_bloatware` (28 items)
-9. **Variable nouvelle** : `winget_packages` (liste des packages winget à installer)
+9. **Variables nouvelles** : `winget_packages` (apps via winget), `msstore_packages` (apps via Store IDs avec `--source msstore`), `amd_chipset_url` (lien direct AMD)
 
 ---
 
