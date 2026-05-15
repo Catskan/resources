@@ -1,0 +1,179 @@
+---
+# Vérifie l'état post-run des optimisations gaming.
+# Aucune modification — uniquement des assertions et des prints d'état.
+#
+# Usage : make verify-windows
+#
+# Si une vérification échoue, le playbook plante et affiche ce qui manque.
+# Tags par catégorie : defender, gaming_optim, console_ux, drivers.
+# Sans --tags : tout tourne (comportement Ansible par défaut).
+
+- name: Verify Windows 11 gaming optimization state
+  hosts: windows_hosts
+  gather_facts: false
+
+  tasks:
+    - name: Header
+      ansible.builtin.debug:
+        msg: "=== Verifying gaming optimizations on {{ inventory_hostname }} ==="
+      tags: [always]
+
+    - name: Verify Defender exclusions and reporting
+      ansible.windows.win_powershell:
+        script: |
+          # Get-MpPreference returns enum fields as int, we need to map them
+          # back to human-readable names matching the spec var values.
+          $mapsLookup    = @{ 0 = 'Disabled'; 1 = 'Basic'; 2 = 'Advanced' }
+          $samplesLookup = @{ 0 = 'AlwaysPrompt'; 1 = 'SendSafeSamples'; 2 = 'NeverSend'; 3 = 'SendAllSamples' }
+          $pref = Get-MpPreference
+          $Ansible.Result = @{
+            paths        = $pref.ExclusionPath
+            processes    = $pref.ExclusionProcess
+            extensions   = $pref.ExclusionExtension
+            maps         = $mapsLookup[[int]$pref.MAPSReporting]
+            samples      = $samplesLookup[[int]$pref.SubmitSamplesConsent]
+            realtime_on  = -not $pref.DisableRealtimeMonitoring
+          }
+      register: defender_verify
+      tags: [defender]
+
+    - name: Show actual Defender state for debug
+      ansible.builtin.debug:
+        var: defender_verify.result
+      tags: [defender]
+
+    - name: Assert Defender state matches spec
+      ansible.builtin.assert:
+        that:
+          - "(defender_exclusion_paths | difference(defender_verify.result.paths | default([]))) | length == 0"
+          - "(defender_exclusion_processes | difference(defender_verify.result.processes | default([]))) | length == 0"
+          - "(defender_exclusion_extensions | difference(defender_verify.result.extensions | default([]))) | length == 0"
+          - "defender_verify.result.maps == defender_maps_reporting"
+          - "defender_verify.result.samples == defender_submit_samples"
+          - "defender_verify.result.realtime_on"
+        fail_msg: "Defender state mismatch — see defender_verify.result above"
+        success_msg: "Defender exclusions and reporting OK"
+      tags: [defender]
+
+    - name: Verify VBS / DeviceGuard status
+      ansible.windows.win_powershell:
+        script: |
+          $dg = Get-CimInstance -ClassName Win32_DeviceGuard -ErrorAction SilentlyContinue
+          $vbs_running = ($dg.VirtualizationBasedSecurityStatus -eq 2)
+          $hvci_running = ($dg.SecurityServicesRunning -contains 2)
+          $sched = Get-ScheduledTask -TaskName 'VBS-Safety-Reset' -ErrorAction SilentlyContinue
+          $Ansible.Result = @{
+            vbs_running  = [bool]$vbs_running
+            hvci_running = [bool]$hvci_running
+            sched_exists = [bool]$sched
+          }
+      register: vbs_verify
+      tags: [gaming_optim]
+
+    - name: Assert VBS state matches spec
+      ansible.builtin.assert:
+        that:
+          - vbs_verify.result.vbs_running == vbs_enabled
+          - vbs_verify.result.hvci_running == vbs_enabled
+          - vbs_verify.result.sched_exists == vbs_weekly_reset.enabled
+        fail_msg: "VBS state mismatch — got {{ vbs_verify.result }}"
+        success_msg: "VBS state OK"
+      tags: [gaming_optim]
+
+    - name: Verify kernel multimedia keys
+      ansible.windows.win_powershell:
+        script: |
+          $base = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile'
+          $Ansible.Result = @{
+            sys_resp = (Get-ItemProperty -Path $base -Name SystemResponsiveness -ErrorAction SilentlyContinue).SystemResponsiveness
+            throttle = (Get-ItemProperty -Path $base -Name NetworkThrottlingIndex -ErrorAction SilentlyContinue).NetworkThrottlingIndex
+          }
+      register: kernel_verify
+      tags: [gaming_optim]
+
+    - name: Assert kernel multimedia keys match spec
+      ansible.builtin.assert:
+        that:
+          - kernel_verify.result.sys_resp == system_responsiveness
+          - kernel_verify.result.throttle == network_throttling_index
+        fail_msg: "Kernel multimedia keys mismatch — got {{ kernel_verify.result }}"
+        success_msg: "Kernel multimedia OK"
+      tags: [gaming_optim]
+
+    - name: Verify hibernation disabled
+      ansible.windows.win_powershell:
+        script: |
+          $out = (powercfg /a) -join ' '
+          $Ansible.Result = @{ hibernation_disabled = $out -match "L'hibernation n'a pas été activée|Hibernation has not been enabled" }
+      register: hibern_verify
+      when: not hibernation_enabled # only meaningful when we actively disabled hibernation
+      tags: [gaming_optim]
+
+    - name: Assert hibernation status matches spec
+      ansible.builtin.assert:
+        that:
+          - hibern_verify.result.hibernation_disabled
+        fail_msg: "Hibernation state mismatch — got {{ hibern_verify.result }}"
+        success_msg: "Hibernation state OK"
+      when: not hibernation_enabled # paired with the verify task above
+      tags: [gaming_optim]
+
+    - name: Verify console_ux state — AppX residuals + Firefox default + OneDrive gone
+      ansible.windows.win_powershell:
+        script: |
+          $appxResiduals = @()
+          foreach ($n in @({{ appx_bloatware_extended | map('to_json') | join(', ') }})) {
+            $found = Get-AppxPackage -Name "*$n*" -ErrorAction SilentlyContinue
+            if ($found) { $appxResiduals += $n }
+          }
+          $ffPolicy = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name DefaultAssociationsConfiguration -ErrorAction SilentlyContinue).DefaultAssociationsConfiguration
+          $oneDrivePresent = Test-Path "$env:LocalAppData\Microsoft\OneDrive\OneDrive.exe"
+          $Ansible.Result = @{
+            appx_residuals    = $appxResiduals
+            firefox_policy    = $ffPolicy
+            onedrive_present  = $oneDrivePresent
+          }
+      register: cux_verify
+      tags: [console_ux]
+
+    - name: Assert console_ux state matches spec
+      ansible.builtin.assert:
+        that:
+          - cux_verify.result.appx_residuals | length == 0
+          - cux_verify.result.firefox_policy == 'C:\\ProgramData\\Microsoft\\Windows\\DefaultAssociations.xml'
+          - not cux_verify.result.onedrive_present
+        fail_msg: "console_ux state mismatch — got {{ cux_verify.result }}"
+        success_msg: "console_ux state OK (no AppX residuals, Firefox default policy set, OneDrive gone)"
+      tags: [console_ux]
+
+    - name: Verify NVIDIA telemetry services disabled
+      ansible.windows.win_powershell:
+        script: |
+          $svcNames = @('NvTelemetryContainer','NvContainerLocalSystem','NvContainerNetworkService')
+          $status = @{}
+          foreach ($n in $svcNames) {
+            $s = Get-Service -Name $n -ErrorAction SilentlyContinue
+            if ($s) {
+              $status[$n] = @{ status=[string]$s.Status; start_type=[string]$s.StartType }
+            } else {
+              $status[$n] = $null
+            }
+          }
+          $sched = Get-ScheduledTask -TaskName 'NvTmRep_CrashReport' -ErrorAction SilentlyContinue
+          $Ansible.Result = @{
+            services    = $status
+            crash_task  = [bool]$sched
+          }
+      register: nvidia_verify
+      tags: [drivers]
+
+    - name: Assert NVIDIA telemetry cleanup applied
+      ansible.builtin.assert:
+        that:
+          - "(nvidia_verify.result.services.NvTelemetryContainer is none) or (nvidia_verify.result.services.NvTelemetryContainer.start_type == 'Disabled')"
+          - "(nvidia_verify.result.services.NvContainerLocalSystem is none) or (nvidia_verify.result.services.NvContainerLocalSystem.start_type == 'Disabled')"
+          - not nvidia_verify.result.crash_task
+        fail_msg: "NVIDIA telemetry cleanup mismatch — got {{ nvidia_verify.result }}"
+        success_msg: "NVIDIA telemetry services + crash task verified disabled/absent"
+      tags: [drivers]
+      when: nvidia_telemetry_cleanup

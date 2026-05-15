@@ -1,0 +1,72 @@
+---
+#Check in Registry if 7-Zip is already installed
+- name: Check if 7-Zip is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-2201-000001000000}
+  register: Sevenzip_installed
+
+#Check in Registry if Firefox is already installed (version-agnostic — key created by any Firefox installer since 3.x)
+- name: Check if Firefox is already installed
+  ansible.windows.win_reg_stat:
+    path: HKLM:\SOFTWARE\Mozilla\Mozilla Firefox
+  register: Firefox_installed
+
+#Check in Registry if Nvidia Display Driver is already installed
+- name: Check if Nvidia Display Driver is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}_Display.Driver
+  register: Nvidia_installed
+  when: inventory_hostname == "aurelien-gaming"
+
+#Check in Registry if Ubisoft Connect is already installed
+- name: Check if Ubisoft Connect is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Uplay
+  register: UbisoftConnect_installed
+
+#Check in Registry if EA App is already installed
+- name: Check if EA App is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{C2622085-ABD2-49E5-8AB9-D3D6A642C091}
+  register: EAApp_installed
+
+#Check in Registry if Epic Launcher is already installed
+- name: Check if Epic Launcher is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{20235E2B-1E9F-473D-A215-B2467F1F06E3}
+  register: Epic_installed
+
+#Check in Registry if Bitwarden is already installed
+- name: Check if Bitwarden is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\173a9bac-6f0d-50c4-8202-4744c69d091a
+  register: Bitwarden_installed
+
+#Check in Registry if Synology Drive Client is already installed
+- name: Check if Synology Drive Client is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{45DD252D-E74D-41C3-8944-26706874CACD}
+  register: SynoDriveClient_installed
+
+#Check in Registry if Steam is already installed
+- name: Check if Steam is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam
+  register: Steam_installed
+
+#Check in Registry if GoG is already installed
+- name: Check if GoG is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{7258BA11-600C-430E-A759-27E2C691A335}_is1
+  register: GoG_installed
+
+#Check in Registry if CrystalDiskInfo is already installed
+- name: Check if CrystalDiskInfo is already installed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\CrystalDiskInfo_is1
+  register: CrystalDiskInfo_installed
+
+- name: Check if Captvty exists
+  ansible.windows.win_stat:
+    path: C:\temp\Captvty.zip
+  register: Captvty_downloaded

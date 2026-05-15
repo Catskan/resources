@@ -1,0 +1,21 @@
+w11_vm_computer_hostname: "W11-Aurel-VM"
+
+# user_name aligned with the VM local account that WinRM authenticates as
+user_name: "Aurel"
+
+# ============================================================================
+# VM hardware-specific overrides
+# Generic gaming optim vars are inherited from group_vars/windows_hosts/main.yml
+# ============================================================================
+
+# --- Storage & power — VM behaves differently from bare metal ---
+hibernation_enabled: true # ne pas supprimer hiberfil sur VM
+page_file:
+  strategy: system_managed # laisser Win11 ajuster (VM RAM petite)
+usb_selective_suspend: true # aucun périphérique USB physique
+pcie_link_state_power_off: false # NIC virtuel, irrelevant
+
+# --- Drivers — no real GPU/chipset on VM ---
+amd_chipset_install: false
+nvidia_driver_install_strategy: skip
+nvidia_telemetry_cleanup: false

@@ -1,0 +1,98 @@
+---
+# Microsoft Defender — keep real-time monitoring ON, but exclude game paths
+# and disable cloud sample reporting. Tamper Protection must be disabled
+# manually one-shot in Windows Security before this file can fully apply.
+# See spec §4.1.
+
+- name: Check whether Tamper Protection is enabled
+  ansible.windows.win_powershell:
+    script: |
+      $status = Get-MpComputerStatus
+      $Ansible.Result = @{ tamper_protected = [bool]$status.IsTamperProtected }
+      $Ansible.Changed = $false   # read-only check, never modifies state
+  register: defender_tamper_status
+  check_mode: false # read-only Get-MpComputerStatus; default check_mode skips win_powershell and breaks the next when:
+
+- name: Fail with clear message if Tamper Protection is still ON
+  ansible.builtin.fail:
+    msg: >-
+      Tamper Protection is ON. Disable it manually in Windows Security
+      → Virus & threat protection → Manage settings → Tamper Protection (OFF),
+      then re-run this playbook. Defender exclusions cannot be applied while
+      Tamper Protection is active.
+  when: defender_tamper_status.result.tamper_protected | bool
+
+- name: Add Defender path exclusions
+  ansible.windows.win_powershell:
+    # Use PS single-quoted strings here — to_json doubles backslashes,
+    # which Windows then stores literally, producing entries like
+    # 'C:\\Program Files\\...' that match no real path.
+    script: |
+      $existing = @((Get-MpPreference).ExclusionPath)
+      $changed = $false
+      foreach ($p in @('{{ defender_exclusion_paths | join("','") }}')) {
+        if ($existing -notcontains $p) {
+          Add-MpPreference -ExclusionPath $p
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+
+- name: Remove legacy double-backslash Defender path entries (cleanup)
+  # Cleanup task — removes the bad \\-prefixed entries left over from the
+  # previous to_json bug. Safe to keep long-term (no-op once cleaned).
+  ansible.windows.win_powershell:
+    script: |
+      $bad = (Get-MpPreference).ExclusionPath | Where-Object { $_ -match '\\\\' }
+      $changed = $false
+      foreach ($b in $bad) {
+        Remove-MpPreference -ExclusionPath $b
+        $changed = $true
+      }
+      $Ansible.Changed = $changed
+
+- name: Add Defender process exclusions
+  ansible.windows.win_powershell:
+    script: |
+      $existing = @((Get-MpPreference).ExclusionProcess)
+      $changed = $false
+      foreach ($p in @({{ defender_exclusion_processes | map('to_json') | join(', ') }})) {
+        if ($existing -notcontains $p) {
+          Add-MpPreference -ExclusionProcess $p
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+
+- name: Add Defender extension exclusions
+  ansible.windows.win_powershell:
+    script: |
+      $existing = @((Get-MpPreference).ExclusionExtension)
+      $changed = $false
+      foreach ($p in @({{ defender_exclusion_extensions | map('to_json') | join(', ') }})) {
+        if ($existing -notcontains $p) {
+          Add-MpPreference -ExclusionExtension $p
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+
+- name: Configure Defender cloud reporting (off)
+  # Get-MpPreference returns MAPSReporting/SubmitSamplesConsent as INTEGERS,
+  # not the enum names like 'Disabled' / 'NeverSend'. We compare the int
+  # against the int value of the desired enum to stay idempotent.
+  ansible.windows.win_powershell:
+    script: |
+      $mapsMap    = @{ Disabled = 0; Basic = 1; Advanced = 2 }
+      $samplesMap = @{ AlwaysPrompt = 0; SendSafeSamples = 1; NeverSend = 2; SendAllSamples = 3 }
+      $pref = Get-MpPreference
+      $changed = $false
+      if ([int]$pref.MAPSReporting -ne $mapsMap['{{ defender_maps_reporting }}']) {
+        Set-MpPreference -MAPSReporting {{ defender_maps_reporting }}
+        $changed = $true
+      }
+      if ([int]$pref.SubmitSamplesConsent -ne $samplesMap['{{ defender_submit_samples }}']) {
+        Set-MpPreference -SubmitSamplesConsent {{ defender_submit_samples }}
+        $changed = $true
+      }
+      $Ansible.Changed = $changed

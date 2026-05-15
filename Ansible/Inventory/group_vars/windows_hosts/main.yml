@@ -1,0 +1,100 @@
+#Softwares versions
+nvidia_driver: "528.24"
+synology_drive_client: "3.4.0-15724"
+gog_galaxy: "2.0.73.27"
+captvty: "2.10.6"
+notepad_plus_plus: "8.6.1"
+crystal_disk_info: "9_2_1"
+vlc: "3.0.20"
+
+#Common variables can be used by all Windows hosts
+adk_silent_argument: "/quiet"
+adk_install_dir: 'C:\ADK'
+adk_feature_deploymentTools: "OptionId.DeploymentTools"
+adk_feature_imaging: "OptionId.ImagingAndConfigurationDesigner"
+
+# ============================================================================
+# Generic Win11 gaming optim vars — applied to ALL windows_hosts
+# (Phase 0 refactor — moved from host_vars/aurelien-gaming/main.yml)
+# Host-specific overrides go in inventory/host_vars/<host>/main.yml
+# ============================================================================
+
+# --- Defender (defender.yml) ---
+defender_exclusion_paths:
+  - 'C:\Program Files (x86)\Steam\steamapps'
+  - 'C:\Program Files\Epic Games'
+  - 'C:\Program Files (x86)\GOG Galaxy\Games'
+  - 'C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games'
+  - 'C:\Program Files\WindowsApps'
+  - 'C:\XboxGames'
+  - 'C:\Program Files\ModifiableWindowsApps'
+  - 'M:\'
+  - 'M:\XboxGames'
+defender_exclusion_processes:
+  - steam.exe
+  - EpicGamesLauncher.exe
+  - GalaxyClient.exe
+  - UbisoftConnect.exe
+  - gamingservices.exe
+  - XboxAppServices.exe
+  - GameBar.exe
+defender_exclusion_extensions:
+  - .dxvk-cache
+  - .cache
+  - .pak
+defender_maps_reporting: Disabled
+defender_submit_samples: NeverSend
+
+# --- VBS / HVCI (gaming_optim.yml) ---
+vbs_enabled: false
+vbs_weekly_reset:
+  enabled: true
+  day: sunday # monday, tuesday, wednesday, thursday, friday, saturday, sunday
+  time: "04:00"
+
+# --- Kernel & multimedia (gaming_optim.yml) ---
+system_responsiveness: 0
+network_throttling_index: 0xFFFFFFFF
+nagle_disable_on_gaming_nic: true
+
+# --- Game DVR / Mode (gaming_optim.yml) ---
+game_dvr_disabled: true
+game_mode_enabled: true
+
+# --- AppX bloatware extended (console_ux.yml) ---
+appx_bloatware_extended:
+  - Microsoft.549981C3F5F10 # Cortana
+  - Microsoft.BingSearch
+  - Microsoft.MicrosoftStickyNotes
+  - Microsoft.MixedReality.Portal
+  - Microsoft.Wallet
+  - Microsoft.WindowsCommunicationsApps # Mail + Calendar
+  - MicrosoftCorporationII.QuickAssist
+  - Microsoft.OutlookForWindows
+  - Microsoft.Windows.DevHome
+  - 5319275A.WhatsAppDesktop # WhatsApp from MS Store
+  - MSTeams # New Teams (work/school) — distinct from legacy MicrosoftTeams in softwares_uninstall.yml
+  - Microsoft.WindowsCalculator
+  - Microsoft.WindowsSoundRecorder
+  - Microsoft.WindowsNotepad
+
+# --- Console UX policies (console_ux.yml) ---
+cortana_disabled: true
+bing_search_disabled: true
+widgets_disabled: true
+onedrive_uninstall: true
+edge_neutralize: true
+notifications_globally_off: true
+background_apps_force_deny: true
+recommended_files_off: true
+startup_apps_disable:
+  - MSEdgeUpdate
+  - "Adobe ARM"
+  - iTunesHelper
+  - iCloudDrive
+  - Cortana
+telemetry_minimum: true
+firefox_set_default: true
+
+# --- Drivers (drivers.yml) — generic defaults, overridable per host ---
+nvidia_telemetry_cleanup: true
