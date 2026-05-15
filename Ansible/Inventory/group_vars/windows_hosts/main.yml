@@ -73,6 +73,10 @@ appx_bloatware_extended:
   - Microsoft.OutlookForWindows
   - Microsoft.Windows.DevHome
   - 5319275A.WhatsAppDesktop # WhatsApp from MS Store
+  - MSTeams # New Teams (work/school) — distinct from legacy MicrosoftTeams in softwares_uninstall.yml
+  - Microsoft.WindowsCalculator
+  - Microsoft.WindowsSoundRecorder
+  - Microsoft.WindowsNotepad
 
 # --- Console UX policies (console_ux.yml) ---
 cortana_disabled: true
