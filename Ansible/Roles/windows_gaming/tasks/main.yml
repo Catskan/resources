@@ -17,6 +17,7 @@
 - name: Relocate User Shell Folders to {{ root_user_directory | default('M:\\Aurel') }}
   ansible.builtin.include_tasks: user_folders.yml
   tags: [user_folders]
+  when: inventory_hostname == "aurelien-gaming"
 
 - name: Apply Windows Defender exclusions and tuning
   ansible.builtin.include_tasks: defender.yml
