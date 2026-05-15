@@ -31,9 +31,14 @@
   ansible.builtin.include_tasks: console_ux.yml
   tags: [system, console_ux]
 
+# --- Software install chain (bare-metal only — VM doesn't need Steam/Firefox/Synology/etc.) ---
+# These tasks will be supplanted by Phase 3 winget consolidation. Gating on
+# aurelien-gaming keeps the VM run lean and avoids hitting host-specific vars
+# (nas_url, nvidia_driver, etc.) that aren't defined on the VM.
 - name: Check which softwares are already installed
   ansible.builtin.include_tasks: softwares_check.yml
   tags: [softwares, softwares_check]
+  when: inventory_hostname == "aurelien-gaming"
 
 - name: Download softwares
   block:
@@ -45,10 +50,12 @@
           Un téléchargement a échoué (mirror down, URL périmée, etc.).
           Vérifiez les URLs versionnées dans group_vars/windows_hosts/main.yml.
   tags: [softwares, softwares_download]
+  when: inventory_hostname == "aurelien-gaming"
 
 - name: Install softwares
   ansible.builtin.include_tasks: softwares_install.yml
   tags: [softwares, softwares_install]
+  when: inventory_hostname == "aurelien-gaming"
 
 - name: Apply Firefox policies (cross-platform)
   ansible.builtin.include_role:
@@ -63,10 +70,12 @@
 - name: Software versions check (no-op until winget migration)
   ansible.builtin.include_tasks: softwares_check_versions.yml
   tags: [softwares_versions]
+  when: inventory_hostname == "aurelien-gaming"
 
 - name: Install MS Store / winget apps
   ansible.builtin.include_tasks: ms_store_apps.yml
   tags: [ms_store]
+  when: inventory_hostname == "aurelien-gaming"
 
 - name: Install and tune GPU/chipset drivers
   ansible.builtin.include_tasks: drivers.yml
