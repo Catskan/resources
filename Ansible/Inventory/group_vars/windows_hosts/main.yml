@@ -72,6 +72,7 @@ appx_bloatware_extended:
   - MicrosoftCorporationII.QuickAssist
   - Microsoft.OutlookForWindows
   - Microsoft.Windows.DevHome
+  - 5319275A.WhatsAppDesktop # WhatsApp from MS Store
 
 # --- Console UX policies (console_ux.yml) ---
 cortana_disabled: true
