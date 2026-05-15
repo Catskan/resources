@@ -1,7 +1,7 @@
 # Lookup KeePass → adapte le path à l'emplacement réel.
 ansible_hostname: W11-VM-Aurel
 ansible_password: "{{ lookup('viczem.keepass.keepass', 'Local/w11-vm-user', 'password') }}"
-ansible_host: 192.168.64.16
+ansible_host: 192.168.64.17
 ansible_user: Aurel
 
 # UTM VM uses WinRM HTTPS only (self-signed cert from ConfigureRemotingForAnsible.ps1).

@@ -2,11 +2,11 @@ all:
   children:
     linux_hosts:
       hosts:
-        nas.eonelia.cloud:
+        nas.eonelia.fr:
           ansible_connection: ssh
           ansible_host: 192.168.2.114
           ansible_port: 3434
-          ansible_user: a.peruchon
+          ansible_user: a.busutil
         macbook-air-aurelien:
         arch-linux-vm:
         arch-linux-laptop:

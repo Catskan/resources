@@ -1,0 +1,6 @@
+# SSH key path : ancien chemin du container `/.ssh_keys/...` invalide depuis
+# le MacBook. Adapte vers ta clé locale, ex. ~/.ssh/id_ed25519_aurel.
+ansible_connection: ssh
+ansible_host: 192.168.1.15
+ansible_user: aurel
+ansible_ssh_private_key_file: ~/.ssh/id_ed25519_aurel
