@@ -493,9 +493,7 @@
     name: .\{{ ansible_user }}
     data: 1
     type: dword
-
-#Reboot computer
-- name: Reboot Gaming
-  ansible.windows.win_reboot:
-    test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
-  when: inventory_hostname == "aurelien-gaming"
+# Reboot is handled by the consolidated win_reboot block at the end of main.yml,
+# which fires only when reboot_required fact has been set by any task.
+# Local user-folders changes don't strictly need a reboot before the rest of
+# the role completes — Explorer re-reads User Shell Folders at next login.

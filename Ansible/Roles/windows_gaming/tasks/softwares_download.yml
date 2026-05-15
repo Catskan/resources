@@ -1,0 +1,126 @@
+---
+- name: Create C:\Temp directory
+  ansible.windows.win_file:
+    path: C:\Temp
+    state: directory
+
+# # Install/uninstall with win_package
+# - name: Download the 7-Zip
+#   win_get_url:
+#     url: https://www.7-zip.org/a/7z2201-x64.msi
+#     dest: C:\temp\7z.msi
+#     force: no
+#   when: Sevenzip_installed.exists == false
+
+# Download Firefox with win_package
+- name: Download the Firefox
+  win_get_url:
+    url: https://download.mozilla.org/?product=firefox-msi-latest-ssl&os=win64&lang=en-US&_gl=1*re3fn1*_ga*MjI3NDc1NTQ0LjE2NjgyNjk0MDc.*_ga_MQ7767QQQW*MTY2ODI2OTQxNy4xLjAuMTY2ODI2OTQxNy4wLjAuMA..
+    dest: C:\temp\Firefox.msi
+    force: no
+  when: Firefox_installed.exists == false
+
+# IDownload Nvidia Drivers with win_package
+- name: Download Nvidia Drivers
+  win_get_url:
+    url: https://fr.download.nvidia.com/Windows/{{ nvidia_driver }}/{{ nvidia_driver }}-desktop-win10-win11-64bit-international-dch-whql.exe
+    dest: C:\temp\Nvidia-{{ nvidia_driver }}.exe
+    force: no
+  when: inventory_hostname == "aurelien-gaming" and Nvidia_installed.exists == false
+
+# Download Ubisoft Connect with win_package
+- name: Download the Ubisoft Connect
+  win_get_url:
+    url: https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe
+    dest: C:\temp\UbisoftConnect.exe
+  when: UbisoftConnect_installed.exists == false
+
+#Download EA App (Origin)
+- name: Download the EA App
+  win_get_url:
+    url: https://origin-a.akamaihd.net/EA-Desktop-Client-Download/installer-releases/EAappInstaller.exe
+    dest: C:\temp\EaApp.exe
+  when: EAApp_installed.exists == false
+
+#Download Epic Launcher
+- name: Download the Epic Launcher
+  win_get_url:
+    url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi
+    dest: C:\temp\Epic.msi
+  when: Epic_installed.exists == false
+
+#Download Synology Drive Client
+- name: Download the Synology Drive Client
+  win_get_url:
+    url: https://global.synologydownload.com/download/Utility/SynologyDriveClient/{{ synology_drive_client }}/Windows/Installer/i686/Synology%20Drive%20Client-{{ synology_drive_client }}-x86.msi
+    dest: C:\temp\SynologyDrive.msi
+  when: SynoDriveClient_installed.exists == false
+
+#Download Steam
+- name: Download Steam
+  win_get_url:
+    url: https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe
+    dest: C:\temp\Steam.exe
+  when: Steam_installed.exists == false
+
+#Download GoG
+- name: Download GoG Galaxy
+  win_get_url:
+    url: https://cdn.gog.com/open/galaxy/client/{{ gog_galaxy }}/setup_galaxy_{{ gog_galaxy }}.exe
+    dest: C:\temp\GoG.exe
+  when: GoG_installed.exists == false
+
+#Download Rockstar Game Social Club
+- name: Download Rockstar Game Social Club
+  win_get_url:
+    url: https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe
+    dest: C:\temp\Rockstar.exe
+  #when: rockstar_installed.exists == false
+
+#Download Captvty
+- name: Download CaptvTY
+  win_get_url:
+    url: https://releases.captvty.fr/151836a79873f8f6e6313205bf7f7cbfd0c1655a/captvty-{{ captvty }}.zip
+    dest: C:\temp\Captvty.zip
+    follow_redirects: yes
+  when: inventory_hostname == "w11-vm-aurel" and Captvty_downloaded.exists == false
+
+#Download Windows ADK
+- name: Download Windows ADK
+  win_get_url:
+    url: https://download.microsoft.com/download/6/7/4/674ec7db-7c89-4f2b-8363-689055c2b430/adk/adksetup.exe
+    dest: C:\temp\adk.exe
+    #follow_redirects: yes
+  when: inventory_hostname != "aurelien-gaming"
+
+#Download Notepad++ x64
+- name: Download Notepad++ x64
+  win_get_url:
+    url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v{{ notepad_plus_plus }}/npp.{{ notepad_plus_plus }}.Installer.x64.exe
+    dest: C:\temp\Notepad++.exe
+    #follow_redirects: yes
+  when: ansible_facts['architecture'] == "64-bit"
+
+#Download Notepad++ arm64
+- name: Download Notepad++ arm64
+  win_get_url:
+    url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v{{ notepad_plus_plus }}/npp.{{ notepad_plus_plus }}.Installer.arm64.exe
+    dest: C:\temp\Notepad++.exe
+    #follow_redirects: yes
+  when: ansible_facts['architecture'] == "arm64"
+
+#Download CrystalDiskInfo
+- name: Download CrystalDiskinfo
+  win_get_url:
+    url: https://crystalmark.info/download/zz/CrystalDiskInfo{{ crystal_disk_info }}.exe
+    dest: C:\temp\Crystaldiskinfo.exe
+    #follow_redirects: yes
+  #when: ansible_facts['architecture'] == "arm64"
+  when: inventory_hostname == "aurelien-gaming"
+
+#Download VLC
+- name: Download VLC
+  win_get_url:
+    url: https://opencolo.mm.fcix.net/videolan-ftp/vlc/{{ vlc }}/win64/vlc-{{ vlc }}-win64.exe
+    dest: C:\temp\vlc.exe
+    #follow_redirects: yes
