@@ -86,15 +86,23 @@
   ansible.windows.win_powershell:
     script: |
       $changed = $false
-      Get-Process -Name OneDrive -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-      $candidates = @(
-        "$env:SystemRoot\System32\OneDriveSetup.exe",
-        "$env:SystemRoot\SysWOW64\OneDriveSetup.exe"
-      )
-      foreach ($exe in $candidates) {
-        if (Test-Path $exe) {
-          & $exe /uninstall | Out-Null
-          $changed = $true
+      # OneDriveSetup.exe exists in C:\Windows\System32\ even after uninstall
+      # (Microsoft ships it with Windows). Only call /uninstall if OneDrive is
+      # actually installed for the current user (presence of the per-user
+      # OneDrive.exe binary, or the ProgramData install dir).
+      $installed = (Test-Path "$env:LocalAppData\Microsoft\OneDrive\OneDrive.exe") -or
+                   (Test-Path "$env:ProgramData\Microsoft OneDrive\OneDrive.exe")
+      if ($installed) {
+        Get-Process -Name OneDrive -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        $candidates = @(
+          "$env:SystemRoot\System32\OneDriveSetup.exe",
+          "$env:SystemRoot\SysWOW64\OneDriveSetup.exe"
+        )
+        foreach ($exe in $candidates) {
+          if (Test-Path $exe) {
+            & $exe /uninstall | Out-Null
+            $changed = $true
+          }
         }
       }
       $paths = @(

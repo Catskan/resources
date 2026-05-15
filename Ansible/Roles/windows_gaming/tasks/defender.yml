@@ -9,6 +9,7 @@
     script: |
       $status = Get-MpComputerStatus
       $Ansible.Result = @{ tamper_protected = [bool]$status.IsTamperProtected }
+      $Ansible.Changed = $false   # read-only check, never modifies state
   register: defender_tamper_status
   check_mode: false # read-only Get-MpComputerStatus; default check_mode skips win_powershell and breaks the next when:
 

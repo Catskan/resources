@@ -137,6 +137,9 @@
         Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' }
       foreach ($a in $adapters) {
         try {
+          $pm = Get-NetAdapterPowerManagement -Name $a.Name -ErrorAction SilentlyContinue
+          # Skip if already enabled — keeps the task idempotent.
+          if ($pm -and "$($pm.WakeOnMagicPacket)" -eq 'Enabled') { continue }
           Enable-NetAdapterPowerManagement -Name $a.Name -WakeOnMagicPacket -ErrorAction Stop
           $changed = $true
         } catch {}
