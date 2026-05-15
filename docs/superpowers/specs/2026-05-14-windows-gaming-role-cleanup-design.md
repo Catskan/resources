@@ -453,7 +453,7 @@ winget_packages:
   - Ubisoft.Connect
   - GOG.Galaxy
   - ElectronicArts.EADesktop
-  - RockstarGames.RockstarGamesLauncher # ex-Social Club, devenu Rockstar Games Launcher
+  - RockstarGames.Launcher # ex-Social Club, devenu Rockstar Games Launcher (verified via winget search)
 
   # --- Apps user ---
   - Mozilla.Firefox
