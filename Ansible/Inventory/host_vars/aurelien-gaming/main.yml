@@ -125,3 +125,12 @@ nvidia_driver_install_strategy: winget # winget | direct_url | skip (Phase 3 win
 # Used only when nvidia_driver_install_strategy == "direct_url"
 nvidia_driver_url: ""
 nvidia_driver_version: ""
+
+# --- NAS mapped drives (system_settings.yml — bare metal only) ---
+# SMB direct LAN. nas_url doit résoudre vers une IP LAN (split-horizon DNS ou
+# hosts entry) sinon Windows tentera SMB over WAN (typiquement bloqué).
+nas_mapped_drives:
+  - letter: W
+    path: Aurelien
+  - letter: V
+    path: Apps
