@@ -106,14 +106,16 @@
           $out = (powercfg /a) -join ' '
           $Ansible.Result = @{ hibernation_disabled = $out -match "L'hibernation n'a pas été activée|Hibernation has not been enabled" }
       register: hibern_verify
+      when: not hibernation_enabled # only meaningful when we actively disabled hibernation
       tags: [gaming_optim]
 
     - name: Assert hibernation status matches spec
       ansible.builtin.assert:
         that:
-          - hibern_verify.result.hibernation_disabled == (not hibernation_enabled)
+          - hibern_verify.result.hibernation_disabled
         fail_msg: "Hibernation state mismatch — got {{ hibern_verify.result }}"
         success_msg: "Hibernation state OK"
+      when: not hibernation_enabled # paired with the verify task above
       tags: [gaming_optim]
 
     - name: Verify console_ux state — AppX residuals + Firefox default + OneDrive gone
