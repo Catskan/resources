@@ -33,6 +33,11 @@
       register: defender_verify
       tags: [defender]
 
+    - name: Show actual Defender state for debug
+      ansible.builtin.debug:
+        var: defender_verify.result
+      tags: [defender]
+
     - name: Assert Defender state matches spec
       ansible.builtin.assert:
         that:
