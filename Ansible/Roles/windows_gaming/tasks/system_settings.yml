@@ -131,17 +131,21 @@
 
 - name: Enable Wake-on-LAN (Magic Packet) on all wired Ethernet adapters
   ansible.windows.win_powershell:
+    # Idempotency: capture WakeOnMagicPacket state before and after the
+    # Enable call, compare as strings (works whether the cmdlet returns
+    # an enum object or an int). Only flag changed if the value moved.
+    # Virtual NICs (UTM RTL8139, etc.) sometimes report success without
+    # actual state change — this guard avoids spurious "changed" reports.
     script: |
       $changed = $false
       $adapters = Get-NetAdapter -Physical |
         Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' }
       foreach ($a in $adapters) {
         try {
-          $pm = Get-NetAdapterPowerManagement -Name $a.Name -ErrorAction SilentlyContinue
-          # Skip if already enabled — keeps the task idempotent.
-          if ($pm -and "$($pm.WakeOnMagicPacket)" -eq 'Enabled') { continue }
+          $before = "$((Get-NetAdapterPowerManagement -Name $a.Name -ErrorAction SilentlyContinue).WakeOnMagicPacket)"
           Enable-NetAdapterPowerManagement -Name $a.Name -WakeOnMagicPacket -ErrorAction Stop
-          $changed = $true
+          $after  = "$((Get-NetAdapterPowerManagement -Name $a.Name -ErrorAction SilentlyContinue).WakeOnMagicPacket)"
+          if ($before -ne $after) { $changed = $true }
         } catch {}
       }
       $Ansible.Changed = $changed
