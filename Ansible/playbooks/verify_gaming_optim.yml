@@ -21,13 +21,17 @@
     - name: Verify Defender exclusions and reporting
       ansible.windows.win_powershell:
         script: |
+          # Get-MpPreference returns enum fields as int, we need to map them
+          # back to human-readable names matching the spec var values.
+          $mapsLookup    = @{ 0 = 'Disabled'; 1 = 'Basic'; 2 = 'Advanced' }
+          $samplesLookup = @{ 0 = 'AlwaysPrompt'; 1 = 'SendSafeSamples'; 2 = 'NeverSend'; 3 = 'SendAllSamples' }
           $pref = Get-MpPreference
           $Ansible.Result = @{
             paths        = $pref.ExclusionPath
             processes    = $pref.ExclusionProcess
             extensions   = $pref.ExclusionExtension
-            maps         = [string]$pref.MAPSReporting
-            samples      = [string]$pref.SubmitSamplesConsent
+            maps         = $mapsLookup[[int]$pref.MAPSReporting]
+            samples      = $samplesLookup[[int]$pref.SubmitSamplesConsent]
             realtime_on  = -not $pref.DisableRealtimeMonitoring
           }
       register: defender_verify

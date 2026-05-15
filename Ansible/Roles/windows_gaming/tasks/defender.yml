@@ -77,15 +77,20 @@
       $Ansible.Changed = $changed
 
 - name: Configure Defender cloud reporting (off)
+  # Get-MpPreference returns MAPSReporting/SubmitSamplesConsent as INTEGERS,
+  # not the enum names like 'Disabled' / 'NeverSend'. We compare the int
+  # against the int value of the desired enum to stay idempotent.
   ansible.windows.win_powershell:
     script: |
+      $mapsMap    = @{ Disabled = 0; Basic = 1; Advanced = 2 }
+      $samplesMap = @{ AlwaysPrompt = 0; SendSafeSamples = 1; NeverSend = 2; SendAllSamples = 3 }
       $pref = Get-MpPreference
       $changed = $false
-      if ([string]$pref.MAPSReporting -ne '{{ defender_maps_reporting }}') {
+      if ([int]$pref.MAPSReporting -ne $mapsMap['{{ defender_maps_reporting }}']) {
         Set-MpPreference -MAPSReporting {{ defender_maps_reporting }}
         $changed = $true
       }
-      if ([string]$pref.SubmitSamplesConsent -ne '{{ defender_submit_samples }}') {
+      if ([int]$pref.SubmitSamplesConsent -ne $samplesMap['{{ defender_submit_samples }}']) {
         Set-MpPreference -SubmitSamplesConsent {{ defender_submit_samples }}
         $changed = $true
       }
