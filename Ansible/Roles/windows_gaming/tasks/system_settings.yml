@@ -73,6 +73,7 @@
     name: "DefaultPassword"
     data: "{{ remote_local_user_name_password }}"
     type: expandstring
+  no_log: true
 
 ##########################################Change hostname##########################################
 - name: Change W11 VM Aurel hostname
