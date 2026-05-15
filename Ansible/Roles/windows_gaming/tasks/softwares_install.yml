@@ -108,11 +108,6 @@
 #   - name: Install RockStar Game Social Club
 #     win_command: C:\temp\Rockstar.exe /S
 
-- name: Create an Playnite shortcut
-  community.windows.win_shortcut:
-    src: M:\Playnite\Playnite.FullscreenApp.exe
-    dest: '{{ startMenu_user_directory }}\Playnite.lnk'
-
 - name: Remove Temp directory
   ansible.windows.win_file:
     path: C:\temp
