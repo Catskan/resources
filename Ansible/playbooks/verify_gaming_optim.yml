@@ -5,10 +5,11 @@
 # Usage : make verify-windows
 #
 # Si une vérification échoue, le playbook plante et affiche ce qui manque.
-# Tags par catégorie : defender, gaming_optim, console_ux, drivers, all.
+# Tags par catégorie : defender, gaming_optim, console_ux, drivers.
+# Sans --tags : tout tourne (comportement Ansible par défaut).
 
 - name: Verify Windows 11 gaming optimization state
-  hosts: aurelien-gaming
+  hosts: windows_hosts
   gather_facts: false
 
   tasks:
@@ -30,7 +31,7 @@
             realtime_on  = -not $pref.DisableRealtimeMonitoring
           }
       register: defender_verify
-      tags: [defender, all]
+      tags: [defender]
 
     - name: Assert Defender state matches spec
       ansible.builtin.assert:
@@ -43,7 +44,7 @@
           - "defender_verify.result.realtime_on"
         fail_msg: "Defender state mismatch — see defender_verify.result above"
         success_msg: "Defender exclusions and reporting OK"
-      tags: [defender, all]
+      tags: [defender]
 
     - name: Verify VBS / DeviceGuard status
       ansible.windows.win_powershell:
@@ -58,7 +59,7 @@
             sched_exists = [bool]$sched
           }
       register: vbs_verify
-      tags: [gaming_optim, all]
+      tags: [gaming_optim]
 
     - name: Assert VBS state matches spec
       ansible.builtin.assert:
@@ -68,7 +69,7 @@
           - vbs_verify.result.sched_exists == vbs_weekly_reset.enabled
         fail_msg: "VBS state mismatch — got {{ vbs_verify.result }}"
         success_msg: "VBS state OK"
-      tags: [gaming_optim, all]
+      tags: [gaming_optim]
 
     - name: Verify kernel multimedia keys
       ansible.windows.win_powershell:
@@ -79,7 +80,7 @@
             throttle = (Get-ItemProperty -Path $base -Name NetworkThrottlingIndex -ErrorAction SilentlyContinue).NetworkThrottlingIndex
           }
       register: kernel_verify
-      tags: [gaming_optim, all]
+      tags: [gaming_optim]
 
     - name: Assert kernel multimedia keys match spec
       ansible.builtin.assert:
@@ -88,7 +89,7 @@
           - kernel_verify.result.throttle == network_throttling_index
         fail_msg: "Kernel multimedia keys mismatch — got {{ kernel_verify.result }}"
         success_msg: "Kernel multimedia OK"
-      tags: [gaming_optim, all]
+      tags: [gaming_optim]
 
     - name: Verify hibernation disabled
       ansible.windows.win_powershell:
@@ -96,7 +97,7 @@
           $out = (powercfg /a) -join ' '
           $Ansible.Result = @{ hibernation_disabled = $out -match "L'hibernation n'a pas été activée|Hibernation has not been enabled" }
       register: hibern_verify
-      tags: [gaming_optim, all]
+      tags: [gaming_optim]
 
     - name: Assert hibernation status matches spec
       ansible.builtin.assert:
@@ -104,7 +105,7 @@
           - hibern_verify.result.hibernation_disabled == (not hibernation_enabled)
         fail_msg: "Hibernation state mismatch — got {{ hibern_verify.result }}"
         success_msg: "Hibernation state OK"
-      tags: [gaming_optim, all]
+      tags: [gaming_optim]
 
     - name: Verify console_ux state — AppX residuals + Firefox default + OneDrive gone
       ansible.windows.win_powershell:
@@ -122,7 +123,7 @@
             onedrive_present  = $oneDrivePresent
           }
       register: cux_verify
-      tags: [console_ux, all]
+      tags: [console_ux]
 
     - name: Assert console_ux state matches spec
       ansible.builtin.assert:
@@ -132,7 +133,7 @@
           - not cux_verify.result.onedrive_present
         fail_msg: "console_ux state mismatch — got {{ cux_verify.result }}"
         success_msg: "console_ux state OK (no AppX residuals, Firefox default policy set, OneDrive gone)"
-      tags: [console_ux, all]
+      tags: [console_ux]
 
     - name: Verify NVIDIA telemetry services disabled
       ansible.windows.win_powershell:
@@ -153,7 +154,7 @@
             crash_task  = [bool]$sched
           }
       register: nvidia_verify
-      tags: [drivers, all]
+      tags: [drivers]
 
     - name: Assert NVIDIA telemetry cleanup applied
       ansible.builtin.assert:
@@ -163,5 +164,5 @@
           - not nvidia_verify.result.crash_task
         fail_msg: "NVIDIA telemetry cleanup mismatch — got {{ nvidia_verify.result }}"
         success_msg: "NVIDIA telemetry services + crash task verified disabled/absent"
-      tags: [drivers, all]
+      tags: [drivers]
       when: nvidia_telemetry_cleanup
