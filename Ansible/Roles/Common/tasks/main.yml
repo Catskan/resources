@@ -1,0 +1,3 @@
+---
+- ansible.builtin.include_tasks: firefox_policies.yml
+  tags: [firefox]

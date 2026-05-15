@@ -1,0 +1,32 @@
+---
+- name: Deploy Blog maman (fonduededeco container)
+  hosts: macbook-air-aurelien
+  gather_facts: false
+
+  tasks:
+    - name: Ensure Python requests is installed
+      ansible.builtin.pip:
+        name: requests
+        state: present
+
+    - name: Ensure docker Python package is installed
+      ansible.builtin.pip:
+        name: docker
+
+    - name: Replace credsStore by credStore (fix docker-credential-desktop issue)
+      ansible.builtin.replace:
+        path: /Users/{{ user_name }}/.docker/config.json
+        regexp: "credsStore"
+        replace: "credStore"
+
+    - name: Log into DockerHub
+      community.docker.docker_login:
+        username: "{{ dockerHub_username }}"
+        password: "{{ dockerHub_password }}"
+
+    - name: Deploy fonduededeco container
+      community.docker.docker_container:
+        name: "{{ container_name_fonduededeco }}"
+        image: "{{ image_name_fonduededeco }}"
+        state: started
+        published_ports: 8080:80

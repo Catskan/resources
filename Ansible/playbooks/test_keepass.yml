@@ -1,0 +1,59 @@
+---
+# Vérifie que chaque entrée KeePass attendue par les rôles est résolvable.
+# Affiche la longueur du secret en clair (jamais la valeur elle-même).
+#
+# Lancement : make test-keepass
+#
+# Si un lookup échoue, ansible plante en indiquant le path concerné — corrige
+# ton DB ou le path d'exemple dans ce fichier, puis relance.
+
+- name: Test KeePass lookups
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  vars:
+    keepass_entries:
+      # Entrées propres à l'infra Ansible (à créer dans la DB)
+      - label: "aurelien-gaming  local_user password"
+        path: "Local/Aurel-Gaming"
+        field: "password"
+      # - label: "w11-vm-aurel     local_user password"
+      #   path: "ansible/w11-vm-aurel/local_user"
+      #   field: "password"
+      # - label: "arch-linux-laptop sudo password"
+      #   path: "ansible/arch-linux-laptop/sudo"
+      #   field: "password"
+
+      # Entrées existantes — adapte les paths à ta vraie structure KeePass
+      - label: "Microsoft account email"
+        path: "Microsoft Account"
+        field: "username"
+      - label: "Microsoft account password"
+        path: "Microsoft Account"
+        field: "password"
+      - label: "Ubisoft Connect username"
+        path: "Uplay (Ubisoft)"
+        field: "username"
+      - label: "Ubisoft Connect password"
+        path: "Uplay (Ubisoft)"
+        field: "password"
+      - label: "NAS Synology username"
+        path: "Nas"
+        field: "username"
+      - label: "NAS Synology password"
+        path: "Nas"
+        field: "password"
+      - label: "Docker Hub (catskan) password"
+        path: "Dockerhub"
+        field: "password"
+
+  tasks:
+    - name: Check KeePass entry
+      ansible.builtin.debug:
+        msg: >-
+          OK — {{ item.path }} ({{ item.field }})
+          : {{ lookup('viczem.keepass.keepass', item.path, item.field) | length }} chars
+      loop: "{{ keepass_entries }}"
+      loop_control:
+        label: "{{ item.label }}"

@@ -1,25 +1,8 @@
 ---
-- name: Main Aurelien Gaming Playbook
-  hosts: 
-    - arch-linux-laptop
-  gather_facts: true
-  vars_files:
-    - Roles/Linux/Laptop/vars/linux-laptop-secrets.yml
-    - Roles/Common/vars/common_secrets.yml
-    - Roles/Common/vars/common_vars.yml
+- name: Configure Arch Linux laptop
+  hosts: arch-linux-laptop
+  gather_facts: yes
 
-  tasks:
-    - name: Perform Linux settings
-      ansible.builtin.import_tasks: Roles/Linux/Laptop/tasks/settings_linux.yml
-
-    - name: Download AUR packages
-      ansible.builtin.import_tasks: Roles/Linux/Laptop/tasks/downloads_packages.yml
-
-    - name: Include install_softwares
-      ansible.builtin.import_tasks: Roles/Linux/Laptop/tasks/install_softwares.yml
-
-    - name: Include settings_softwares
-      ansible.builtin.import_tasks: Roles/Common/tasks/settings_softwares.yml
-
-    - name: Include remove_softwares
-      ansible.builtin.import_tasks: Roles/Linux/Laptop/tasks/remove_softwares.yml
+  roles:
+    - role: linux_laptop
+    - role: common
