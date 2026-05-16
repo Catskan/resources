@@ -1,0 +1,30 @@
+[General]
+ConfigVersion=2
+OpenPreviousDatabasesOnStartup=true
+RememberLastDatabases=true
+RememberLastKeyFiles=true
+MinimizeOnStartup=true
+MinimizeOnClose=true
+LastOpenedDatabases={{ keepassxc_vault_unc | replace('\\', '\\\\') }}
+LastActiveDatabase={{ keepassxc_vault_unc | replace('\\', '\\\\') }}
+LastDir={{ keepassxc_vault_unc | regex_replace('\\\\[^\\\\]+\\.kdbx$', '') | replace('\\', '\\\\') }}
+
+# Qt::Key_V = 0x56 = 86
+# Qt::ShiftModifier (0x02000000) | Qt::ControlModifier (0x04000000) = 0x06000000 = 100663296
+GlobalAutoTypeKey=86
+GlobalAutoTypeModifiers=100663296
+
+[GUI]
+ShowTrayIcon=true
+MinimizeToTray=true
+MinimizeOnClose=true
+HidePreviewPanel=false
+
+[Security]
+LockDatabaseIdle=true
+LockDatabaseIdleSeconds=600
+LockDatabaseMinimize=false
+LockDatabaseScreenLock=true
+
+[Browser]
+Enabled=true

@@ -37,7 +37,11 @@ favorites_user_directory: 'M:\Aurel\Favorites'
 aurel_gaming_computer_hostname: "Aurel-Gaming"
 
 #SynologyDrive Variables
-nas_url: "nas.eonelia.cloud"
+# Local LAN IP (static via DHCP reservation on the NAS). We don't go
+# through nas.eonelia.cloud here because that DNS would resolve to a WAN
+# IP and Windows would try SMB over the internet (blocked by every
+# residential ISP). Direct LAN IP gives the fastest SMB path.
+nas_url: "192.168.1.7"
 
 # ============================================================================
 # Hardware-specific vars for aurelien-gaming
@@ -73,10 +77,17 @@ nvidia_driver_install_strategy: nvcleanstall
 nvidia_driver_url: "" # only consumed when strategy == 'direct_url'
 
 # --- NAS mapped drives (system_settings.yml — bare metal only) ---
-# SMB direct LAN. nas_url doit résoudre vers une IP LAN (split-horizon DNS ou
-# hosts entry) sinon Windows tentera SMB over WAN (typiquement bloqué).
+# Uses the LAN IP defined above. Both shares live on the same NAS so the
+# Credential Manager entry (keyed on nas_url) covers both.
 nas_mapped_drives:
   - letter: W
     path: Aurelien
   - letter: V
     path: Apps
+
+# --- KeePassXC central vault (keepassxc_setup.yml) ---
+# UNC path consumed by keepassxc.ini → KeePassXC opens the kdbx directly
+# from the NAS (no local copy, NAS stays single source of truth across
+# the Mac controller + Windows desktop). The `home` share is the
+# Synology User Home Service mirror of /Volumes/home/ on macOS.
+keepassxc_vault_unc: '\\{{ nas_url }}\home\Drive\Vault\Aurel-Vault.kdbx'

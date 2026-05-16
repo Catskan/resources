@@ -51,6 +51,7 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 | `softwares_winget` | Install user apps + tooling via winget (Steam, Epic, Firefox, MSI Afterburner, NVCleanstall, …) + MS Store Xbox Acc. |
 | `firefox`          | Firefox policies (cross-platform, from `common` role)                                                                |
 | `drivers`          | AMD chipset (direct_url) + NVIDIA driver via NVCleanstall CLI + NVIDIA telemetry services off                        |
+| `keepassxc`        | KeePassXC pointed at NAS vault UNC + tray autostart + Ctrl+Shift+V Auto-Type + Defender exclusion (bare-metal only)  |
 
 ### Running things
 

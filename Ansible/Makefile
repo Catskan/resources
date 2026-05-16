@@ -1,13 +1,14 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help windows windows-vm linux uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass verify-windows lint
+.PHONY: help windows windows-vm linux uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows lint
 
 help:
 	@echo "Cibles disponibles :"
 	@echo "  make test-keepass     — Vérifie la résolution KeePass de chaque secret (offline)"
 	@echo "  make verify-windows   — Vérifie l'état post-run des optimisations gaming (offline)"
 	@echo "  make inspect-keepass  — Diagnostic offline : vérifie les paths + dumpe l'arbo de la DB"
+	@echo "  make keepass-autotype — Ajoute les Window Associations Auto-Type aux entrées launchers (dry-run; --apply pour écrire)"
 	@echo "  make windows          — Run complet sur aurelien-gaming + w11-vm-aurel"
 	@echo "  make windows-vm       — Run uniquement sur w11-vm-aurel (test sur UTM avant bare-metal)"
 	@echo "  make check-windows-vm — Dry-run sur w11-vm-aurel (--check --diff)"
@@ -35,6 +36,9 @@ verify-windows:
 
 inspect-keepass:
 	./scripts/run.sh ./scripts/inspect_keepass.py $(ARGS)
+
+keepass-autotype:
+	./scripts/run.sh ./scripts/keepass_apply_autotype.py $(ARGS)
 
 windows:
 	./scripts/run.sh ansible-playbook main_windows_playbook.yml $(ARGS)
