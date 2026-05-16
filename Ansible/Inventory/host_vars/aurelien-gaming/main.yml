@@ -35,10 +35,6 @@ favorites_user_directory_reg_key_name: "Favorites"
 favorites_user_directory: 'M:\Aurel\Favorites'
 
 aurel_gaming_computer_hostname: "Aurel-Gaming"
-games_directory: 'M:\Games'
-
-## MS Store Apps
-XboxAccessoires_id: "9NBLGGH30XJ3"
 
 #SynologyDrive Variables
 nas_url: "nas.eonelia.cloud"
@@ -59,11 +55,22 @@ usb_selective_suspend: false
 pcie_link_state_power_off: true
 
 # --- Drivers (drivers.yml) — bare metal only ---
+# AMD chipset is NOT in the winget catalog (verified 2026-05-15), so we
+# pull it from amd.com directly. URL must point to the silent-installer
+# AMD Chipset Software bundle. Bump amd_chipset_url whenever AMD ships a
+# refresh — the current 6.x line covers 9800X3D v-cache scheduling.
 amd_chipset_install: true
-nvidia_driver_install_strategy: winget # winget | direct_url | skip (Phase 3 winget only)
-# Used only when nvidia_driver_install_strategy == "direct_url"
-nvidia_driver_url: ""
-nvidia_driver_version: ""
+amd_chipset_url: "https://drivers.amd.com/drivers/installer/24.20/whql/amd_chipset_software_8.10.0827.6.exe"
+
+# NVIDIA strategy: nvcleanstall (default, recommended), direct_url, or skip.
+# - nvcleanstall : assumes TechPowerUp.NVCleanstall is installed via
+#   softwares_winget.yml; drivers.yml invokes its CLI to clean-install
+#   the latest driver without GeForce Experience or telemetry.
+# - direct_url   : download from nvidia_driver_url + silent install
+#                  (fallback if NVCleanstall ever breaks).
+# - skip         : no-op.
+nvidia_driver_install_strategy: nvcleanstall
+nvidia_driver_url: "" # only consumed when strategy == 'direct_url'
 
 # --- NAS mapped drives (system_settings.yml — bare metal only) ---
 # SMB direct LAN. nas_url doit résoudre vers une IP LAN (split-horizon DNS ou

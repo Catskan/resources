@@ -13,23 +13,8 @@
 
 # ======================== §4.3.1 AppX bloatware extended ========================
 
-- name: Uninstall extended AppX bloatware
-  ansible.windows.win_powershell:
-    script: |
-      $names = @({{ appx_bloatware_extended | map('to_json') | join(', ') }})
-      $changed = $false
-      foreach ($n in $names) {
-        $pkg = Get-AppxPackage -AllUsers -Name "*$n*" -ErrorAction SilentlyContinue
-        if ($pkg) {
-          $pkg | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
-          $prov = Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like "*$n*"
-          if ($prov) {
-            $prov | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null
-          }
-          $changed = $true
-        }
-      }
-      $Ansible.Changed = $changed
+- name: Uninstall AppX bloatware
+  ansible.builtin.include_tasks: appx_bloatware.yml
 
 # ======================== §4.3.2 Cortana / Bing / Widgets / Start menu ========================
 

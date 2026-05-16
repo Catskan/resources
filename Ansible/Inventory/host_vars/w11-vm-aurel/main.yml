@@ -19,3 +19,20 @@ pcie_link_state_power_off: false # NIC virtuel, irrelevant
 amd_chipset_install: false
 nvidia_driver_install_strategy: skip
 nvidia_telemetry_cleanup: false
+
+# --- winget packages (VM override) ---
+# Bare-metal lists ~17 packages. TCG-emulated Win11 ARM can't realistically
+# install the heavy x86-only launchers (Steam, EA Desktop, Epic, GOG,
+# Ubisoft, Rockstar, MSI Afterburner) without hanging or taking hours.
+# Keep a tight subset of small ARM-native (or fast-emulated) packages
+# just to validate the softwares_winget.yml logic on VM. The full list
+# stays on aurelien-gaming via group_vars/windows_hosts/main.yml.
+winget_packages:
+  - Mozilla.Firefox # ARM64 native
+  - 7zip.7zip # ARM64 native
+  - Notepad++.Notepad++ # x86, small, fast under emulation
+  - VideoLAN.VLC # ARM64 native
+  - Microsoft.WindowsTerminal # ARM64 native
+
+# No MS Store packages on VM — Xbox Accessories has no use on a VM.
+msstore_packages: []

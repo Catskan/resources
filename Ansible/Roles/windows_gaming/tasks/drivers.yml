@@ -1,26 +1,59 @@
 ---
-# GPU + chipset drivers. See spec §4.4.
-# AMD chipset critical for 9800X3D v-cache aware scheduler.
-# NVIDIA driver: one-shot install via winget by default, user updates manually
-# afterwards. Telemetry services disabled on every run regardless.
+# GPU + chipset drivers — Phase 3 refactor.
+# AMD chipset and NVIDIA driver are NOT in the winget catalog (verified
+# 2026-05-15), so drivers stay in their own file with these strategies:
+#
+#   AMD chipset → direct_url (from amd_chipset_url in host_vars), silent
+#                 .exe install. Critical on 9800X3D for the v-cache aware
+#                 scheduler.
+#
+#   NVIDIA → choice of:
+#     • nvcleanstall  (default): assumes TechPowerUp.NVCleanstall was
+#                                installed in softwares_winget.yml. Runs
+#                                its CLI: -clean -nogfe -notlm -nophysx →
+#                                downloads + clean-installs latest driver
+#                                without GeForce Experience or telemetry.
+#     • direct_url    : download from nvidia_driver_url + silent install.
+#     • skip          : no-op (used on the VM — no real GPU).
+#
+# Telemetry cleanup (services + scheduled task) runs unconditionally when
+# nvidia_telemetry_cleanup is true.
 
 # ======================== §4.4.1 AMD chipset ========================
 
-- name: AMD chipset — install via winget if absent
+- name: AMD chipset — check if already installed
   ansible.windows.win_powershell:
     script: |
-      $installed = winget list --id AdvancedMicroDevices.AMDChipsetDrivers --exact 2>$null |
-                   Select-String 'AMDChipsetDrivers'
-      if (-not $installed) {
-        winget install --id AdvancedMicroDevices.AMDChipsetDrivers `
-                       --silent --accept-package-agreements --accept-source-agreements
-        $Ansible.Changed = $true
-        $Ansible.Result = @{ action = 'installed' }
-      } else {
-        $Ansible.Result = @{ action = 'already_present' }
+      # AMD Chipset Software writes its version under
+      # HKLM:\SOFTWARE\AMD\CIM\amd_chipset_software_version
+      $key = 'HKLM:\SOFTWARE\AMD\CIM'
+      $present = $false
+      if (Test-Path $key) {
+        $present = $null -ne (Get-ItemProperty -Path $key -ErrorAction SilentlyContinue).amd_chipset_software_version
       }
+      $Ansible.Result = @{ present = $present }
+      $Ansible.Changed = $false
+  register: amd_chipset_check
+  changed_when: false
+  when: amd_chipset_install | bool
+
+- name: AMD chipset — download installer
+  ansible.windows.win_get_url:
+    url: "{{ amd_chipset_url }}"
+    dest: 'C:\Windows\Temp\amd_chipset_software.exe'
+  when:
+    - amd_chipset_install | bool
+    - not (amd_chipset_check.result.present | default(false))
+    - amd_chipset_url | length > 0
+
+- name: AMD chipset — silent install
+  ansible.windows.win_command:
+    cmd: 'C:\Windows\Temp\amd_chipset_software.exe -INSTALL'
   register: amd_install_result
-  when: amd_chipset_install
+  when:
+    - amd_chipset_install | bool
+    - not (amd_chipset_check.result.present | default(false))
+    - amd_chipset_url | length > 0
 
 - name: Flag reboot after AMD chipset install
   ansible.builtin.set_fact:
@@ -35,24 +68,45 @@
       $nv = Get-PnpDevice -Class Display -ErrorAction SilentlyContinue |
             Where-Object FriendlyName -match 'NVIDIA'
       $Ansible.Result = @{ present = [bool]$nv }
+      $Ansible.Changed = $false
   register: nvidia_check
+  changed_when: false
   when: nvidia_driver_install_strategy != 'skip'
 
-- name: NVIDIA — install driver via winget (one-shot)
+- name: NVIDIA — install driver via NVCleanstall (clean, no GFE / no telemetry)
   ansible.windows.win_powershell:
     script: |
-      winget install --id Nvidia.GeForceDriver `
-                     --silent --accept-package-agreements --accept-source-agreements
+      # NVCleanstall is installed by softwares_winget.yml (TechPowerUp.NVCleanstall).
+      # Locate the exe — winget drops it under user-scope %LOCALAPPDATA% by default,
+      # but with --scope machine it lands under Program Files. Probe both.
+      $candidates = @(
+        "$env:LOCALAPPDATA\Programs\NVCleanstall\NVCleanstall.exe",
+        "$env:ProgramFiles\NVCleanstall\NVCleanstall.exe",
+        "${env:ProgramFiles(x86)}\NVCleanstall\NVCleanstall.exe"
+      )
+      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+      if (-not $exe) { throw "NVCleanstall.exe not found — softwares_winget.yml didn't install TechPowerUp.NVCleanstall?" }
+      # -clean: clean driver install
+      # -nogfe: skip GeForce Experience
+      # -notlm: skip telemetry
+      # -nophysx: skip PhysX (lighter footprint; remove this flag if PhysX needed)
+      $job = Start-Job -ScriptBlock {
+        param($p)
+        & $p -clean -nogfe -notlm -nophysx *>$null
+        $LASTEXITCODE
+      } -ArgumentList $exe
+      if (-not (Wait-Job $job -Timeout 1800)) {
+        Stop-Job $job; Remove-Job $job -Force
+        throw "NVCleanstall driver install timed out after 30 minutes"
+      }
+      $exitCode = Receive-Job $job
+      Remove-Job $job
+      if ($exitCode -ne 0) { throw "NVCleanstall exited $exitCode" }
       $Ansible.Changed = $true
   register: nvidia_install_result
   when:
-    - nvidia_driver_install_strategy == 'winget'
+    - nvidia_driver_install_strategy == 'nvcleanstall'
     - not (nvidia_check.result.present | default(false))
-
-- name: Flag reboot after NVIDIA winget install
-  ansible.builtin.set_fact:
-    reboot_required: true
-  when: nvidia_install_result.changed | default(false)
 
 - name: NVIDIA — install driver via direct URL (one-shot)
   block:
@@ -64,14 +118,17 @@
       ansible.windows.win_command:
         cmd: 'C:\Windows\Temp\nvidia-driver.exe -s -clean'
       register: nvidia_directurl_install
-    - name: Flag reboot after NVIDIA direct_url install
-      ansible.builtin.set_fact:
-        reboot_required: true
-      when: nvidia_directurl_install.changed | default(false)
   when:
     - nvidia_driver_install_strategy == 'direct_url'
     - not (nvidia_check.result.present | default(false))
     - nvidia_driver_url | length > 0
+
+- name: Flag reboot after NVIDIA install
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: >
+    (nvidia_install_result.changed | default(false)) or
+    (nvidia_directurl_install.changed | default(false))
 
 # ======================== §4.4.3 NVIDIA telemetry cleanup ========================
 
@@ -86,11 +143,11 @@
     - NvContainerNetworkService
     - NVDisplay.ContainerLocalSystem
   failed_when: false
-  when: nvidia_telemetry_cleanup
+  when: nvidia_telemetry_cleanup | bool
 
 - name: NVIDIA — remove telemetry crash report scheduled task
   community.windows.win_scheduled_task:
     name: NvTmRep_CrashReport
     state: absent
   failed_when: false
-  when: nvidia_telemetry_cleanup
+  when: nvidia_telemetry_cleanup | bool

@@ -1,0 +1,105 @@
+---
+# Install user apps + hardware tooling via winget. Two-step idempotency:
+#   1) One upfront `winget list` snapshot (slow on TCG-emulated ARM, but
+#      paid once per run).
+#   2) Per-package Ansible loop — checks the snapshot in-memory and only
+#      invokes `winget install` for missing IDs. Gives per-package
+#      visibility (useful for debugging a hang on a specific package)
+#      without paying N×`winget list`.
+#
+# The ID-column match uses regex `(?m)\s+<ID>\s+`. Names can have spaces;
+# the ID column is always whitespace-bounded, so this won't false-positive
+# on Name content.
+#
+# Install invocation runs inside a Start-Job — PS jobs propagate
+# $LASTEXITCODE reliably (Start-Process + WaitForExit was returning a
+# null ExitCode on Win11 ARM even after the install succeeded). Wait-Job
+# gives us a 10-min hard timeout per package so a hung installer fails
+# cleanly instead of blocking the whole run.
+
+- name: Verify winget is available
+  ansible.windows.win_powershell:
+    script: |
+      try {
+        $version = (winget --version) 2>&1
+        $Ansible.Result = @{ version = "$version" }
+        $Ansible.Changed = $false
+      } catch {
+        throw "winget CLI not found. Install Microsoft.DesktopAppInstaller from the MS Store first."
+      }
+  changed_when: false
+
+- name: Snapshot currently-installed winget packages
+  ansible.windows.win_powershell:
+    script: |
+      $listing = (winget list --disable-interactivity 2>&1) -join "`n"
+      $Ansible.Result = @{ listing = $listing }
+      $Ansible.Changed = $false
+  register: winget_snapshot
+  changed_when: false
+
+- name: Install winget packages (default source, skip if already installed)
+  ansible.windows.win_powershell:
+    parameters:
+      pkgId: "{{ item }}"
+      snapshot: "{{ winget_snapshot.result.listing }}"
+    script: |
+      param([string]$pkgId, [string]$snapshot)
+      $pattern = "(?m)\s+" + [regex]::Escape($pkgId) + "\s+"
+      if ($snapshot -match $pattern) {
+        $Ansible.Changed = $false
+        return
+      }
+      $job = Start-Job -ScriptBlock {
+        param($id)
+        $a = @('install','--id',$id,'--exact','--silent',
+               '--accept-package-agreements','--accept-source-agreements',
+               '--disable-interactivity')
+        & winget @a *>$null
+        $LASTEXITCODE
+      } -ArgumentList $pkgId
+      if (-not (Wait-Job $job -Timeout 600)) {
+        Stop-Job $job
+        Remove-Job $job -Force
+        throw "winget install $pkgId timed out after 10 minutes"
+      }
+      $exitCode = Receive-Job $job
+      Remove-Job $job
+      if ($exitCode -ne 0) { throw "winget install $pkgId exited $exitCode" }
+      $Ansible.Changed = $true
+  loop: "{{ winget_packages | default([]) }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Install MS Store packages (--source msstore, skip if already installed)
+  ansible.windows.win_powershell:
+    parameters:
+      pkgId: "{{ item }}"
+      snapshot: "{{ winget_snapshot.result.listing }}"
+    script: |
+      param([string]$pkgId, [string]$snapshot)
+      $pattern = "(?m)\s+" + [regex]::Escape($pkgId) + "\s+"
+      if ($snapshot -match $pattern) {
+        $Ansible.Changed = $false
+        return
+      }
+      $job = Start-Job -ScriptBlock {
+        param($id)
+        $a = @('install','--id',$id,'--exact','--source','msstore','--silent',
+               '--accept-package-agreements','--accept-source-agreements',
+               '--disable-interactivity')
+        & winget @a *>$null
+        $LASTEXITCODE
+      } -ArgumentList $pkgId
+      if (-not (Wait-Job $job -Timeout 600)) {
+        Stop-Job $job
+        Remove-Job $job -Force
+        throw "winget install (msstore) $pkgId timed out after 10 minutes"
+      }
+      $exitCode = Receive-Job $job
+      Remove-Job $job
+      if ($exitCode -ne 0) { throw "winget install (msstore) $pkgId exited $exitCode" }
+      $Ansible.Changed = $true
+  loop: "{{ msstore_packages | default([]) }}"
+  loop_control:
+    label: "MS Store: {{ item }}"
