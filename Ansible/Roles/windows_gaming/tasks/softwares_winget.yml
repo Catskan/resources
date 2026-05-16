@@ -37,12 +37,13 @@
       $Ansible.Changed = $false
   register: winget_snapshot
   changed_when: false
+  check_mode: false # read-only `winget list`, safe to run during --check
 
 - name: Install winget packages (default source, skip if already installed)
   ansible.windows.win_powershell:
     parameters:
       pkgId: "{{ item }}"
-      snapshot: "{{ winget_snapshot.result.listing }}"
+      snapshot: "{{ winget_snapshot.result.listing | default('') }}"
     script: |
       param([string]$pkgId, [string]$snapshot)
       $pattern = "(?m)\s+" + [regex]::Escape($pkgId) + "\s+"
@@ -75,7 +76,7 @@
   ansible.windows.win_powershell:
     parameters:
       pkgId: "{{ item }}"
-      snapshot: "{{ winget_snapshot.result.listing }}"
+      snapshot: "{{ winget_snapshot.result.listing | default('') }}"
     script: |
       param([string]$pkgId, [string]$snapshot)
       $pattern = "(?m)\s+" + [regex]::Escape($pkgId) + "\s+"

@@ -138,6 +138,9 @@ winget_packages:
   - MSI.Afterburner # GPU monitoring + OC + fan curves (RTX 3080)
   - TechPowerUp.NVCleanstall # Clean NVIDIA driver install (no GFE / telemetry)
 
+  # --- Password manager ---
+  - KeePassXCTeam.KeePassXC # Vault opened from NAS via keepassxc_setup.yml
+
 # Apps that aren't in the winget catalogue but exist in MS Store — looped
 # with --source msstore by softwares_winget.yml.
 msstore_packages:

@@ -20,6 +20,9 @@
 #   --tags firefox           : Firefox policies (cross-platform)
 #   --tags drivers           : AMD chipset (direct_url) + NVIDIA via
 #                              NVCleanstall + telemetry cleanup
+#   --tags keepassxc         : KeePassXC pointed at the NAS vault UNC +
+#                              tray autostart + Defender exclusion
+#                              (bare-metal only)
 
 - name: System settings (power plan, RDP, AutoLogon, MS account, WoL, UAC)
   ansible.builtin.include_tasks:
@@ -76,6 +79,14 @@
     apply:
       tags: [drivers]
   tags: [drivers]
+
+- name: Configure KeePassXC (NAS vault auto-open + tray + autostart)
+  ansible.builtin.include_tasks:
+    file: keepassxc_setup.yml
+    apply:
+      tags: [keepassxc]
+  tags: [keepassxc]
+  when: inventory_hostname == "aurelien-gaming"
 
 - name: Reboot if any task flagged it
   ansible.windows.win_reboot:
