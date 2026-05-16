@@ -5,3 +5,10 @@ Vagrant/Ansible/*/.env
 *}#
 __pycache__/
 *.pyc
+
+# Autounattend USB build outputs and driver payloads (large + licensed —
+# user-populated per-machine, see Microsoft-Resources/autounattend/README).
+Microsoft-Resources/autounattend/dist/
+Microsoft-Resources/autounattend/drivers-source/*
+!Microsoft-Resources/autounattend/drivers-source/.gitkeep
+!Microsoft-Resources/autounattend/drivers-source/README.md
