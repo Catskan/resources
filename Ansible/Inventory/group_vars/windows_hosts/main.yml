@@ -1,18 +1,3 @@
-#Softwares versions
-nvidia_driver: "528.24"
-synology_drive_client: "3.4.0-15724"
-gog_galaxy: "2.0.73.27"
-captvty: "2.10.6"
-notepad_plus_plus: "8.6.1"
-crystal_disk_info: "9_2_1"
-vlc: "3.0.20"
-
-#Common variables can be used by all Windows hosts
-adk_silent_argument: "/quiet"
-adk_install_dir: 'C:\ADK'
-adk_feature_deploymentTools: "OptionId.DeploymentTools"
-adk_feature_imaging: "OptionId.ImagingAndConfigurationDesigner"
-
 # ============================================================================
 # Generic Win11 gaming optim vars — applied to ALL windows_hosts
 # (Phase 0 refactor — moved from host_vars/aurelien-gaming/main.yml)
@@ -61,8 +46,12 @@ nagle_disable_on_gaming_nic: true
 game_dvr_disabled: true
 game_mode_enabled: true
 
-# --- AppX bloatware extended (console_ux.yml) ---
-appx_bloatware_extended:
+# --- AppX bloatware (console_ux.yml) ---
+# Unified list (Phase 3 P3d — softwares_uninstall.yml deleted). Removing
+# AppX is sémantiquement debloat console UX, not a software install
+# workflow, so the loop lives in console_ux.yml.
+appx_bloatware:
+  # --- Core Win11 debloat ---
   - Microsoft.549981C3F5F10 # Cortana
   - Microsoft.BingSearch
   - Microsoft.MicrosoftStickyNotes
@@ -73,10 +62,31 @@ appx_bloatware_extended:
   - Microsoft.OutlookForWindows
   - Microsoft.Windows.DevHome
   - 5319275A.WhatsAppDesktop # WhatsApp from MS Store
-  - MSTeams # New Teams (work/school) — distinct from legacy MicrosoftTeams in softwares_uninstall.yml
+  - MSTeams # New Teams (work/school) — distinct from legacy MicrosoftTeams below
   - Microsoft.WindowsCalculator
   - Microsoft.WindowsSoundRecorder
   - Microsoft.WindowsNotepad
+
+  # --- Migrated from softwares_uninstall.yml ---
+  - Microsoft.WindowsMaps
+  - Microsoft.ScreenSketch
+  - Microsoft.MicrosoftOfficeHub
+  - Microsoft.GetHelp
+  - Microsoft.ZuneMusic
+  - Microsoft.ZuneVideo
+  - Microsoft.WindowsCamera
+  - Microsoft.YourPhone
+  - Microsoft.WindowsAlarms
+  - Microsoft.BingWeather
+  - Microsoft.Todos
+  - Microsoft.BingNews
+  - Microsoft.People
+  - Clipchamp.Clipchamp
+  - MicrosoftTeams # Legacy consumer Teams (distinct from MSTeams above)
+  - SpotifyAB.SpotifyMusic
+  - Microsoft.MicrosoftSolitaireCollection
+  - Microsoft.Getstarted
+  - Microsoft.WindowsFeedbackHub
 
 # --- Console UX policies (console_ux.yml) ---
 cortana_disabled: true
@@ -98,3 +108,37 @@ firefox_set_default: true
 
 # --- Drivers (drivers.yml) — generic defaults, overridable per host ---
 nvidia_telemetry_cleanup: true
+
+# --- winget packages (softwares_winget.yml) ---
+# Apps installed from the default winget source. Hardware drivers (AMD
+# chipset, NVIDIA GeForce) are NOT here — empirically verified 2026-05-15
+# that they're not published to winget; drivers.yml handles them via
+# direct_url + NVCleanstall (which IS in winget below).
+winget_packages:
+  # --- Game launchers ---
+  - Valve.Steam
+  - EpicGames.EpicGamesLauncher
+  - Ubisoft.Connect
+  - GOG.Galaxy
+  - ElectronicArts.EADesktop
+  - RockstarGames.Launcher
+
+  # --- User apps ---
+  - Mozilla.Firefox
+  - Notepad++.Notepad++
+  - VideoLAN.VLC
+  - CrystalDewWorld.CrystalDiskInfo
+  - Synology.DriveClient
+  - 7zip.7zip
+  - Microsoft.WindowsTerminal
+  - Microsoft.PowerToys
+  - Microsoft.PowerShell
+
+  # --- Hardware tooling ---
+  - MSI.Afterburner # GPU monitoring + OC + fan curves (RTX 3080)
+  - TechPowerUp.NVCleanstall # Clean NVIDIA driver install (no GFE / telemetry)
+
+# Apps that aren't in the winget catalogue but exist in MS Store — looped
+# with --source msstore by softwares_winget.yml.
+msstore_packages:
+  - 9NBLGGH30XJ3 # Xbox Accessories (matches the legacy XboxAccessoires_id var)

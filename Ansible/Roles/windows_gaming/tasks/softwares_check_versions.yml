@@ -1,8 +1,0 @@
----
-# Placeholder — la logique précédente comparait une variable à elle-même
-# (gog_version_installed.value != "{{ gog_version_installed }}") et ne pouvait
-# jamais être vraie. Voir le futur rôle windows_gaming pour la détection
-# d'updates via winget.
-- name: Software version checks (no-op for now)
-  ansible.builtin.debug:
-    msg: "check_softwares_versions: à réécrire via winget upgrade --include-unknown"

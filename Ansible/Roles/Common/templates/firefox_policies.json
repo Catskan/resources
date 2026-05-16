@@ -9,11 +9,11 @@
       },
       "{{ firefox_extension_id_videoDownloadHelper }}": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/file/3804074/video_downloadhelper-7.6.0.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/video-downloadhelper/latest.xpi"
       },
       "{{ firefox_extension_id_downThemAll }}": {
         "installation_mode": "normal_installed",
-        "install_url": "https://addons.mozilla.org/firefox/downloads/file/3983650/downthemall-4.5.2.xpi"
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/downthemall/latest.xpi"
       },
       "{{ firefox_extension_id_keepassxc }}": {
         "installation_mode": "force_installed",

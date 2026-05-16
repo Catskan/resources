@@ -21,7 +21,7 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 - **Entry points** at `Ansible/main_*_playbook.yml` are thin (hosts + one `roles:` entry):
   - `main_windows_playbook.yml` → role `windows_gaming` on `windows_hosts` (`aurelien-gaming`, `w11-vm-aurel`)
   - `main_linux_playbook.yml` → roles `linux_laptop` + `common` on `arch-linux-laptop`
-  - `main_remove_softwares.yml` → `include_role tasks_from: softwares_uninstall.yml` against `aurelien-gaming`
+  - `main_remove_softwares.yml` → `include_role tasks_from: appx_bloatware.yml` against `aurelien-gaming`
 - **Standalone playbooks** at `Ansible/playbooks/`:
   - `blog_maman_deploy.yml` / `blog_maman_remove.yml` — Docker container `catskan/fonduededeco:v1` on the MacBook (uses `ansible_connection: local`)
 - **Roles** at `Ansible/roles/`:
@@ -39,21 +39,18 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 
 ### Tags (rôle `windows_gaming`)
 
-| Tag                                            | What it does                                                                                              |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `bootstrap`                                    | WinRM startup, UAC, AdminAutoLogon (1ʳᵉ install only)                                                     |
-| `system`                                       | power plan, services, MS account credential                                                               |
-| `rdp`, `wol`                                   | the corresponding subsystems                                                                              |
-| `user_folders`                                 | redirect User Shell Folders to `M:\Aurel`                                                                 |
-| `softwares`                                    | full check + download + install cycle                                                                     |
-| `softwares_{check,download,install,uninstall}` | each step on its own                                                                                      |
-| `ms_store`                                     | winget installs                                                                                           |
-| `firefox`                                      | policies from `common`                                                                                    |
-| `cleanup`                                      | alias for `softwares_uninstall`                                                                           |
-| `defender`                                     | Defender exclusions paths/processes/extensions + cloud reporting off                                      |
-| `gaming_optim`                                 | VBS off + weekly safety-reset + kernel/network/storage tweaks + Game DVR/Mode                             |
-| `console_ux`                                   | Debloat (AppX, Cortana, Bing, Widgets, OneDrive, Edge neutral, Firefox default, telemetry, notifications) |
-| `drivers`                                      | AMD chipset + NVIDIA driver (one-shot) + NVIDIA telemetry services off                                    |
+| Tag                | What it does                                                                                                         |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `bootstrap`        | WinRM startup, UAC, AdminAutoLogon (1ʳᵉ install only)                                                                |
+| `system`           | power plan, services, NAS mounts, MS account credential                                                              |
+| `rdp`, `wol`       | the corresponding subsystems                                                                                         |
+| `user_folders`     | redirect User Shell Folders to `M:\Aurel`                                                                            |
+| `defender`         | Defender exclusions paths/processes/extensions + cloud reporting off                                                 |
+| `gaming_optim`     | VBS off + weekly safety-reset + kernel/network/storage tweaks + Game DVR/Mode                                        |
+| `console_ux`       | Debloat (AppX bloatware, Cortana, Bing, Widgets, OneDrive, Edge neutral, Firefox default, telemetry, notifications)  |
+| `softwares_winget` | Install user apps + tooling via winget (Steam, Epic, Firefox, MSI Afterburner, NVCleanstall, …) + MS Store Xbox Acc. |
+| `firefox`          | Firefox policies (cross-platform, from `common` role)                                                                |
+| `drivers`          | AMD chipset (direct_url) + NVIDIA driver via NVCleanstall CLI + NVIDIA telemetry services off                        |
 
 ### Running things
 
@@ -67,7 +64,7 @@ make uninstall-bloat               # AppX bloatware only
 make check-windows                 # dry-run --check --diff
 make ping-windows                  # win_ping validation
 make windows ARGS='--tags rdp,wol' # subset by tag
-make windows ARGS='--skip-tags softwares_download'
+make windows ARGS='--tags softwares_winget' # winget chain only
 make test-keepass                  # offline: every lookup must resolve
 make inspect-keepass               # offline diagnostic + full DB tree dump
 make inspect-keepass ARGS='--tree' # only dump the DB tree
