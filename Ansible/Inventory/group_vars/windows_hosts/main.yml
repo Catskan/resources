@@ -174,6 +174,9 @@ winget_packages:
   # --- Password manager ---
   - KeePassXCTeam.KeePassXC # Vault opened from NAS via keepassxc_setup.yml
 
+  # --- Dev / scripting ---
+  - Python.Python.3.13 # No gaming-perf impact; useful for local scripts
+
 # Apps that aren't in the winget catalogue but exist in MS Store — looped
 # with --source msstore by softwares_winget.yml.
 msstore_packages:
