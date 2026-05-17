@@ -8,6 +8,10 @@
 #   §4.2.3 Network (Nagle)       ← Task 5
 #   §4.2.4 Storage / power       ← Task 6
 #   §4.2.5 Game DVR / Mode       ← Task 7
+#   §4.2.6 HAGS / VRR / Auto HDR / Power Throttling
+#   §4.2.7 Game Bar capture precision (kill background, keep manual)
+#   §4.2.8 Accessibility shortcuts off (no Sticky Keys popup in-game)
+#   §4.2.9 HPET disable via bcdedit (bare-metal only, 2-3% gain on X3D)
 # Order matters: VBS reboot, then kernel, then storage, then user-level.
 
 # ======================== §4.2.1 VBS / HVCI ========================
@@ -252,3 +256,144 @@
     ansible_become_method: runas
     ansible_become_user: "{{ user_name }}"
     ansible_become_pass: "{{ ansible_password }}"
+
+# ======================== §4.2.6 HAGS / VRR / Auto HDR / Power Throttling ========================
+
+- name: HAGS — Hardware-accelerated GPU Scheduling on (moves GPU scheduler off CPU, lower input latency)
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers
+    name: HwSchMode
+    data: "{{ 2 if hags_enabled else 1 }}"
+    type: dword
+  register: hags_key
+
+- name: Flag reboot if HAGS changed
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: hags_key.changed
+
+- name: Power Throttling — system-wide off (prevents Win11 from throttling background launchers)
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling
+    name: PowerThrottlingOff
+    data: "{{ 1 if power_throttling_off else 0 }}"
+    type: dword
+
+- name: VRR + Auto HDR + Windowed Optimizations (HKCU per-user)
+  ansible.windows.win_powershell:
+    script: |
+      # DirectXUserGlobalSettings is a REG_SZ holding semicolon-separated
+      # key=value pairs. Win11 uses it for the three Settings → Graphics
+      # toggles: VRROptimizeEnable, AutoHDREnable, SwapEffectUpgradeEnable
+      # (the last one = "Optimizations for windowed games").
+      $path = 'HKCU:\Software\Microsoft\DirectX\UserGpuPreferences'
+      if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+      $desired = @{
+        'VRROptimizeEnable'        = '{{ 1 if vrr_optimize_enabled else 0 }}';
+        'AutoHDREnable'            = '{{ 1 if auto_hdr_enabled else 0 }}';
+        'SwapEffectUpgradeEnable'  = '1';
+      }
+      $kvs = ($desired.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ';'
+      $kvs = "$kvs;"
+      $current = (Get-ItemProperty -Path $path -Name 'DirectXUserGlobalSettings' -ErrorAction SilentlyContinue).DirectXUserGlobalSettings
+      if ($current -ne $kvs) {
+        Set-ItemProperty -Path $path -Name 'DirectXUserGlobalSettings' -Value $kvs -Type String
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
+
+# ======================== §4.2.7 Game Bar capture precision ========================
+# Keep Game Bar (overlay + Xbox-button screenshots) alive for controller-only
+# gaming. Kill ONLY the heavy bits: continuous background recording and
+# microphone capture. Game Mode stays ON (already handled in §4.2.5).
+
+- name: Game Bar capture — keep screenshots/manual recording, kill background buffer + mic
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $entries = @(
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR'; Name='AppCaptureEnabled';        Value=1},
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR'; Name='HistoricalCaptureEnabled'; Value={{ 0 if game_capture_historical_off else 1 }}},
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR'; Name='MicrophoneCaptureEnabled'; Value={{ 0 if game_capture_microphone_off else 1 }}},
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR'; Name='AudioCaptureEnabled';      Value=1}
+      )
+      foreach ($e in $entries) {
+        if (-not (Test-Path $e.Path)) { New-Item -Path $e.Path -Force | Out-Null }
+        $cur = (Get-ItemProperty -Path $e.Path -Name $e.Name -ErrorAction SilentlyContinue).($e.Name)
+        if ($cur -ne $e.Value) {
+          Set-ItemProperty -Path $e.Path -Name $e.Name -Value $e.Value -Type DWord
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
+
+# ======================== §4.2.8 Accessibility shortcuts off ========================
+# No more "Sticky Keys activated" popup when a game holds Shift, no Filter
+# Keys lag when you spam keys. Flags=506 → feature off + shortcut off.
+
+- name: Accessibility — disable Sticky/Filter/Toggle Keys shortcuts
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $entries = @(
+        @{Path='HKCU:\Control Panel\Accessibility\StickyKeys';        Name='Flags'; Value='506'},
+        @{Path='HKCU:\Control Panel\Accessibility\Keyboard Response'; Name='Flags'; Value='122'},
+        @{Path='HKCU:\Control Panel\Accessibility\ToggleKeys';        Name='Flags'; Value='58'}
+      )
+      foreach ($e in $entries) {
+        if (-not (Test-Path $e.Path)) { New-Item -Path $e.Path -Force | Out-Null }
+        $cur = (Get-ItemProperty -Path $e.Path -Name $e.Name -ErrorAction SilentlyContinue).($e.Name)
+        if ($cur -ne $e.Value) {
+          Set-ItemProperty -Path $e.Path -Name $e.Name -Value $e.Value -Type String
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
+  when: accessibility_shortcuts_off | bool
+
+# ======================== §4.2.9 HPET disable (bare-metal only) ========================
+# 9800X3D has invariant TSC — Windows can use TSC as the OS timer, avoiding
+# the HPET round-trips that cost ~2-3% on 1% lows. On VM, hypervisor uses
+# HPET so this stays opt-in via hpet_disabled (false on VM host_vars).
+
+- name: HPET — remove useplatformclock from BCD (let Windows pick TSC)
+  ansible.windows.win_powershell:
+    script: |
+      $out = & bcdedit /enum '{current}' 2>&1 | Out-String
+      $hasPlatformClock = $out -match 'useplatformclock\s+Yes'
+      if ($hasPlatformClock) {
+        & bcdedit /deletevalue useplatformclock | Out-Null
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  when: hpet_disabled | bool
+
+- name: HPET — set tscsyncpolicy = Enhanced (better than default Default on Zen 5)
+  ansible.windows.win_powershell:
+    script: |
+      $out = & bcdedit /enum '{current}' 2>&1 | Out-String
+      $hasEnhanced = $out -match 'tscsyncpolicy\s+Enhanced'
+      if (-not $hasEnhanced) {
+        & bcdedit /set tscsyncpolicy Enhanced | Out-Null
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  when: hpet_disabled | bool

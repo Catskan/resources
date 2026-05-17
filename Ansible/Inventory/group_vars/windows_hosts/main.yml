@@ -46,6 +46,39 @@ nagle_disable_on_gaming_nic: true
 game_dvr_disabled: true
 game_mode_enabled: true
 
+# --- Deep optim toggles (gaming_optim.yml §4.2.6-§4.2.9) ---
+# HAGS: GPU does its own scheduling, lower input latency. Win11 25H2 standard.
+hags_enabled: true
+# Power Throttling: Win11 silently throttles background apps incl. launchers.
+power_throttling_off: true
+# VRR + Auto HDR: per-user DirectX global settings.
+vrr_optimize_enabled: true
+auto_hdr_enabled: true
+# Game Bar capture: keep manual screenshots (controller Xbox-button) alive,
+# kill only the heavy background buffer + mic capture.
+game_capture_historical_off: true
+game_capture_microphone_off: true
+# Accessibility shortcuts: no Sticky/Filter/Toggle Keys popup mid-game.
+accessibility_shortcuts_off: true
+# HPET via bcdedit — bare-metal only (VM hypervisor needs HPET). 2-3% on
+# X3D 1% lows. Per-host override on the VM (set to false).
+hpet_disabled: true
+
+# --- Xbox Mode / Full Screen Experience (xbox_mode.yml) ---
+# Boot into the Xbox app as console-like shell. Toggleable: flip to false
+# in host_vars/aurelien-gaming/main.yml to revert to classic desktop
+# (next `make windows ARGS='--tags xbox_mode'` removes DeviceForm +
+# clears GamingHomeApp). Even when enabled, Win key + Xbox-button menu
+# both switch back to desktop in 1 keypress — non-destructive UX.
+xbox_mode_enabled: true
+
+# --- Windows Update Active Hours (system_settings.yml) ---
+# 24h-clock hours. No update install pop-up during these hours; Windows
+# reschedules to outside the window. 18h max span enforced by Win11.
+windows_update_active_hours:
+  start: 10
+  end: 23
+
 # --- AppX bloatware (console_ux.yml) ---
 # Unified list (Phase 3 P3d — softwares_uninstall.yml deleted). Removing
 # AppX is sémantiquement debloat console UX, not a software install

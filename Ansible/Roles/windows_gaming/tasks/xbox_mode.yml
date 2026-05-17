@@ -1,0 +1,59 @@
+---
+# Xbox Mode / Full Screen Experience (FSE) on Win11 25H2+
+#
+# Microsoft's official console-like shell. Boots into a controller-first,
+# full-screen game launcher (Xbox app); pressing the Win key or the Xbox
+# button on a controller switches back to the desktop in 1 keypress —
+# the PC stays a full PC behind, only explorer.exe is replaced by the
+# Xbox app as the gaming home shell.
+#
+# As of May 2026 it's officially in Win11 but the rollout is staggered.
+# Two registry tweaks force-enable it on a regular desktop PC:
+#   1) HKLM\...\OEM\DeviceForm = 0x2E (46) → spoofs handheld device form,
+#      which is the gate Microsoft uses to hide FSE on most desktops.
+#   2) HKCU\...\GamingConfiguration\GamingHomeApp = the Xbox app AUMID →
+#      tells Win which app to launch as the gaming home.
+#
+# Toggle via `xbox_mode_enabled` in group_vars/windows_hosts/main.yml
+# (or per-host override). Set false → next run reverts DeviceForm (key
+# removed) and clears GamingHomeApp, Windows boots back into classic
+# desktop. Flip is non-destructive: `make windows ARGS='--tags
+# xbox_mode'` is enough, no full re-provision.
+#
+# Note: the "Enter Xbox mode on startup" toggle in Settings → Gaming →
+# Full-screen experience stays a one-click manual step on first boot
+# (its registry location is a private Win API not publicly documented).
+# After enabling it once, every login boots straight into Xbox mode.
+#
+# Bare-metal only — gated in main.yml on inventory_hostname=aurelien-gaming.
+
+- name: Xbox FSE — DeviceForm handheld spoof (set when enabling, remove when disabling)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\OEM
+    name: DeviceForm
+    data: 46 # 0x2E — handheld gaming form factor
+    type: dword
+    state: "{{ 'present' if xbox_mode_enabled else 'absent' }}"
+
+- name: Xbox FSE — GamingHomeApp shell (Xbox app when enabling, cleared when disabling)
+  ansible.windows.win_regedit:
+    path: HKCU:\Software\Microsoft\Windows\CurrentVersion\GamingConfiguration
+    name: GamingHomeApp
+    data: "{{ 'Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App' if xbox_mode_enabled else '' }}"
+    type: string
+    state: "{{ 'present' if xbox_mode_enabled else 'absent' }}"
+
+- name: Xbox FSE — verify Xbox app is installed (Microsoft.GamingApp AUMID)
+  # Safety net: Win11 ships with it but a fresh install may have removed
+  # it via AppX bloatware sweep — in that case we surface the gap rather
+  # than silently letting Xbox Mode fail to launch.
+  ansible.windows.win_powershell:
+    script: |
+      $found = Get-AppxPackage -Name 'Microsoft.GamingApp' -ErrorAction SilentlyContinue
+      if (-not $found) {
+        throw "Microsoft.GamingApp (Xbox app) is NOT installed. Run: winget install --id 9MV0B5HZVK9Z --source msstore"
+      }
+      $Ansible.Result = @{ xbox_app_version = $found.Version }
+      $Ansible.Changed = $false
+  changed_when: false
+  when: xbox_mode_enabled | bool
