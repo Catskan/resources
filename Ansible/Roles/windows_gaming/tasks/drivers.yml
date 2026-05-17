@@ -151,3 +151,27 @@
     state: absent
   failed_when: false
   when: nvidia_telemetry_cleanup | bool
+
+# ======================== §4.4.4 Power plan ========================
+# Set AFTER the AMD chipset install, because the chipset package is what
+# ships the `AMD Ryzen Balanced` plan — running this earlier would force
+# a 2-run convergence on fresh provisions.
+# AMD Ryzen Balanced is recommended over High Performance for 9800X3D
+# (Tom's Hardware + AMD guidance 2026) — High Performance breaks the
+# X3D cache-aware boost behavior.
+
+- name: Power plan — check what's available (after chipset install)
+  ansible.windows.win_powershell:
+    script: |
+      $plans = (powercfg /list) -join "`n"
+      $Ansible.Result = @{ amd_balanced_available = ($plans -match 'AMD Ryzen Balanced') }
+      $Ansible.Changed = $false
+  register: power_plans_available
+  changed_when: false
+  check_mode: false # read-only, safe to always run for --check
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: Power plan — set AMD Ryzen Balanced if available, else High Performance
+  community.windows.win_power_plan:
+    name: "{{ 'AMD Ryzen Balanced' if power_plans_available.result.amd_balanced_available else 'high performance' }}"
+  when: inventory_hostname == "aurelien-gaming"

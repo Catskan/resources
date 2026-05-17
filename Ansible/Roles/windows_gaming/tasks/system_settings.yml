@@ -5,11 +5,10 @@
     name: WinRM
     start_mode: delayed
 
-#Change power plan
-- name: Change power plan to high performance
-  community.windows.win_power_plan:
-    name: high performance
-  when: inventory_hostname == "aurelien-gaming"
+# Power plan is set at the END of drivers.yml — after AMD Chipset install,
+# which is what ships the `AMD Ryzen Balanced` plan. Running it here in
+# system_settings.yml (early in the role) would race the chipset install
+# on first provision and force a 2-run convergence.
 
 #Set RDP
 - name: Allow RDP TSConnection
@@ -205,3 +204,28 @@
 - name: Reboot to apply UAC Turned off
   ansible.windows.win_reboot:
   when: output_uac is changed
+
+# Windows Update Active Hours — no reboot/install pop-up during your typical
+# gaming window. The reg keys live under WindowsUpdate\UX\Settings. Values
+# are 24h-clock integers (hour-only, not minutes). ActiveHoursMaxRange=18
+# allows the manual range to span 18h (Win11 default is 18).
+- name: Windows Update Active Hours — start
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings
+    name: ActiveHoursStart
+    data: "{{ windows_update_active_hours.start }}"
+    type: dword
+
+- name: Windows Update Active Hours — end
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings
+    name: ActiveHoursEnd
+    data: "{{ windows_update_active_hours.end }}"
+    type: dword
+
+- name: Windows Update Active Hours — disable auto-detection (use manual range)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings
+    name: SmartActiveHoursState
+    data: 0
+    type: dword

@@ -42,7 +42,7 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 | Tag                | What it does                                                                                                         |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | `bootstrap`        | WinRM startup, UAC, AdminAutoLogon (1ʳᵉ install only)                                                                |
-| `system`           | power plan, services, NAS mounts, MS account credential                                                              |
+| `system`           | services, NAS mounts, MS account credential, Active Hours, UAC, VSS                                                  |
 | `rdp`, `wol`       | the corresponding subsystems                                                                                         |
 | `user_folders`     | redirect User Shell Folders to `M:\Aurel`                                                                            |
 | `defender`         | Defender exclusions paths/processes/extensions + cloud reporting off                                                 |
@@ -50,8 +50,9 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 | `console_ux`       | Debloat (AppX bloatware, Cortana, Bing, Widgets, OneDrive, Edge neutral, Firefox default, telemetry, notifications)  |
 | `softwares_winget` | Install user apps + tooling via winget (Steam, Epic, Firefox, MSI Afterburner, NVCleanstall, …) + MS Store Xbox Acc. |
 | `firefox`          | Firefox policies (cross-platform, from `common` role)                                                                |
-| `drivers`          | AMD chipset (direct_url) + NVIDIA driver via NVCleanstall CLI + NVIDIA telemetry services off                        |
+| `drivers`          | AMD chipset (direct_url) + NVIDIA driver via NVCleanstall + NVIDIA telemetry off + power plan (AMD Ryzen Balanced)   |
 | `keepassxc`        | KeePassXC pointed at NAS vault UNC + tray autostart + Ctrl+Shift+V Auto-Type + Defender exclusion (bare-metal only)  |
+| `xbox_mode`        | Win11 Xbox Full-Screen Experience — DeviceForm spoof + GamingHomeApp = Xbox app shell (bare-metal only)              |
 
 ### Running things
 

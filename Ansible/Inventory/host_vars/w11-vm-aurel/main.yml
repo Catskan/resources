@@ -20,6 +20,9 @@ amd_chipset_install: false
 nvidia_driver_install_strategy: skip
 nvidia_telemetry_cleanup: false
 
+# --- HPET stays enabled on VM (hypervisor TSC drift without it) ---
+hpet_disabled: false
+
 # --- winget packages (VM override) ---
 # Bare-metal lists ~17 packages. TCG-emulated Win11 ARM can't realistically
 # install the heavy x86-only launchers (Steam, EA Desktop, Epic, GOG,
