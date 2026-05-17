@@ -37,6 +37,11 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 
 > **Migration in progress**: secrets were previously sourced from AWS Secrets Manager (`lookup('amazon.aws.aws_secret', ...)`). The lookup expressions in `*/secrets.yml` and `*/connection.yml` may still reference the AWS variant — finish the swap to KeePass when migrating remaining entries. The `inventory/host_vars/macbook-air-aurelien/secrets.yml` was vault-encrypted under the old scheme and may still be a `$ANSIBLE_VAULT` blob until migrated.
 
+> **KeePass entries to create before bare-metal run** (the role expects them; `make test-keepass` will tell you if any are missing):
+>
+> - `ansible/aurelien-gaming/sunshine` — username + password (Sunshine Web UI admin)
+> - `ansible/aurelien-gaming/rustdesk` — password only (RustDesk permanent password for incoming clients)
+
 ### Tags (rôle `windows_gaming`)
 
 | Tag                | What it does                                                                                                         |
@@ -53,6 +58,8 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 | `drivers`          | AMD chipset (direct_url) + NVIDIA driver via NVCleanstall + NVIDIA telemetry off + power plan (AMD Ryzen Balanced)   |
 | `keepassxc`        | KeePassXC pointed at NAS vault UNC + tray autostart + Ctrl+Shift+V Auto-Type + Defender exclusion (bare-metal only)  |
 | `xbox_mode`        | Win11 Xbox Full-Screen Experience — DeviceForm spoof + GamingHomeApp = Xbox app shell (bare-metal only)              |
+| `sunshine`         | Sunshine game streaming server + Moonlight app entries (Desktop / Steam BP / Xbox) + LAN firewall (bare-metal only)  |
+| `rustdesk`         | RustDesk desktop remoting (LAN direct IP + permanent password + telemetry off) + LAN firewall (bare-metal only)      |
 
 ### Running things
 

@@ -1,0 +1,16 @@
+{
+  "env": {
+    "PATH": "$(PATH);C:\\Program Files (x86)\\Steam"
+  },
+  "apps": [
+    {
+      "name": "Desktop",
+      "image-path": "desktop.png"
+    }{% for app in sunshine_apps %},
+    {
+      "name": {{ app.name | to_json }},
+      "cmd": {{ app.cmd | to_json }},
+      "image-path": {{ app.image_path | default('') | to_json }}
+    }{% endfor %}
+  ]
+}

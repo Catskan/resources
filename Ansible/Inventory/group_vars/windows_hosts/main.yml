@@ -79,6 +79,49 @@ windows_update_active_hours:
   start: 10
   end: 23
 
+# --- Remote access (sunshine_setup.yml, rustdesk_setup.yml) ---
+# Both toggleable independently. LAN-only firewall scope (profile=private)
+# — WAN later via Tailscale or similar VPN, NEVER expose these ports to
+# the open internet.
+sunshine_enabled: true
+rustdesk_enabled: true
+
+# --- Sunshine config (sunshine.conf.j2) ---
+# Targets RTX 3080 + 9800X3D. HEVC NVENC is the right pick (the 3080
+# supports HEVC encode natively, much better quality than H.264 at the
+# same bitrate). Adjust fps_cap if your Moonlight clients can't push
+# 120Hz (Apple TV 4K Gen 3 = 60Hz, iPad Pro M-series = 120Hz, Steam Deck
+# OLED = 90Hz native).
+sunshine_encoder: nvenc # nvenc | qsv | amfvce | software
+sunshine_hevc_mode: 2 # 0=auto, 1=h264-only, 2=prefer HEVC, 3=force HEVC
+sunshine_fps_cap: 120
+sunshine_lan_only_web_ui: true # restrict Web UI to LAN clients
+sunshine_upnp: false # never open ports to WAN automatically
+sunshine_log_level: warning # debug | info | warning | error
+# Pre-defined apps shown in every Moonlight client's library. "Desktop"
+# is auto-added by Sunshine. The Steam + Xbox entries launch the
+# respective shells (full-screen-friendly for controller use).
+sunshine_apps:
+  - name: "Steam Big Picture"
+    cmd: "steam://open/bigpicture"
+    image_path: ""
+  - name: "Xbox app (FSE)"
+    cmd: 'shell:AppsFolder\Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App'
+    image_path: ""
+
+# --- RustDesk config (RustDesk2.toml.j2) ---
+# Direct IP LAN mode = no relay, fastest path. Permanent password from
+# KeePass (rustdesk_permanent_password) is the only auth. Whitelist
+# optional but recommended on a multi-VLAN home network.
+rustdesk_direct_access: true
+rustdesk_lan_discovery: true # broadcast for autodiscovery on LAN
+rustdesk_disable_telemetry: true
+rustdesk_disable_tcp_listen_announce: false # let RustDesk announce on LAN
+# Empty list = accept connections from any LAN IP. Otherwise list of
+# IPs / CIDRs (e.g. ["192.168.1.0/24"]). Strongly recommended once you
+# know your client devices' IPs.
+rustdesk_whitelist: []
+
 # --- AppX bloatware (console_ux.yml) ---
 # Unified list (Phase 3 P3d — softwares_uninstall.yml deleted). Removing
 # AppX is sémantiquement debloat console UX, not a software install
@@ -176,6 +219,10 @@ winget_packages:
 
   # --- Dev / scripting ---
   - Python.Python.3.13 # No gaming-perf impact; useful for local scripts
+
+  # --- Remote access ---
+  - LizardByte.Sunshine # Game streaming — Moonlight clients (iPad, Apple TV, Steam Deck) via sunshine_setup.yml
+  - RustDesk.RustDesk # Desktop remoting — see/control session without disconnecting via rustdesk_setup.yml
 
 # Apps that aren't in the winget catalogue but exist in MS Store — looped
 # with --source msstore by softwares_winget.yml.
