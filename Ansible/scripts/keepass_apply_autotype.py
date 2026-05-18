@@ -80,12 +80,19 @@ LAUNCHERS = [
         ],
     },
     {
-        "name": "Microsoft account / Store",
+        "name": "Microsoft account / Store / Xbox app",
+        # Single KeePass entry covers all three windows because they all
+        # use the same Microsoft Account credentials (MS Store login,
+        # Xbox app login, Windows MS account sign-in all share one auth).
         "candidates": ["microsoft account", "microsoft store", "ms account", "microsoft"],
         "associations": [
             ("Microsoft account", "{USERNAME}{TAB}{PASSWORD}{ENTER}{DELAY 3000}{TOTP}{ENTER}"),
             ("Sign in", "{USERNAME}{TAB}{PASSWORD}{ENTER}{DELAY 3000}{TOTP}{ENTER}"),
             ("Microsoft Store", "{USERNAME}{TAB}{PASSWORD}{ENTER}{DELAY 3000}{TOTP}{ENTER}"),
+            # Xbox app login window — its title varies across Win11
+            # builds ("Xbox", "Xbox - Sign in", etc.). The Window field
+            # in KeePassXC supports wildcards, so "Xbox*" catches all.
+            ("Xbox*", "{USERNAME}{TAB}{PASSWORD}{ENTER}{DELAY 3000}{TOTP}{ENTER}"),
         ],
     },
 ]
