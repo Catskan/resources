@@ -13,8 +13,10 @@ hevc_mode = {{ sunshine_hevc_mode }}
 nvenc_preset = 4
 
 # ---- Web UI access scope ----
-# lan = restrict to LAN clients (192.168.x, 10.x). pc = localhost only. wan = open.
-origin_web_ui_allowed = {{ 'lan' if sunshine_lan_only_web_ui else 'pc' }}
+# lan = restrict to LAN clients (192.168.x, 10.x). pc = localhost only.
+# wan = open (only when sunshine_wan_enabled — bot scanners WILL hit
+# port 47990, so keep the admin password strong).
+origin_web_ui_allowed = {{ 'wan' if sunshine_wan_enabled else 'lan' }}
 
 # ---- Logging ----
 min_log_level = {{ sunshine_log_level }}
