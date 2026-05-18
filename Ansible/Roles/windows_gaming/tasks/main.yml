@@ -26,6 +26,10 @@
 #   --tags xbox_mode         : Win11 Xbox Full-Screen Experience —
 #                              controller-first console-like shell,
 #                              boot direct into Xbox app (bare-metal only)
+#   --tags sunshine          : Sunshine game streaming server + Moonlight
+#                              pairing, LAN firewall (bare-metal only)
+#   --tags rustdesk          : RustDesk desktop remoting + permanent
+#                              password + LAN firewall (bare-metal only)
 
 - name: System settings (power plan, RDP, AutoLogon, MS account, WoL, UAC)
   ansible.builtin.include_tasks:
@@ -98,6 +102,26 @@
       tags: [xbox_mode]
   tags: [xbox_mode]
   when: inventory_hostname == "aurelien-gaming"
+
+- name: Configure Sunshine game streaming (Moonlight clients via LAN)
+  ansible.builtin.include_tasks:
+    file: sunshine_setup.yml
+    apply:
+      tags: [sunshine]
+  tags: [sunshine]
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - sunshine_enabled | bool
+
+- name: Configure RustDesk desktop remoting (LAN direct IP)
+  ansible.builtin.include_tasks:
+    file: rustdesk_setup.yml
+    apply:
+      tags: [rustdesk]
+  tags: [rustdesk]
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - rustdesk_enabled | bool
 
 - name: Reboot if any task flagged it
   ansible.windows.win_reboot:

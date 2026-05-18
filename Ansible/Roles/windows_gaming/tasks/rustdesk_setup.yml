@@ -1,0 +1,109 @@
+---
+# RustDesk — open-source desktop remoting (modern replacement for VNC).
+# Lets you see/control the existing local Aurel session without
+# disconnecting it (vs RDP which kicks the local user). Installed by
+# softwares_winget.yml (RustDesk.RustDesk); this task:
+#
+#   1) Locates rustdesk.exe
+#   2) Installs the Windows service so RustDesk listens at boot
+#   3) Seeds the permanent password from KeePass (entry
+#      `ansible/aurelien-gaming/rustdesk` — password field only). This
+#      is the password remote clients enter to authenticate.
+#   4) Opens standard RustDesk ports on the Windows firewall, profile
+#      `private` only (LAN direct IP access — no public relay needed).
+#      Connections from the open internet should go through Tailscale
+#      or the user's self-hosted RustDesk relay on the NAS.
+#
+# After role run, on the controller (Mac/iPad/whatever the client lives):
+#   - Install the RustDesk client
+#   - Enter Aurel-Gaming's LAN IP (192.168.1.x) directly — no ID/key needed
+#   - Enter the permanent password from KeePass to authenticate
+#
+# Bare-metal only — gated in main.yml on inventory_hostname=aurelien-gaming
+# AND on rustdesk_enabled.
+
+- name: RustDesk — locate installed binary
+  ansible.windows.win_powershell:
+    script: |
+      $candidates = @(
+        "$env:ProgramFiles\RustDesk\rustdesk.exe",
+        "${env:ProgramFiles(x86)}\RustDesk\rustdesk.exe"
+      )
+      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+      if (-not $exe) { throw "rustdesk.exe not found — softwares_winget.yml didn't install RustDesk.RustDesk?" }
+      $Ansible.Result = @{ path = $exe }
+      $Ansible.Changed = $false
+  register: rustdesk_exe
+  changed_when: false
+
+- name: RustDesk — ensure Windows service is installed
+  ansible.windows.win_powershell:
+    parameters:
+      exe: "{{ rustdesk_exe.result.path }}"
+    script: |
+      param([string]$exe)
+      $svc = Get-Service -Name 'RustDesk' -ErrorAction SilentlyContinue
+      if (-not $svc) {
+        & $exe --install-service 2>&1 | Out-Null
+        Start-Sleep -Seconds 2
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: RustDesk — ensure ProgramData config directory exists
+  ansible.windows.win_file:
+    path: 'C:\ProgramData\RustDesk\config'
+    state: directory
+
+- name: RustDesk — deploy RustDesk2.toml (direct LAN + permanent password mode + telemetry off)
+  ansible.windows.win_template:
+    src: RustDesk2.toml.j2
+    dest: 'C:\ProgramData\RustDesk\config\RustDesk2.toml'
+  register: rustdesk_toml
+
+- name: RustDesk — service auto-start
+  ansible.windows.win_service:
+    name: RustDesk
+    start_mode: auto
+    state: "{{ 'restarted' if rustdesk_toml.changed else 'started' }}"
+
+- name: RustDesk — set permanent password (from KeePass)
+  ansible.windows.win_powershell:
+    parameters:
+      exe: "{{ rustdesk_exe.result.path }}"
+      pw: "{{ rustdesk_permanent_password }}"
+    script: |
+      param([string]$exe, [string]$pw)
+      # --password sets the permanent password used by incoming clients.
+      # Idempotent: same input → same stored hash; no observable change.
+      & $exe --password $pw 2>&1 | Out-Null
+      $Ansible.Changed = $false
+  no_log: true
+  changed_when: false
+
+- name: RustDesk — firewall TCP ports (LAN direct IP access)
+  community.windows.win_firewall_rule:
+    name: RustDesk TCP (LAN)
+    # 21115 = hbb control, 21116 = hbb auth, 21117 = relay (only used
+    # when running a self-hosted relay; harmless to open on the client
+    # side too), 21118 = web client, 21119 = API. Open all so any
+    # client config works without further fiddling.
+    localport: 21115-21119
+    protocol: tcp
+    direction: in
+    action: allow
+    enabled: true
+    profiles: private
+    state: present
+
+- name: RustDesk — firewall UDP port (LAN discovery)
+  community.windows.win_firewall_rule:
+    name: RustDesk UDP (LAN)
+    localport: 21116
+    protocol: udp
+    direction: in
+    action: allow
+    enabled: true
+    profiles: private
+    state: present
