@@ -95,17 +95,9 @@ rustdesk_enabled: true
 sunshine_encoder: nvenc # nvenc | qsv | amfvce | software
 sunshine_hevc_mode: 2 # 0=auto, 1=h264-only, 2=prefer HEVC, 3=force HEVC
 sunshine_fps_cap: 120
+sunshine_lan_only_web_ui: true # restrict Web UI to LAN clients
+sunshine_upnp: false # never open ports to WAN automatically
 sunshine_log_level: warning # debug | info | warning | error
-
-# WAN mode: opens Sunshine + Web UI to the open internet. Set to true
-# ONLY if you've port-forwarded the Sunshine ports on your router AND
-# you accept the surface (Web UI on a default port = bot scanners).
-# When false (default): LAN-only firewall rules + Web UI restricted to
-# LAN clients. When true: adds duplicate firewall rules on the `public`
-# profile so VPN-tunneled connections (e.g. OpenVPN client subnet) work
-# even without LAN classification, AND switches Web UI access to `wan`.
-sunshine_wan_enabled: false
-sunshine_upnp: false # let the user port-forward manually on the router — never auto
 # Pre-defined apps shown in every Moonlight client's library. "Desktop"
 # is auto-added by Sunshine. The Steam + Xbox entries launch the
 # respective shells (full-screen-friendly for controller use).

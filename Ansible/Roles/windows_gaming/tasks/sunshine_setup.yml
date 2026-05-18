@@ -100,27 +100,24 @@
     start_mode: auto
     state: "{{ 'restarted' if (sunshine_conf.changed or sunshine_apps_file.changed) else 'started' }}"
 
-- name: Sunshine — firewall TCP ports (Web UI + pairing + control)
-  # Profile list grows to include `public` only if sunshine_wan_enabled.
-  # The user must still port-forward 47984/47989/47990/48010 (TCP) +
-  # 47998-48002 (UDP) on their router for WAN to actually work end-to-end.
+- name: Sunshine — firewall TCP ports (Web UI + pairing + control), LAN only
   community.windows.win_firewall_rule:
-    name: Sunshine TCP
+    name: Sunshine TCP (LAN)
     localport: 47984,47989,47990,48010
     protocol: tcp
     direction: in
     action: allow
     enabled: true
-    profiles: "{{ ['private', 'public'] if sunshine_wan_enabled else ['private'] }}"
+    profiles: private
     state: present
 
-- name: Sunshine — firewall UDP ports (video/audio/control RTP)
+- name: Sunshine — firewall UDP ports (video/audio/control RTP), LAN only
   community.windows.win_firewall_rule:
-    name: Sunshine UDP
+    name: Sunshine UDP (LAN)
     localport: 47998-48002
     protocol: udp
     direction: in
     action: allow
     enabled: true
-    profiles: "{{ ['private', 'public'] if sunshine_wan_enabled else ['private'] }}"
+    profiles: private
     state: present
