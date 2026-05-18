@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **Picking up the project in a new Claude session?** Read [docs/CLAUDE-HANDOFF.md](docs/CLAUDE-HANDOFF.md) first — it has the full timeline of the 9 merged PRs, current state, hardware specs, KeePass entry paths, and the fresh-bare-metal-install workflow. This `CLAUDE.md` is the structural reference; the handoff doc is the chronological snapshot.
+
 ## What this repo is
 
 A personal infrastructure / dotfiles-style monorepo. There is **no application, no test suite, no build pipeline at the repo root**. The content is a collection of Ansible playbooks, PowerShell/bash scripts and small standalone projects used to provision and maintain Aurélien's own machines (Windows gaming PC, Arch Linux laptop, MacBook Air = controller, NAS, VMs).
