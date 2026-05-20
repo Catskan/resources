@@ -61,6 +61,7 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 | `keepassxc`        | KeePassXC pointed at NAS vault UNC + tray autostart + Ctrl+Shift+V Auto-Type + Defender exclusion (bare-metal only)  |
 | `xbox_mode`        | Win11 Xbox Full-Screen Experience — DeviceForm spoof + GamingHomeApp = Xbox app shell (bare-metal only)              |
 | `sunshine`         | Sunshine game streaming server + Moonlight app entries (Desktop / Steam BP / Xbox) + LAN firewall (bare-metal only)  |
+| `openrgb`          | OpenRGB startup shortcut (minimized) + Defender exclusion (bare-metal only)                                          |
 | `rustdesk`         | RustDesk desktop remoting (LAN direct IP + permanent password + telemetry off) + LAN firewall (bare-metal only)      |
 
 ### Running things
