@@ -86,6 +86,12 @@ windows_update_active_hours:
 sunshine_enabled: true
 rustdesk_enabled: true
 
+# --- RGB control (openrgb_setup.yml) ---
+# Set & forget: OpenRGB launches minimized at startup, user configures
+# their RGB profile once manually, OpenRGB maintains the SMBus claim so
+# devices don't revert to firmware rainbow. ~20 Mo RAM resident, 0% CPU.
+openrgb_enabled: true
+
 # --- Sunshine config (sunshine.conf.j2) ---
 # Targets RTX 3080 + 9800X3D. HEVC NVENC is the right pick (the 3080
 # supports HEVC encode natively, much better quality than H.264 at the
@@ -223,6 +229,9 @@ winget_packages:
   # --- Remote access ---
   - LizardByte.Sunshine # Game streaming — Moonlight clients (iPad, Apple TV, Steam Deck) via sunshine_setup.yml
   - RustDesk.RustDesk # Desktop remoting — see/control session without disconnecting via rustdesk_setup.yml
+
+  # --- RGB control ---
+  - CalcProgrammer1.OpenRGB  # Set & forget RGB — startup shortcut via openrgb_setup.yml
 
 # Apps that aren't in the winget catalogue but exist in MS Store — looped
 # with --source msstore by softwares_winget.yml.

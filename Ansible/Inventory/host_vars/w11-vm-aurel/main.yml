@@ -39,3 +39,6 @@ winget_packages:
 
 # No MS Store packages on VM — Xbox Accessories has no use on a VM.
 msstore_packages: []
+
+# --- No RGB hardware on VM ---
+openrgb_enabled: false
