@@ -1,0 +1,49 @@
+---
+# Configure OpenRGB on aurelien-gaming:
+#   1) Locate the installed binary (winget install path varies by scope).
+#   2) Create a Startup shortcut so OpenRGB launches minimized at login
+#      and maintains the SMBus claim on RGB devices.
+#   3) Add a Defender exclusion for the install directory (prevents
+#      realtime scan interference with SMBus/I2C access).
+#
+# Assumes OpenRGB has been installed by softwares_winget.yml
+# (CalcProgrammer1.OpenRGB in winget_packages). Gated on aurelien-gaming
+# because the VM has no RGB hardware.
+
+- name: OpenRGB — locate installed binary
+  ansible.windows.win_powershell:
+    script: |
+      $candidates = @(
+        "$env:ProgramFiles\OpenRGB\OpenRGB.exe",
+        "${env:ProgramFiles(x86)}\OpenRGB\OpenRGB.exe",
+        "$env:LOCALAPPDATA\Programs\OpenRGB\OpenRGB.exe"
+      )
+      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+      if (-not $exe) { throw "OpenRGB.exe not found — softwares_winget.yml didn't install CalcProgrammer1.OpenRGB?" }
+      $dir = Split-Path $exe -Parent
+      $Ansible.Result = @{ path = $exe; directory = $dir }
+      $Ansible.Changed = $false
+  register: openrgb_exe
+  changed_when: false
+  check_mode: false
+
+- name: OpenRGB — startup shortcut (launches minimized at user login)
+  community.windows.win_shortcut:
+    src: "{{ openrgb_exe.result.path }}"
+    args: "--startminimized"
+    dest: '{{ ansible_env.APPDATA }}\Microsoft\Windows\Start Menu\Programs\Startup\OpenRGB.lnk'
+    description: OpenRGB — set & forget RGB control at login
+
+- name: Defender — exclude OpenRGB install directory from realtime scan
+  ansible.windows.win_powershell:
+    parameters:
+      path: "{{ openrgb_exe.result.directory }}"
+    script: |
+      param([string]$path)
+      $current = (Get-MpPreference).ExclusionPath
+      if ($current -notcontains $path) {
+        Add-MpPreference -ExclusionPath $path
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
