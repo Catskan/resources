@@ -95,6 +95,16 @@
   tags: [keepassxc]
   when: inventory_hostname == "aurelien-gaming"
 
+- name: Configure OpenRGB (startup minimized for RGB control)
+  ansible.builtin.include_tasks:
+    file: openrgb_setup.yml
+    apply:
+      tags: [openrgb]
+  tags: [openrgb]
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - openrgb_enabled | bool
+
 - name: Enable Xbox Full-Screen Experience (console-like shell)
   ansible.builtin.include_tasks:
     file: xbox_mode.yml
