@@ -74,3 +74,37 @@
       }
   loop_control:
     label: "{{ item.key }} → {{ item.path }}"
+
+# "Where new content is saved" — Settings → System → Storage
+# AppX/MS Store apps → M:\WindowsApps, everything else → M:\Aurel
+- name: Redirect default save locations to M:\
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: expandstring
+  loop:
+    - { name: '{F42EE2D3-909F-4907-8871-4C22FC0BF756}', data: '{{ root_user_directory }}\Documents' }  # New documents
+    - { name: '{7D83EE9B-2244-4E70-B1F5-5393042AF1E4}', data: '{{ root_user_directory }}\Downloads' }  # New downloads
+    - { name: '{A0C69A99-21C8-4671-8703-7934162FCF1D}', data: '{{ root_user_directory }}\Music' }       # New music
+    - { name: '{0DDD015D-B06C-45D5-8C4C-F59713854639}', data: '{{ root_user_directory }}\Pictures' }    # New pictures
+    - { name: '{35286A68-3C57-41A1-BBB1-0EAE73D76C95}', data: '{{ root_user_directory }}\Videos' }      # New videos
+  loop_control:
+    label: "{{ item.name }} → {{ item.data }}"
+
+- name: Redirect MS Store / Xbox app installs to M:\WindowsApps
+  ansible.windows.win_powershell:
+    script: |
+      # Move default app install volume to M:
+      $currentDefault = (Get-AppxDefaultVolume -ErrorAction SilentlyContinue).PackageStorePath
+      if ($currentDefault -and $currentDefault.StartsWith('M:\')) {
+        $Ansible.Changed = $false
+      } else {
+        $volume = Get-AppxVolume | Where-Object { $_.PackageStorePath -like 'M:\*' }
+        if (-not $volume) {
+          Add-AppxVolume -Path 'M:\WindowsApps'
+          $volume = Get-AppxVolume | Where-Object { $_.PackageStorePath -like 'M:\*' }
+        }
+        Set-AppxDefaultVolume -Volume $volume
+        $Ansible.Changed = $true
+      }

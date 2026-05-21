@@ -50,7 +50,7 @@
     dest: 'C:\ProgramData\Sunshine\sunshine.conf'
   register: sunshine_conf
 
-- name: Sunshine — deploy apps.json (Moonlight library: Desktop + Steam Big Picture + Xbox)
+- name: "Sunshine — deploy apps.json (Moonlight library: Desktop + Steam Big Picture + Xbox)"
   ansible.windows.win_template:
     src: sunshine_apps.json.j2
     dest: 'C:\ProgramData\Sunshine\apps.json'

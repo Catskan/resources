@@ -24,12 +24,22 @@
 - name: AMD chipset — check if already installed
   ansible.windows.win_powershell:
     script: |
-      # AMD Chipset Software writes its version under
-      # HKLM:\SOFTWARE\AMD\CIM\amd_chipset_software_version
-      $key = 'HKLM:\SOFTWARE\AMD\CIM'
+      # Check if AMD chipset software is installed via registry or installed programs
       $present = $false
+      # Method 1: CIM registry key (older versions)
+      $key = 'HKLM:\SOFTWARE\AMD\CIM'
       if (Test-Path $key) {
         $present = $null -ne (Get-ItemProperty -Path $key -ErrorAction SilentlyContinue).amd_chipset_software_version
+      }
+      # Method 2: Uninstall registry (newer versions)
+      if (-not $present) {
+        $paths = @(
+          'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+          'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+        )
+        $present = ($paths | ForEach-Object { Get-ItemProperty $_ -ErrorAction SilentlyContinue } |
+          Where-Object { $_.DisplayName -like '*AMD Chipset*' -or $_.DisplayName -like '*AMD Software*' } |
+          Measure-Object).Count -gt 0
       }
       $Ansible.Result = @{ present = $present }
       $Ansible.Changed = $false
@@ -41,6 +51,7 @@
   ansible.windows.win_get_url:
     url: "{{ amd_chipset_url }}"
     dest: 'C:\Windows\Temp\amd_chipset_software.exe'
+    force: false
   when:
     - amd_chipset_install | bool
     - not (amd_chipset_check.result.present | default(false))
@@ -48,7 +59,7 @@
 
 - name: AMD chipset — silent install
   ansible.windows.win_command:
-    cmd: 'C:\Windows\Temp\amd_chipset_software.exe -INSTALL'
+    cmd: 'C:\Windows\Temp\amd_chipset_software.exe /S'
   register: amd_install_result
   when:
     - amd_chipset_install | bool

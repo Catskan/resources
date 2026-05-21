@@ -1,8 +1,8 @@
 ---
 # RustDesk — open-source desktop remoting (modern replacement for VNC).
 # Lets you see/control the existing local Aurel session without
-# disconnecting it (vs RDP which kicks the local user). Installed by
-# softwares_winget.yml (RustDesk.RustDesk); this task:
+# disconnecting it (vs RDP which kicks the local user). Installed via
+# direct download from GitHub (removed from winget catalogue). This task:
 #
 #   1) Locates rustdesk.exe
 #   2) Installs the Windows service so RustDesk listens at boot
@@ -22,19 +22,38 @@
 # Bare-metal only — gated in main.yml on inventory_hostname=aurelien-gaming
 # AND on rustdesk_enabled.
 
-- name: RustDesk — locate installed binary
-  ansible.windows.win_powershell:
-    script: |
-      $candidates = @(
-        "$env:ProgramFiles\RustDesk\rustdesk.exe",
-        "${env:ProgramFiles(x86)}\RustDesk\rustdesk.exe"
-      )
-      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-      if (-not $exe) { throw "rustdesk.exe not found — softwares_winget.yml didn't install RustDesk.RustDesk?" }
-      $Ansible.Result = @{ path = $exe }
-      $Ansible.Changed = $false
-  register: rustdesk_exe
-  changed_when: false
+- name: RustDesk — check if already installed
+  ansible.windows.win_stat:
+    path: 'C:\Program Files\RustDesk\rustdesk.exe'
+  register: rustdesk_stat
+
+- name: RustDesk — download and install (not in winget catalogue)
+  when: not rustdesk_stat.stat.exists
+  block:
+    - name: RustDesk — download installer
+      ansible.windows.win_get_url:
+        url: https://github.com/rustdesk/rustdesk/releases/download/1.3.9/rustdesk-1.3.9-x86_64.exe
+        dest: 'C:\Windows\Temp\rustdesk-installer.exe'
+
+    - name: RustDesk — silent install
+      ansible.windows.win_command: 'C:\Windows\Temp\rustdesk-installer.exe --silent-install'
+      register: rustdesk_install
+
+    - name: RustDesk — wait for install to settle
+      ansible.windows.win_wait_for:
+        path: 'C:\Program Files\RustDesk\rustdesk.exe'
+        timeout: 30
+
+    - name: RustDesk — clean up installer
+      ansible.windows.win_file:
+        path: 'C:\Windows\Temp\rustdesk-installer.exe'
+        state: absent
+
+- name: RustDesk — register binary path
+  ansible.builtin.set_fact:
+    rustdesk_exe:
+      result:
+        path: 'C:\Program Files\RustDesk\rustdesk.exe'
 
 - name: RustDesk — ensure Windows service is installed
   ansible.windows.win_powershell:

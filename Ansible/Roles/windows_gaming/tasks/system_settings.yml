@@ -1,5 +1,58 @@
 ---
 ##########################################Aurel-Gaming##########################################
+
+# ── Display language: English (US) with French keyboard ──────────────
+- name: Install English (US) language pack
+  ansible.windows.win_powershell:
+    script: |
+      $installed = Get-WindowsCapability -Online -Name 'Language.Basic~~~en-US~*' |
+                   Where-Object State -eq 'Installed'
+      if (-not $installed) {
+        Install-Language en-US -CopyToSettings
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  register: lang_install
+
+- name: Set display language to English (US) and keep FR keyboard
+  ansible.windows.win_powershell:
+    script: |
+      $override = Get-WinUILanguageOverride
+      $locale = Get-WinSystemLocale
+      $list = Get-WinUserLanguageList
+      $hasEnKeyboard = $list | Where-Object {
+        $_.InputMethodTips -contains '0409:00000409'
+      }
+
+      $needsChange = (
+        -not $override -or
+        $override.Name -ne 'en-US' -or
+        $locale.Name -ne 'en-US' -or
+        $hasEnKeyboard
+      )
+
+      if ($needsChange) {
+        Set-WinUILanguageOverride -Language en-US
+        Set-WinSystemLocale -SystemLocale en-US
+        Set-Culture -CultureInfo en-US
+
+        $newList = New-WinUserLanguageList en-US
+        $newList[0].InputMethodTips.Clear()
+        $newList[0].InputMethodTips.Add('040c:0000040c')  # French AZERTY
+        Set-WinUserLanguageList $newList -Force
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  register: lang_set
+
+- name: Reboot to apply language change
+  ansible.windows.win_reboot:
+    reboot_timeout: 300
+    test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+  when: lang_install.changed or lang_set.changed
+
 - name: Ensure WinRM starts when the system has settled and is ready to work reliably
   ansible.windows.win_service:
     name: WinRM
@@ -86,29 +139,35 @@
     test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
   when: inventory_hostname == "w11-vm-aurel" and old_hostname.changed == true
 
-- name: Mount NAS shares via SMB (LAN direct)
-  block:
-    - name: Save NAS credentials in Credential Manager
-      community.windows.win_credential:
-        name: "{{ nas_url }}"
-        type: generic_password
-        username: "{{ nas_username }}"
-        secret: "{{ nas_password }}"
-        state: present
-        persistence: enterprise
-      no_log: true
+- name: Share mapped drives between elevated and normal sessions
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+    name: EnableLinkedConnections
+    data: 1
+    type: dword
+  when: inventory_hostname == "aurelien-gaming"
 
-    - name: Map NAS drives
-      community.windows.win_mapped_drive:
-        letter: "{{ item.letter }}"
-        path: '\\{{ nas_url }}\{{ item.path }}'
-        state: present
-      loop: "{{ nas_mapped_drives }}"
+- name: Save NAS credentials in Credential Manager
+  community.windows.win_credential:
+    name: "{{ nas_url }}"
+    type: domain_password
+    username: "{{ nas_username }}"
+    secret: "{{ nas_password }}"
+    state: present
+    persistence: local
   vars:
     ansible_become: yes
     ansible_become_method: runas
     ansible_become_user: "{{ ansible_user }}"
     ansible_become_pass: "{{ ansible_password }}"
+  no_log: true
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: Map NAS drives (persistent — visible after logon)
+  include_tasks: nas_drive_map.yml
+  loop: "{{ nas_mapped_drives }}"
+  loop_control:
+    label: "{{ item.letter }}:"
   when: inventory_hostname == "aurelien-gaming"
 
 - name: Save Microsoft Account Credentials to Credentials Store

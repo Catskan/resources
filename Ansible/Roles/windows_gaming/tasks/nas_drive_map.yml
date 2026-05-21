@@ -1,0 +1,47 @@
+---
+# Included by system_settings.yml — creates HKCU:\Network\<letter> registry
+# entries so Windows reconnects the mapped drive at interactive logon.
+# Loop variable: item = { letter: 'W', path: 'Aurelien' }
+
+- name: "{{ item.letter }}: → \\\\{{ nas_url }}\\{{ item.path }} — RemotePath"
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Network\{{ item.letter }}'
+    name: RemotePath
+    data: '\\{{ nas_url }}\{{ item.path }}'
+    type: string
+
+- name: "{{ item.letter }}: — UserName"
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Network\{{ item.letter }}'
+    name: UserName
+    data: '{{ nas_username }}'
+    type: string
+  no_log: true
+
+- name: "{{ item.letter }}: — ProviderName"
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Network\{{ item.letter }}'
+    name: ProviderName
+    data: Microsoft Windows Network
+    type: string
+
+- name: "{{ item.letter }}: — ProviderType"
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Network\{{ item.letter }}'
+    name: ProviderType
+    data: 131072
+    type: dword
+
+- name: "{{ item.letter }}: — ConnectionType"
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Network\{{ item.letter }}'
+    name: ConnectionType
+    data: 1
+    type: dword
+
+- name: "{{ item.letter }}: — DeferFlags"
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Network\{{ item.letter }}'
+    name: DeferFlags
+    data: 4
+    type: dword
