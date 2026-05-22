@@ -58,10 +58,7 @@
     name: WinRM
     start_mode: delayed
 
-# Power plan is set at the END of drivers.yml — after AMD Chipset install,
-# which is what ships the `AMD Ryzen Balanced` plan. Running it here in
-# system_settings.yml (early in the role) would race the chipset install
-# on first provision and force a 2-run convergence.
+# Power plan is set at the END of drivers.yml (Balanced).
 
 #Set RDP
 - name: Allow RDP TSConnection

@@ -224,6 +224,84 @@
   when: pcie_link_state_power_off
   changed_when: false
 
+# ======================== §4.2.4b Display — max refresh rate ========================
+
+- name: Display — set highest available refresh rate
+  ansible.windows.win_powershell:
+    script: |
+      Add-Type @'
+      using System;
+      using System.Runtime.InteropServices;
+      public class Display {
+        [DllImport("user32.dll")]
+        public static extern int EnumDisplaySettingsW(string device, int mode, ref DEVMODE dm);
+        [DllImport("user32.dll")]
+        public static extern int ChangeDisplaySettingsW(ref DEVMODE dm, int flags);
+        [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
+        public struct DEVMODE {
+          [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string dmDeviceName;
+          public short dmSpecVersion; public short dmDriverVersion; public short dmSize;
+          public short dmDriverExtra; public int dmFields; public int dmPositionX;
+          public int dmPositionY; public int dmDisplayOrientation; public int dmDisplayFixedOutput;
+          public short dmColor; public short dmDuplex; public short dmYResolution;
+          public short dmTTOption; public short dmCollate;
+          [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string dmFormName;
+          public short dmLogPixels; public int dmBitsPerPel; public int dmPelsWidth;
+          public int dmPelsHeight; public int dmDisplayFlags; public int dmDisplayFrequency;
+          public int dmICMMethod; public int dmICMIntent; public int dmMediaType;
+          public int dmDitherType; public int dmReserved1; public int dmReserved2;
+          public int dmPanningWidth; public int dmPanningHeight;
+        }
+      }
+      '@
+      # Get current settings
+      $current = New-Object Display+DEVMODE
+      $current.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($current)
+      [Display]::EnumDisplaySettingsW($null, -1, [ref]$current) | Out-Null
+      $currentHz = $current.dmDisplayFrequency
+
+      # Enumerate all modes at current resolution and find max Hz
+      $maxHz = $currentHz
+      $i = 0
+      $dm = New-Object Display+DEVMODE
+      $dm.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($dm)
+      while ([Display]::EnumDisplaySettingsW($null, $i, [ref]$dm)) {
+        if ($dm.dmPelsWidth -eq $current.dmPelsWidth -and
+            $dm.dmPelsHeight -eq $current.dmPelsHeight -and
+            $dm.dmBitsPerPel -eq $current.dmBitsPerPel -and
+            $dm.dmDisplayFrequency -gt $maxHz) {
+          $maxHz = $dm.dmDisplayFrequency
+        }
+        $i++
+      }
+
+      if ($maxHz -gt $currentHz) {
+        $current.dmDisplayFrequency = $maxHz
+        $current.dmFields = 0x400000  # DM_DISPLAYFREQUENCY
+        $result = [Display]::ChangeDisplaySettingsW([ref]$current, 0x01)  # CDS_UPDATEREGISTRY
+        $Ansible.Changed = $true
+        $Ansible.Result = "Refresh rate changed from ${currentHz}Hz to ${maxHz}Hz"
+      } else {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Already at max refresh rate: ${currentHz}Hz"
+      }
+  when: inventory_hostname == "aurelien-gaming"
+
+# ======================== §4.2.4c Display — HDR ========================
+
+- name: Display — enable HDR (Auto HDR + streaming)
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\VideoSettings'
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+  loop:
+    - { name: EnableHDRForPlayback, data: 1 }
+    - { name: AutoHDR, data: 1 }
+  loop_control:
+    label: "{{ item.name }}"
+  when: inventory_hostname == "aurelien-gaming"
+
 # ======================== §4.2.5 Game DVR / Mode ========================
 
 - name: Game DVR — HKLM policy off

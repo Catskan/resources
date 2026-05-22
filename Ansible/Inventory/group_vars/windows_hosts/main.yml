@@ -222,7 +222,7 @@ winget_packages:
   - Synology.DriveClient
   - 7zip.7zip
   - Microsoft.WindowsTerminal
-  - Microsoft.PowerToys
+
   - Microsoft.PowerShell
 
   # --- Hardware tooling ---

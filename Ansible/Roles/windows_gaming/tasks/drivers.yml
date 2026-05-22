@@ -171,18 +171,30 @@
 # (Tom's Hardware + AMD guidance 2026) — High Performance breaks the
 # X3D cache-aware boost behavior.
 
-- name: Power plan — check what's available (after chipset install)
+# ======================== MSI Afterburner — auto-start ========================
+
+- name: Afterburner — start with Windows
   ansible.windows.win_powershell:
     script: |
-      $plans = (powercfg /list) -join "`n"
-      $Ansible.Result = @{ amd_balanced_available = ($plans -match 'AMD Ryzen Balanced') }
-      $Ansible.Changed = $false
-  register: power_plans_available
-  changed_when: false
-  check_mode: false # read-only, safe to always run for --check
+      $exe = "${env:ProgramFiles(x86)}\MSI Afterburner\MSIAfterburner.exe"
+      if (-not (Test-Path $exe)) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "MSI Afterburner not installed — skipping"
+        return
+      }
+      $regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+      $current = (Get-ItemProperty $regPath -Name 'MSI Afterburner' -ErrorAction SilentlyContinue).'MSI Afterburner'
+      if ($current -eq $exe) {
+        $Ansible.Changed = $false
+      } else {
+        Set-ItemProperty $regPath -Name 'MSI Afterburner' -Value $exe
+        $Ansible.Changed = $true
+      }
   when: inventory_hostname == "aurelien-gaming"
 
-- name: Power plan — set AMD Ryzen Balanced if available, else High Performance
+# ======================== Power plan ========================
+
+- name: Power plan — set Balanced
   community.windows.win_power_plan:
-    name: "{{ 'AMD Ryzen Balanced' if power_plans_available.result.amd_balanced_available else 'high performance' }}"
+    name: Balanced
   when: inventory_hostname == "aurelien-gaming"
