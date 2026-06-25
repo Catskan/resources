@@ -1,0 +1,49 @@
+<article id="card-{{ p.vinted_item_id }}" class="card edit">
+  <div class="card-photo">
+    <img src="{{ p.main_photo_url }}" alt="photo" />
+  </div>
+  <div class="card-body">
+    <div class="meta">
+      {% if p.brand %}<strong>{{ p.brand }}</strong>{% endif %} {% if p.price
+      %}<span>· {{ p.price }}</span>{% endif %}
+      <span class="status-pill edit">en édition</span>
+    </div>
+
+    <form
+      hx-post="/proposals/{{ account }}/{{ p.vinted_item_id }}/save-edit"
+      hx-target="#card-{{ p.vinted_item_id }}"
+      hx-swap="outerHTML"
+    >
+      <label>
+        Titre
+        <input
+          type="text"
+          name="title"
+          value="{{ p.edited_title or p.title_after }}"
+          maxlength="80"
+          required
+        />
+      </label>
+      <label>
+        Description
+        <textarea name="description" rows="5" required>
+{{ p.edited_description or p.description_after }}</textarea
+        >
+      </label>
+      <small> Original : « {{ p.title_before }} » </small>
+
+      <div class="actions">
+        <button type="submit">💾 Save (apply)</button>
+        <button
+          type="button"
+          class="secondary outline"
+          hx-get="/proposals/{{ account }}/{{ p.vinted_item_id }}/view"
+          hx-target="#card-{{ p.vinted_item_id }}"
+          hx-swap="outerHTML"
+        >
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</article>

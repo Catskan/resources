@@ -1,0 +1,52 @@
+[project]
+name = "vinted-bot"
+version = "0.1.0"
+description = "Bumper Vinted + optimizer LLM + crosspost assisté"
+requires-python = ">=3.12"
+
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "pillow>=10.3",
+    "numpy>=1.26",
+    "loguru>=0.7",
+    "openai>=1.30",
+    "wakeonlan>=3.1",
+    "paramiko>=3.4",
+    "click>=8.1",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "pytest>=8.2",
+]
+
+[project.scripts]
+vbot-bump = "vinted_bot.bumper.runner:main"
+vbot-optimize = "vinted_bot.optimizer.runner:main"
+vbot-crosspost = "vinted_bot.crosspost.runner:main"
+vbot-webui = "vinted_bot.webui.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vinted_bot"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/vinted_bot/webui/templates" = "vinted_bot/webui/templates"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "UP"]

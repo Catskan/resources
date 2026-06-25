@@ -1,0 +1,1 @@
+"""Crosspost assisté Vinted → Leboncoin."""

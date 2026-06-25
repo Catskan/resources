@@ -1,0 +1,95 @@
+<article
+  id="card-{{ p.vinted_item_id }}"
+  class="card{% if p.applied_at %} done{% elif p.user_action == 'skip' %} skip{% elif p.user_action in ('apply', 'edit') %} validated{% endif %}"
+>
+  <div class="card-photo">
+    <img src="{{ p.main_photo_url }}" alt="photo" loading="lazy" />
+  </div>
+  <div class="card-body">
+    <div class="meta">
+      {% if p.brand %}<strong>{{ p.brand }}</strong>{% endif %} {% if p.price
+      %}<span>· {{ p.price }}</span>{% endif %}
+      <span class="badge badge-{{ badge_for(p.confidence) }}"
+        >conf {{ '%.2f'|format(p.confidence) }}</span
+      >
+      {% if p.applied_at %}
+      <span class="status-pill done"
+        >🟢 Appliqué sur Vinted ({{ p.applied_at[:10] }})</span
+      >
+      {% elif p.user_action == 'skip' %}
+      <span class="status-pill skip">⚪ Skip</span>
+      {% elif p.user_action in ('apply', 'edit') %}
+      <span class="status-pill validated">🟠 Validé · push à 23h</span>
+      {% endif %}
+    </div>
+
+    <dl class="titles">
+      <dt>Titre avant</dt>
+      <dd>{{ p.title_before }}</dd>
+      <dt>
+        Titre {% if p.user_action == 'edit' %}édité{% else %}après{% endif %}
+      </dt>
+      <dd class="after">{{ p.edited_title or p.title_after }}</dd>
+    </dl>
+
+    <details>
+      <summary>Description (cliquer pour comparer)</summary>
+      <p>
+        <strong>Avant :</strong><br />{{ p.description_before|replace('\n', '<br />')|safe
+        }}
+      </p>
+      <p>
+        <strong>Après :</strong><br />{{ (p.edited_description or
+        p.description_after)|replace('\n', '<br />')|safe }}
+      </p>
+    </details>
+
+    <p class="rationale">💡 {{ p.rationale }}</p>
+
+    {% if p.applied_at %}
+    <small
+      ><em
+        >Déjà appliqué le {{ p.applied_at }}. Pour le modifier à nouveau, va sur
+        Vinted ou attends la prochaine optimisation.</em
+      ></small
+    >
+    {% elif not p.user_action %}
+    <div class="actions">
+      <button
+        hx-post="/proposals/{{ account }}/{{ p.vinted_item_id }}/apply"
+        hx-target="#card-{{ p.vinted_item_id }}"
+        hx-swap="outerHTML"
+      >
+        ✅ Apply
+      </button>
+      <button
+        class="secondary"
+        hx-post="/proposals/{{ account }}/{{ p.vinted_item_id }}/skip"
+        hx-target="#card-{{ p.vinted_item_id }}"
+        hx-swap="outerHTML"
+      >
+        ❌ Skip
+      </button>
+      <button
+        class="outline"
+        hx-get="/proposals/{{ account }}/{{ p.vinted_item_id }}/edit-form"
+        hx-target="#card-{{ p.vinted_item_id }}"
+        hx-swap="outerHTML"
+      >
+        ✏️ Éditer
+      </button>
+    </div>
+    {% else %}
+    <div class="actions">
+      <button
+        class="outline secondary"
+        hx-post="/proposals/{{ account }}/{{ p.vinted_item_id }}/reset"
+        hx-target="#card-{{ p.vinted_item_id }}"
+        hx-swap="outerHTML"
+      >
+        ↩ Annuler ma décision
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</article>

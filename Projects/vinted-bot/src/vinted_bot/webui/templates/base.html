@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr" data-theme="auto">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}vinted-bot{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+      .card {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid var(--pico-muted-border-color);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        transition: opacity 0.2s;
+      }
+      .card.done {
+        opacity: 0.55;
+        background: rgba(34, 197, 94, 0.08);
+        border-left: 4px solid #16a34a;
+      }
+      .card.validated {
+        opacity: 0.9;
+        background: rgba(245, 158, 11, 0.06);
+        border-left: 4px solid #f59e0b;
+      }
+      .card.skip {
+        opacity: 0.45;
+        background: rgba(107, 114, 128, 0.08);
+        border-left: 4px solid #6b7280;
+      }
+      .card-photo {
+        flex: 0 0 140px;
+      }
+      .card-photo img {
+        width: 100%;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 0.4rem;
+      }
+      .card-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .meta {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+      }
+      .badge {
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.85em;
+        font-weight: 600;
+        color: white;
+      }
+      .badge-high {
+        background: #16a34a;
+      }
+      .badge-mid {
+        background: #f59e0b;
+      }
+      .badge-low {
+        background: #dc2626;
+      }
+      .titles dt {
+        font-weight: 600;
+        color: var(--pico-muted-color);
+        margin-top: 0.5rem;
+      }
+      .titles dd {
+        margin: 0.15rem 0 0.4rem 0;
+        padding: 0;
+      }
+      .titles dd.after {
+        color: var(--pico-primary);
+        font-weight: 500;
+      }
+      .rationale {
+        color: var(--pico-muted-color);
+        font-size: 0.9em;
+        margin: 0.5rem 0;
+        font-style: italic;
+      }
+      .actions {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+      }
+      .actions button {
+        margin: 0;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9em;
+      }
+      .status-pill {
+        padding: 0.2rem 0.6rem;
+        border-radius: 1rem;
+        font-size: 0.85em;
+        font-weight: 600;
+      }
+      .status-pill.done {
+        background: #16a34a;
+        color: white;
+      }
+      .status-pill.validated {
+        background: #f59e0b;
+        color: white;
+      }
+      .status-pill.skip {
+        background: #6b7280;
+        color: white;
+      }
+      @media (max-width: 720px) {
+        .card {
+          flex-direction: column;
+        }
+        .card-photo {
+          max-width: 200px;
+          align-self: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">{% block content %}{% endblock %}</main>
+  </body>
+</html>

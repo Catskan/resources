@@ -1,0 +1,50 @@
+{% extends "base.html" %} {% block title %}{{ account|capitalize }} —
+Propositions{% endblock %} {% block content %}
+<nav>
+  <ul>
+    <li><a href="/">← Tableau de bord</a></li>
+  </ul>
+</nav>
+
+<hgroup>
+  <h1>{{ account|capitalize }} — {{ total }} propositions</h1>
+  <p>
+    Page {{ page }}/{{ total_pages }} · affiche {{ page_start }}–{{ page_end }}
+  </p>
+</hgroup>
+
+{% if total == 0 %}
+<p>
+  <em
+    >Aucune proposition. Lance <code>optimizer --generate</code> sur ce
+    compte.</em
+  >
+</p>
+{% else %} {% for p in proposals %} {% include "_card.html" %} {% endfor %} {%
+if total_pages > 1 %}
+<nav
+  style="
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+  "
+>
+  {% if page > 1 %}
+  <a href="?page=1" role="button" class="outline secondary">⏮ 1</a>
+  <a href="?page={{ page - 1 }}" role="button" class="outline">‹ Précédent</a>
+  {% endif %}
+
+  <span style="align-self: center; padding: 0 1rem">
+    Page <strong>{{ page }}</strong> / {{ total_pages }}
+  </span>
+
+  {% if page < total_pages %}
+  <a href="?page={{ page + 1 }}" role="button">Suivant ›</a>
+  <a href="?page={{ total_pages }}" role="button" class="outline secondary"
+    >{{ total_pages }} ⏭</a
+  >
+  {% endif %}
+</nav>
+{% endif %} {% endif %} {% endblock %}

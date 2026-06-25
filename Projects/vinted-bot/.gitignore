@@ -1,0 +1,44 @@
+# Secrets — ne JAMAIS commit
+.env
+.env.local
+.env.aurelien
+.env.amandine
+.env.*.local
+
+# Runtime data — multi-compte
+data-*/cookies/*.json
+data-*/db/*.sqlite*
+data-*/db/*.sqlite-journal
+data-*/logs/*
+data-*/proposals/*.json
+data-*/crosspost/queue.json
+data-*/api-exploration/
+!data-*/**/.gitkeep
+
+# Legacy mono-compte (au cas où)
+data/cookies/*.json
+data/db/*.sqlite*
+data/logs/*
+data/proposals/*.json
+data/crosspost/queue.json
+!data/**/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

@@ -1,0 +1,69 @@
+{% extends "base.html" %} {% block title %}vinted-bot — Tableau de bord{%
+endblock %} {% block content %}
+<hgroup>
+  <h1>vinted-bot</h1>
+  <p>Optimisations LLM à valider</p>
+</hgroup>
+
+{% for acc in accounts %}
+<article>
+  <header>
+    <h2>
+      {% if acc.name == 'aurelien' %}👤{% else %}👩{% endif %} {{
+      acc.name|capitalize }}
+    </h2>
+  </header>
+  {% if acc.total == 0 %}
+  <p>
+    <em
+      >Aucune proposition générée (lance <code>optimizer --generate</code>).</em
+    >
+  </p>
+  {% else %}
+  <p><strong>{{ acc.total }} propositions au total</strong></p>
+  <ul style="list-style: none; padding-left: 0">
+    <li>🔵 <strong>{{ acc.pending }}</strong> en attente de ta décision</li>
+    <li>
+      🟠 <strong>{{ acc.validated }}</strong> validées par toi (en attente de
+      push sur Vinted à 23h)
+    </li>
+    <li>🟢 <strong>{{ acc.done }}</strong> déjà appliquées sur Vinted</li>
+    <li>⚪ <strong>{{ acc.skipped }}</strong> skip</li>
+  </ul>
+  <footer>
+    <a href="/proposals/{{ acc.name }}" role="button">
+      {% if acc.pending > 0 %}Continuer la validation ({{ acc.pending }} en
+      attente) →{% else %}Voir l'historique →{% endif %}
+    </a>
+  </footer>
+  {% endif %}
+</article>
+{% endfor %}
+
+<article
+  style="
+    background: var(--pico-card-sectioning-background-color);
+    margin-top: 2rem;
+  "
+>
+  <header><strong>Comment ça marche ?</strong></header>
+  <ol>
+    <li>
+      <strong>Tu valides</strong> dans la WebUI (✅ Apply, ❌ Skip, ✏️ Édit) —
+      c'est écrit dans le proposals.json mais pas encore envoyé à Vinted.
+    </li>
+    <li>
+      <strong>À 23h chaque jour</strong>, la tâche DSM lit les validations et
+      pousse les modifications sur Vinted via l'API.
+    </li>
+    <li>
+      <strong>Le lendemain</strong> tes annonces sont à jour. Le compteur "déjà
+      appliquées" augmente.
+    </li>
+    <li>
+      <strong>Le 1er du mois</strong>, le LLM génère de nouvelles propositions
+      pour les items pas encore optimisés.
+    </li>
+  </ol>
+</article>
+{% endblock %}

@@ -1,0 +1,60 @@
+# 2 containers partagent la MÊME image (build 1 fois), chacun avec son env_file
+# et son volume data isolé. Permet de gérer plusieurs comptes Vinted.
+#
+# DSM Task Scheduler lance :
+#   /usr/local/bin/docker exec vinted-bot-aurelien python -m vinted_bot.bumper.runner --tick
+#   /usr/local/bin/docker exec vinted-bot-amandine python -m vinted_bot.bumper.runner --tick
+#
+# Optimizer LLM (mensuel) :
+#   /usr/local/bin/docker exec vinted-bot-aurelien python -m vinted_bot.optimizer.runner --generate
+#   /usr/local/bin/docker exec vinted-bot-amandine python -m vinted_bot.optimizer.runner --generate
+#
+# network_mode: host est REQUIS pour que le WoL UDP broadcast traverse le réseau
+# vers le PC Windows sur le LAN (le bridge Docker bloque les broadcasts).
+
+services:
+  vinted-bot-aurelien:
+    build: .
+    image: vinted-bot:latest
+    container_name: vinted-bot-aurelien
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env.aurelien
+    environment:
+      TZ: Europe/Paris
+    volumes:
+      - ./data-aurelien:/app/data
+      - /var/services/homes/a.busutil/.ssh/id_ed25519_vintedbot:/root/.ssh/id_ed25519:ro
+
+  vinted-bot-amandine:
+    image: vinted-bot:latest # ré-utilise l'image buildée par aurelien
+    container_name: vinted-bot-amandine
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env.amandine
+    environment:
+      TZ: Europe/Paris
+    volumes:
+      - ./data-amandine:/app/data
+      - /var/services/homes/a.busutil/.ssh/id_ed25519_vintedbot:/root/.ssh/id_ed25519:ro
+    depends_on:
+      - vinted-bot-aurelien # garantit que l'image est buildée avant
+
+  # WebUI FastAPI sur port 8089 — accessible depuis http://nas.local:8089
+  # Lit les proposals.json des 2 comptes (mounts en RW pour écrire les user_actions).
+  # Pas de docker.sock : l'UI ne déclenche jamais Vinted directement, elle ne fait
+  # qu'écrire le user_action dans le JSON. C'est la tâche DSM `--apply` (planifiée
+  # quotidiennement) qui pousse les validations vers Vinted.
+  vinted-bot-webui:
+    image: vinted-bot:latest # même image
+    container_name: vinted-bot-webui
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TZ: Europe/Paris
+    volumes:
+      - ./data-aurelien:/app/data-aurelien
+      - ./data-amandine:/app/data-amandine
+    command: ["python", "-m", "vinted_bot.webui.server"]
+    depends_on:
+      - vinted-bot-aurelien
