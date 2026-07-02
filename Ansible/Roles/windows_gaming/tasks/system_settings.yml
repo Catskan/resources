@@ -102,6 +102,32 @@
     state: present
     enabled: yes
 
+# Windows enforces a 42-day default maximum password age. On this headless
+# box the local account password silently expires, which then breaks WinRM
+# auth *and* AdminAutoLogon. Pin the account to "never expires" and lift the
+# machine-wide max age so it can't recur.
+- name: Local account — password never expires
+  ansible.windows.win_powershell:
+    script: |
+      $u = Get-LocalUser -Name '{{ user_name }}'
+      if ($u.PasswordExpires -ne $null) {
+        Set-LocalUser -Name '{{ user_name }}' -PasswordNeverExpires $true
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Disable machine-wide maximum password age
+  ansible.windows.win_powershell:
+    script: |
+      $line = (net accounts | Select-String 'Maximum password age').ToString()
+      if ($line -notmatch 'Unlimited|Illimit') {
+        net accounts /maxpwage:unlimited | Out-Null
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
 - name: Enable AdminAutoLogOn
   ansible.windows.win_regedit:
     path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
