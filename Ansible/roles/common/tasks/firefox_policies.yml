@@ -1,0 +1,23 @@
+---
+- name: Create Firefox/distribution directory (Windows)
+  ansible.windows.win_file:
+    path: C:\Program Files\Mozilla Firefox\distribution
+    state: directory
+  when: ansible_facts['system'] == "Win32NT"
+
+- name: Import Firefox Policies (Windows)
+  ansible.windows.win_template:
+    src: firefox_policies.json
+    dest: C:\Program Files\Mozilla Firefox\distribution\policies.json
+    force: true
+  when: ansible_facts['system'] == "Win32NT"
+
+- name: Import Firefox Policies (Linux)
+  ansible.builtin.template:
+    src: firefox_policies.json
+    dest: /usr/lib/firefox/distribution/policies.json
+    force: true
+  vars:
+    ansible_become: yes
+    ansible_become_password: "{{ sudo_pwd }}"
+  when: ansible_facts['system'] == "Linux"

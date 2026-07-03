@@ -1,10 +1,12 @@
-*.DS_STORE
-**/.vagrant
-Containers/Linux/Debian-Ansible/.ssh
-Vagrant/Ansible/*/.env
-*}#
+.DS_Store
 __pycache__/
 *.pyc
+
+# Legacy local cruft de l'ancien setup (Vagrant + container Debian-Ansible),
+# non suivi mais toujours présent sur disque — contient notamment une clé SSH
+# privée. On ignore les dossiers entiers pour empêcher tout commit accidentel.
+Vagrant/
+Containers/Linux/Debian-Ansible/
 
 # Autounattend USB build outputs and driver payloads (large + licensed —
 # user-populated per-machine, see Microsoft-Resources/autounattend/README).

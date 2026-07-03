@@ -1,15 +1,15 @@
 # Ansible
 
-Configuration automatisée des machines persos, lancée **depuis le MacBook contrôleur**. Secrets dans un fichier KeePass local (`~/Vault/Aurel-vault.kdbx` par défaut), prompté à chaque run.
+Configuration automatisée des machines persos, lancée **depuis le MacBook contrôleur**. Secrets dans une base KeePass sur le NAS Synology (`/Volumes/home/Drive/Vault/Aurel-vault.kdbx` par défaut — le partage SMB `home` doit être monté), master password prompté à chaque run. Override via `KEEPASS_LOCATION` pour pointer une copie locale.
 
-Plus de pipeline cloud : ni GitHub Actions, ni Vagrant, ni container Debian-Ansible. Tout tourne en local.
+Plus de pipeline cloud : ni AWS, ni Vagrant, ni container Debian-Ansible. Seul reste un workflow GitHub Actions de lint (`.github/workflows/ansible-lint.yml`, yamllint + ansible-lint). Tous les runs tournent en local.
 
 ## Setup initial (une fois sur le MacBook)
 
 ```bash
 brew install ansible
 ansible-galaxy collection install ansible.windows community.windows community.general community.docker viczem.keepass
-pip3 install --user pykeepass    # dépendance du lookup KeePass
+pip3 install --user pykeepass pyyaml    # pykeepass = lookup KeePass (+ lxml transitif) ; pyyaml = scripts/inspect_keepass.py
 ```
 
 ## Lancer un run
@@ -40,7 +40,7 @@ Ansible/
 ├── scripts/run.sh                       # wrapper KeePass → ansible-*
 ├── main_windows_playbook.yml            # → role windows_gaming
 ├── main_linux_playbook.yml              # → role linux_laptop + common
-├── main_remove_softwares.yml            # → include_role tasks_from softwares_uninstall
+├── main_remove_softwares.yml            # → include_role tasks_from appx_bloatware.yml
 ├── playbooks/
 │   ├── blog_maman_deploy.yml            # container Docker "fonduededeco" sur le Mac
 │   └── blog_maman_remove.yml

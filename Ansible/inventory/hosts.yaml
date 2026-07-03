@@ -1,0 +1,15 @@
+all:
+  children:
+    linux_hosts:
+      hosts:
+        nas.eonelia.fr:
+          ansible_connection: ssh
+          ansible_host: 192.168.2.114
+          ansible_port: 3434
+          ansible_user: a.busutil
+        macbook-air-aurelien:
+        arch-linux-laptop:
+    windows_hosts:
+      hosts:
+        w11-vm-aurel:
+        aurelien-gaming:

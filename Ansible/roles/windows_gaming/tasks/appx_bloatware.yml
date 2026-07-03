@@ -1,0 +1,31 @@
+---
+# Standalone AppX bloatware removal — consumed by:
+#   - console_ux.yml (full console UX hardening chain)
+#   - playbooks/main_remove_softwares.yml (one-shot `make uninstall-bloat`)
+#
+# Single source of truth: edit appx_bloatware list in
+# group_vars/windows_hosts/main.yml to grow/shrink the bloatware set.
+
+- name: Uninstall AppX bloatware
+  ansible.windows.win_powershell:
+    script: |
+      $names = @({{ appx_bloatware | map('to_json') | join(', ') }})
+      $changed = $false
+      foreach ($n in $names) {
+        # 1) Remove the installed package for every user.
+        $pkg = Get-AppxPackage -AllUsers -Name "*$n*" -ErrorAction SilentlyContinue
+        if ($pkg) {
+          $pkg | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+          $changed = $true
+        }
+        # 2) De-provision independently — a package can be already uninstalled
+        #    for the user yet still provisioned, in which case it reappears for
+        #    new profiles or after a feature update. This must run even when
+        #    step 1 found nothing.
+        $prov = Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like "*$n*"
+        if ($prov) {
+          $prov | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed

@@ -37,12 +37,12 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
   - `host_vars/<host>/{connection,main,secrets}.yml` — `aurelien-gaming`, `w11-vm-aurel`, `arch-linux-laptop`, `macbook-air-aurelien` (this last one is the controller — `ansible_connection: local`). The remaining hosts (`arch-linux-vm`) are still flat `host_vars/<host>` files.
 - **Secrets — KeePass-backed**: every `secrets.yml` and the `ansible_password` line in `connection.yml` use `lookup('viczem.keepass.keepass', '<group>/<entry>', '<password|username>')`. The DB path defaults to `/Volumes/home/Drive/Vault/Aurel-vault.kdbx` — the Synology NAS share `home` mounted via SMB (the share must be mounted before any run, otherwise `scripts/run.sh` aborts with "KeePass DB introuvable"). Override via `KEEPASS_LOCATION` to point at a local copy. The master password is prompted at run-time by `scripts/run.sh` (no caching). Required collection: `viczem.keepass`. Python deps: `pykeepass`, `pyyaml` (the latter only for `scripts/inspect_keepass.py`).
 
-> **Migration in progress**: secrets were previously sourced from AWS Secrets Manager (`lookup('amazon.aws.aws_secret', ...)`). The lookup expressions in `*/secrets.yml` and `*/connection.yml` may still reference the AWS variant — finish the swap to KeePass when migrating remaining entries. The `inventory/host_vars/macbook-air-aurelien/secrets.yml` was vault-encrypted under the old scheme and may still be a `$ANSIBLE_VAULT` blob until migrated.
+> **Migration AWS → KeePass : terminée.** Aucun `lookup('amazon.aws.aws_secret', ...)` ne subsiste (vérifié par grep sur tout `Ansible/`), aucun secret en clair dans l'inventaire, et l'ancien blob `$ANSIBLE_VAULT` de `macbook-air-aurelien/secrets.yml` a été retiré. Tous les secrets passent par `viczem.keepass`.
 
-> **KeePass entries to create before bare-metal run** (the role expects them; `make test-keepass` will tell you if any are missing):
+> **KeePass entries expected before a bare-metal run** — the exact list is whatever the inventory looks up; regenerate it with `grep -rhoE "keepass',\s*'[^']*',\s*'[^']*'" inventory/ | sort -u`. `playbooks/test_keepass.yml` (via `make test-keepass`) est synchronisé sur cette liste et signale toute entrée manquante. Les entrées propres au remote-access bare-metal :
 >
-> - `ansible/aurelien-gaming/sunshine` — username + password (Sunshine Web UI admin)
-> - `ansible/aurelien-gaming/rustdesk` — password only (RustDesk permanent password for incoming clients)
+> - `Local/Sunshine` — username + password (Sunshine Web UI admin)
+> - `Local/RustDesk` — password only (RustDesk permanent password for incoming clients)
 
 ### Tags (rôle `windows_gaming`)
 
@@ -56,13 +56,14 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 | `gaming_optim`     | VBS off + weekly safety-reset + kernel/network/storage tweaks + Game DVR/Mode                                        |
 | `console_ux`       | Debloat (AppX bloatware, Cortana, Bing, Widgets, OneDrive, Edge neutral, Firefox default, telemetry, notifications)  |
 | `softwares_winget` | Install user apps + tooling via winget (Steam, Epic, Firefox, MSI Afterburner, NVCleanstall, …) + MS Store Xbox Acc. |
+| `launcher_paths`   | Game launcher install/library paths on `M:\` (Steam, Epic, GOG, EA, Rockstar, Ubisoft) (bare-metal only)             |
 | `firefox`          | Firefox policies (cross-platform, from `common` role)                                                                |
-| `drivers`          | AMD chipset (direct_url) + AMD GPU Adrenalin (direct_url) + power plan (Balanced)                                   |
+| `drivers`          | AMD chipset (direct_url) + AMD GPU Adrenalin (direct_url) + power plan (Balanced)                                    |
 | `keepassxc`        | KeePassXC pointed at NAS vault UNC + tray autostart + Ctrl+Shift+V Auto-Type + Defender exclusion (bare-metal only)  |
 | `xbox_mode`        | Win11 Xbox Full-Screen Experience — DeviceForm spoof + GamingHomeApp = Xbox app shell (bare-metal only)              |
 | `sunshine`         | Sunshine game streaming server + Moonlight app entries (Desktop / Steam BP / Xbox) + LAN firewall (bare-metal only)  |
 | `openrgb`          | OpenRGB startup shortcut (minimized) + Defender exclusion (bare-metal only)                                          |
-| `rustdesk`         | RustDesk desktop remoting (LAN direct IP + permanent password + telemetry off) + LAN firewall (bare-metal only)      |
+| `rustdesk`         | RustDesk desktop remoting (LAN direct IP + permanent password, config seeded once) + LAN firewall (bare-metal only)  |
 
 ### Running things
 

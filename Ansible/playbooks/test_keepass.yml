@@ -13,19 +13,37 @@
   connection: local
 
   vars:
+    # Liste synchronisée avec les lookups réels de l'inventaire :
+    #   grep -rhoE "keepass',\s*'[^']*',\s*'[^']*'" inventory/ | sort -u
     keepass_entries:
-      # Entrées propres à l'infra Ansible (à créer dans la DB)
-      - label: "aurelien-gaming  local_user password"
+      # --- Comptes locaux Windows (connection + AutoLogon) ---
+      - label: "aurelien-gaming local_user username"
+        path: "Local/Aurel-Gaming"
+        field: "username"
+      - label: "aurelien-gaming local_user password"
         path: "Local/Aurel-Gaming"
         field: "password"
-      # - label: "w11-vm-aurel     local_user password"
-      #   path: "ansible/w11-vm-aurel/local_user"
-      #   field: "password"
-      # - label: "arch-linux-laptop sudo password"
-      #   path: "ansible/arch-linux-laptop/sudo"
-      #   field: "password"
+      - label: "w11-vm-aurel local_user password"
+        path: "Local/w11-vm-user"
+        field: "password"
 
-      # Entrées existantes — adapte les paths à ta vraie structure KeePass
+      # --- Remote access (bare-metal) ---
+      - label: "Sunshine admin username"
+        path: "Local/Sunshine"
+        field: "username"
+      - label: "Sunshine admin password"
+        path: "Local/Sunshine"
+        field: "password"
+      - label: "RustDesk permanent password"
+        path: "Local/RustDesk"
+        field: "password"
+
+      # --- Arch Linux laptop ---
+      - label: "arch-linux-laptop sudo password"
+        path: "ansible/arch-linux-laptop/sudo"
+        field: "password"
+
+      # --- Comptes applicatifs / services ---
       - label: "Microsoft account email"
         path: "Microsoft Account"
         field: "username"
@@ -45,7 +63,7 @@
         path: "Nas"
         field: "password"
       - label: "Docker Hub (catskan) password"
-        path: "Dockerhub"
+        path: "Dev/Docker Hub - catskan"
         field: "password"
 
   tasks:

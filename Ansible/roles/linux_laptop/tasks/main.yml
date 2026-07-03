@@ -1,0 +1,21 @@
+---
+- name: Apply Linux laptop settings
+  ansible.builtin.include_tasks:
+    file: settings_linux.yml
+    apply:
+      tags: [system, settings]
+  tags: [system, settings]
+
+- name: Install user software
+  ansible.builtin.include_tasks:
+    file: install_softwares.yml
+    apply:
+      tags: [packages, packages_install]
+  tags: [packages, packages_install]
+
+- name: Remove unwanted software
+  ansible.builtin.include_tasks:
+    file: remove_softwares.yml
+    apply:
+      tags: [packages, packages_remove, cleanup]
+  tags: [packages, packages_remove, cleanup]

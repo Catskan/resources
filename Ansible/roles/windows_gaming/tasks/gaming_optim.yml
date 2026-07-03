@@ -1,0 +1,526 @@
+---
+# Gaming optim — VBS/HVCI OFF, kernel/network/storage tweaks, Game DVR OFF,
+# Game Mode ON. See spec §4.2.
+#
+# This file is split conceptually:
+#   §4.2.1 VBS / HVCI            ← below
+#   §4.2.2 Kernel / multimedia   ← Task 5
+#   §4.2.3 Network (Nagle)       ← Task 5
+#   §4.2.4 Storage / power       ← Task 6
+#   §4.2.5 Game DVR / Mode       ← Task 7
+#   §4.2.6 HAGS / VRR / Auto HDR / Power Throttling
+#   §4.2.7 Game Bar capture precision (kill background, keep manual)
+#   §4.2.8 Accessibility shortcuts off (no Sticky Keys popup in-game)
+#   §4.2.9 HPET disable via bcdedit (bare-metal only, 2-3% gain on X3D)
+# Order matters: VBS reboot, then kernel, then storage, then user-level.
+
+# ======================== §4.2.1 VBS / HVCI ========================
+
+- name: VBS — disable EnableVirtualizationBasedSecurity
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard
+    name: EnableVirtualizationBasedSecurity
+    data: "{{ 1 if vbs_enabled else 0 }}"
+    type: dword
+  register: vbs_key1
+
+- name: VBS — disable RequirePlatformSecurityFeatures
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard
+    name: RequirePlatformSecurityFeatures
+    data: "{{ 1 if vbs_enabled else 0 }}"
+    type: dword
+  register: vbs_key2
+
+- name: VBS — disable HypervisorEnforcedCodeIntegrity
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity
+    name: Enabled
+    data: "{{ 1 if vbs_enabled else 0 }}"
+    type: dword
+  register: vbs_key3
+
+- name: VBS — disable Credential Guard (LsaCfgFlags)
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+    name: LsaCfgFlags
+    data: "{{ 1 if vbs_enabled else 0 }}"
+    type: dword
+  register: vbs_key4
+
+- name: Flag reboot if any VBS key changed
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: vbs_key1.changed or vbs_key2.changed or vbs_key3.changed or vbs_key4.changed
+
+- name: Create VBS-Safety-Reset weekly scheduled task
+  community.windows.win_scheduled_task:
+    name: VBS-Safety-Reset
+    description: Re-disable VBS/HVCI keys after Windows updates may have re-enabled them.
+    state: present
+    enabled: "{{ vbs_weekly_reset.enabled }}"
+    username: SYSTEM
+    run_level: highest
+    hidden: true
+    triggers:
+      - type: weekly
+        days_of_week: "{{ vbs_weekly_reset.day }}"
+        start_boundary: "2026-01-01T{{ vbs_weekly_reset.time }}:00"
+      - type: boot
+        delay: PT5M
+    actions:
+      - path: powershell.exe
+        arguments: >-
+          -NoProfile -ExecutionPolicy Bypass -Command "
+          $keys = @(
+            @{Path='HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard'; Name='EnableVirtualizationBasedSecurity'},
+            @{Path='HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard'; Name='RequirePlatformSecurityFeatures'},
+            @{Path='HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity'; Name='Enabled'},
+            @{Path='HKLM:\SYSTEM\CurrentControlSet\Control\Lsa'; Name='LsaCfgFlags'}
+          );
+          foreach ($k in $keys) {
+            try { Set-ItemProperty -Path $k.Path -Name $k.Name -Value 0 -Type DWord -ErrorAction Stop }
+            catch { }
+          }"
+
+# ======================== §4.2.2 Kernel / multimedia ========================
+
+- name: Kernel — SystemResponsiveness
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile
+    name: SystemResponsiveness
+    data: "{{ system_responsiveness }}"
+    type: dword
+
+- name: Kernel — NetworkThrottlingIndex
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile
+    name: NetworkThrottlingIndex
+    data: "{{ network_throttling_index }}"
+    type: dword
+
+- name: Multimedia Games task — GPU Priority
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games
+    name: GPU Priority
+    data: 8
+    type: dword
+
+- name: Multimedia Games task — Priority
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games
+    name: Priority
+    data: 6
+    type: dword
+
+- name: Multimedia Games task — Scheduling Category
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games
+    name: Scheduling Category
+    data: High
+    type: string
+
+- name: Multimedia Games task — SFIO Priority
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games
+    name: SFIO Priority
+    data: High
+    type: string
+
+# ======================== §4.2.3 Network (Nagle OFF) ========================
+
+- name: Network — disable Nagle on all Ethernet NICs (Up + 802.3)
+  # Applies to all 802.3 adapters Up — same selection pattern as the WOL task
+  # in system_settings.yml. On the B850 Max Gaming Wifi W there's only one
+  # Ethernet port (Realtek 8125 2.5GbE). The WiFi NIC is excluded because
+  # its MediaType is 'Native 802.11', not '802.3'.
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $touched = @()
+      $adapters = Get-NetAdapter -Physical |
+        Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' }
+      if (-not $adapters) {
+        $Ansible.Result = @{ message = 'No Ethernet adapter Up'; touched = @() }
+        return
+      }
+      $desired = @{ TcpAckFrequency = 1; TCPNoDelay = 1; TcpDelAckTicks = 0 }
+      foreach ($a in $adapters) {
+        $guid = $a.InterfaceGuid
+        $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$guid"
+        $adapterChanged = $false
+        foreach ($name in $desired.Keys) {
+          $current = (Get-ItemProperty -Path $path -Name $name -ErrorAction SilentlyContinue).$name
+          if ($current -ne $desired[$name]) {
+            Set-ItemProperty -Path $path -Name $name -Value $desired[$name] -Type DWord
+            $adapterChanged = $true
+          }
+        }
+        if ($adapterChanged) { $changed = $true }
+        $touched += @{ name = $a.Name; speed = [string]$a.LinkSpeed; guid = $guid; changed = $adapterChanged }
+      }
+      $Ansible.Changed = $changed
+      $Ansible.Result = @{ touched = $touched }
+  when: nagle_disable_on_gaming_nic
+
+# ======================== §4.2.4 Storage / power ========================
+
+- name: Storage — disable hibernation
+  ansible.windows.win_powershell:
+    # On teste l'état réel (registre + présence de hiberfil.sys) plutôt que de
+    # parser la sortie localisée de `powercfg /a` : sur Win11 26200 le libellé a
+    # changé et l'ancien -match ne détectait plus l'hibernation active, laissant
+    # traîner un hiberfil.sys de ~12 Go. powercfg /h off est idempotent.
+    script: |
+      $he = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Power' -Name HibernateEnabled -ErrorAction SilentlyContinue).HibernateEnabled
+      if ($he -eq 1 -or (Test-Path 'C:\hiberfil.sys')) {
+        powercfg /h off
+        $Ansible.Changed = $true
+      }
+  when: not hibernation_enabled
+
+- name: Storage — configure fixed page file(s) — main on {{ page_file.drive | default('C:') }}
+  ansible.windows.win_powershell:
+    # Construit l'ensemble des page files voulus (principal sur le volume cible +
+    # petit page file de dump sur le volume système si system_dump_mb > 0), puis
+    # réconcilie : supprime tout page file non voulu (ex. l'ancien C: 32 Go) et
+    # crée/ajuste les voulus. La suppression d'un page file en cours d'usage ne
+    # libère l'espace qu'après redémarrage.
+    script: |
+      $changed = $false
+      $drive     = '{{ page_file.drive | default("C:") }}'.TrimEnd('\')
+      $sysDumpMb = {{ page_file.system_dump_mb | default(0) }}
+
+      # Ensemble voulu : { 'E:' = @{Init;Max}; 'C:' = @{Init;Max} }
+      $desired = @{}
+      $desired[$drive] = @{ Init = {{ page_file.initial_size_mb }}; Max = {{ page_file.max_size_mb }} }
+      if ($sysDumpMb -gt 0 -and $env:SystemDrive -ne $drive) {
+        $desired[$env:SystemDrive] = @{ Init = $sysDumpMb; Max = $sysDumpMb }
+      }
+
+      # Garde-fou : chaque volume voulu doit exister
+      foreach ($d in $desired.Keys) {
+        if (-not (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$d'" -ErrorAction SilentlyContinue)) {
+          throw "Volume cible du page file introuvable : $d"
+        }
+      }
+
+      $cs = Get-CimInstance Win32_ComputerSystem
+      if ($cs.AutomaticManagedPagefile) {
+        Set-CimInstance -InputObject $cs -Property @{ AutomaticManagedPagefile = $false } | Out-Null
+        $changed = $true
+      }
+
+      # Supprimer tout page file dont le volume n'est pas voulu (ex. ancien C: 32 Go)
+      foreach ($pf in Get-CimInstance Win32_PageFileSetting) {
+        $vol = $pf.Name.Substring(0, 2)  # 'C:' depuis 'C:\pagefile.sys'
+        if (-not $desired.ContainsKey($vol)) {
+          Remove-CimInstance -InputObject $pf
+          $changed = $true
+        }
+      }
+
+      # Créer / ajuster chaque page file voulu
+      foreach ($d in $desired.Keys) {
+        $path = "$d\pagefile.sys"
+        $want = $desired[$d]
+        $pf = Get-CimInstance Win32_PageFileSetting | Where-Object { $_.Name -eq $path }
+        if ($null -eq $pf) {
+          New-CimInstance -ClassName Win32_PageFileSetting -Property @{
+            Name = $path; InitialSize = $want.Init; MaximumSize = $want.Max
+          } | Out-Null
+          $changed = $true
+        } elseif ($pf.InitialSize -ne $want.Init -or $pf.MaximumSize -ne $want.Max) {
+          Set-CimInstance -InputObject $pf -Property @{ InitialSize = $want.Init; MaximumSize = $want.Max } | Out-Null
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  register: pagefile_cfg
+  when: page_file.strategy == 'fixed'
+
+- name: Flag reboot if page file changed
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: pagefile_cfg is defined and pagefile_cfg.changed
+
+- name: Power — disable USB selective suspend
+  ansible.windows.win_powershell:
+    script: |
+      # GUIDs documented in powercfg /q output
+      $sub  = '2a737441-1930-4402-8d77-b2bebba308a3'  # USB settings
+      $set  = '48e6b7a6-50f5-4782-a5d4-53bb8f07e226'  # USB selective suspend
+      powercfg /setacvalueindex SCHEME_CURRENT $sub $set 0
+      powercfg /setdcvalueindex SCHEME_CURRENT $sub $set 0
+      powercfg /setactive SCHEME_CURRENT
+      $Ansible.Changed = $true   # idempotent in effect; powercfg is silent
+  when: not usb_selective_suspend
+  changed_when: false
+
+- name: Power — disable PCIe Link State Power Management
+  ansible.windows.win_powershell:
+    script: |
+      $sub  = '501a4d13-42af-4429-9fd1-a8218c268e20'  # PCI Express
+      $set  = 'ee12f906-d277-404b-b6da-e5fa1a576df5'  # Link State Power Mgmt
+      powercfg /setacvalueindex SCHEME_CURRENT $sub $set 0
+      powercfg /setactive SCHEME_CURRENT
+      $Ansible.Changed = $true
+  when: pcie_link_state_power_off
+  changed_when: false
+
+# ======================== §4.2.4b Display — max refresh rate ========================
+
+- name: Display — set highest available refresh rate
+  ansible.windows.win_powershell:
+    script: |
+      Add-Type @'
+      using System;
+      using System.Runtime.InteropServices;
+      public class Display {
+        [DllImport("user32.dll")]
+        public static extern int EnumDisplaySettingsW(string device, int mode, ref DEVMODE dm);
+        [DllImport("user32.dll")]
+        public static extern int ChangeDisplaySettingsW(ref DEVMODE dm, int flags);
+        [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
+        public struct DEVMODE {
+          [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string dmDeviceName;
+          public short dmSpecVersion; public short dmDriverVersion; public short dmSize;
+          public short dmDriverExtra; public int dmFields; public int dmPositionX;
+          public int dmPositionY; public int dmDisplayOrientation; public int dmDisplayFixedOutput;
+          public short dmColor; public short dmDuplex; public short dmYResolution;
+          public short dmTTOption; public short dmCollate;
+          [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string dmFormName;
+          public short dmLogPixels; public int dmBitsPerPel; public int dmPelsWidth;
+          public int dmPelsHeight; public int dmDisplayFlags; public int dmDisplayFrequency;
+          public int dmICMMethod; public int dmICMIntent; public int dmMediaType;
+          public int dmDitherType; public int dmReserved1; public int dmReserved2;
+          public int dmPanningWidth; public int dmPanningHeight;
+        }
+      }
+      '@
+      # Get current settings
+      $current = New-Object Display+DEVMODE
+      $current.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($current)
+      [Display]::EnumDisplaySettingsW($null, -1, [ref]$current) | Out-Null
+      $currentHz = $current.dmDisplayFrequency
+
+      # Enumerate all modes at current resolution and find max Hz
+      $maxHz = $currentHz
+      $i = 0
+      $dm = New-Object Display+DEVMODE
+      $dm.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($dm)
+      while ([Display]::EnumDisplaySettingsW($null, $i, [ref]$dm)) {
+        if ($dm.dmPelsWidth -eq $current.dmPelsWidth -and
+            $dm.dmPelsHeight -eq $current.dmPelsHeight -and
+            $dm.dmBitsPerPel -eq $current.dmBitsPerPel -and
+            $dm.dmDisplayFrequency -gt $maxHz) {
+          $maxHz = $dm.dmDisplayFrequency
+        }
+        $i++
+      }
+
+      if ($maxHz -gt $currentHz) {
+        $current.dmDisplayFrequency = $maxHz
+        $current.dmFields = 0x400000  # DM_DISPLAYFREQUENCY
+        $result = [Display]::ChangeDisplaySettingsW([ref]$current, 0x01)  # CDS_UPDATEREGISTRY
+        # DISP_CHANGE_SUCCESSFUL = 0. Anything else means the mode change was
+        # rejected — don't report a success that didn't happen.
+        if ($result -ne 0) {
+          throw "ChangeDisplaySettings rejected the ${maxHz}Hz mode (code $result)"
+        }
+        $Ansible.Changed = $true
+        $Ansible.Result = "Refresh rate changed from ${currentHz}Hz to ${maxHz}Hz"
+      } else {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Already at max refresh rate: ${currentHz}Hz"
+      }
+  when: inventory_hostname == "aurelien-gaming"
+
+# ======================== §4.2.4c Display — HDR ========================
+
+- name: Display — enable HDR (Auto HDR + streaming)
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\VideoSettings'
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+  loop:
+    - { name: EnableHDRForPlayback, data: 1 }
+    - { name: AutoHDR, data: 1 }
+  loop_control:
+    label: "{{ item.name }}"
+  when: inventory_hostname == "aurelien-gaming"
+
+# ======================== §4.2.5 Game DVR / Mode ========================
+
+- name: Game DVR — HKLM policy off
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR
+    name: AllowGameDVR
+    data: "{{ 0 if game_dvr_disabled else 1 }}"
+    type: dword
+
+- name: Game DVR & Mode — HKCU (user-level)
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $entries = @(
+        @{Path='HKCU:\System\GameConfigStore';                Name='GameDVR_Enabled';         Value={{ 0 if game_dvr_disabled else 1 }}},
+        @{Path='HKCU:\Software\Microsoft\GameBar';            Name='AllowAutoGameMode';        Value={{ 1 if game_mode_enabled else 0 }}},
+        @{Path='HKCU:\Software\Microsoft\GameBar';            Name='AutoGameModeEnabled';      Value={{ 1 if game_mode_enabled else 0 }}}
+      )
+      foreach ($e in $entries) {
+        if (-not (Test-Path $e.Path)) { New-Item -Path $e.Path -Force | Out-Null }
+        $cur = (Get-ItemProperty -Path $e.Path -Name $e.Name -ErrorAction SilentlyContinue).($e.Name)
+        if ($cur -ne $e.Value) {
+          Set-ItemProperty -Path $e.Path -Name $e.Name -Value $e.Value -Type DWord
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
+
+# ======================== §4.2.6 HAGS / VRR / Auto HDR / Power Throttling ========================
+
+- name: HAGS — Hardware-accelerated GPU Scheduling on (moves GPU scheduler off CPU, lower input latency)
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers
+    name: HwSchMode
+    data: "{{ 2 if hags_enabled else 1 }}"
+    type: dword
+  register: hags_key
+
+- name: Flag reboot if HAGS changed
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: hags_key.changed
+
+- name: Power Throttling — system-wide off (prevents Win11 from throttling background launchers)
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling
+    name: PowerThrottlingOff
+    data: "{{ 1 if power_throttling_off else 0 }}"
+    type: dword
+
+- name: VRR + Auto HDR + Windowed Optimizations (HKCU per-user)
+  ansible.windows.win_powershell:
+    script: |
+      # DirectXUserGlobalSettings is a REG_SZ holding semicolon-separated
+      # key=value pairs. Win11 uses it for the three Settings → Graphics
+      # toggles: VRROptimizeEnable, AutoHDREnable, SwapEffectUpgradeEnable
+      # (the last one = "Optimizations for windowed games").
+      $path = 'HKCU:\Software\Microsoft\DirectX\UserGpuPreferences'
+      if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+      $desired = @{
+        'VRROptimizeEnable'        = '{{ 1 if vrr_optimize_enabled else 0 }}';
+        'AutoHDREnable'            = '{{ 1 if auto_hdr_enabled else 0 }}';
+        'SwapEffectUpgradeEnable'  = '1';
+      }
+      $kvs = ($desired.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ';'
+      $kvs = "$kvs;"
+      $current = (Get-ItemProperty -Path $path -Name 'DirectXUserGlobalSettings' -ErrorAction SilentlyContinue).DirectXUserGlobalSettings
+      if ($current -ne $kvs) {
+        Set-ItemProperty -Path $path -Name 'DirectXUserGlobalSettings' -Value $kvs -Type String
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
+
+# ======================== §4.2.7 Game Bar capture precision ========================
+# Keep Game Bar (overlay + Xbox-button screenshots) alive for controller-only
+# gaming. Kill ONLY the heavy bits: continuous background recording and
+# microphone capture. Game Mode stays ON (already handled in §4.2.5).
+
+- name: Game Bar capture — keep screenshots/manual recording, kill background buffer + mic
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $entries = @(
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR'; Name='AppCaptureEnabled';        Value=1},
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR'; Name='HistoricalCaptureEnabled'; Value={{ 0 if game_capture_historical_off else 1 }}},
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR'; Name='MicrophoneCaptureEnabled'; Value={{ 0 if game_capture_microphone_off else 1 }}},
+        @{Path='HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR'; Name='AudioCaptureEnabled';      Value=1}
+      )
+      foreach ($e in $entries) {
+        if (-not (Test-Path $e.Path)) { New-Item -Path $e.Path -Force | Out-Null }
+        $cur = (Get-ItemProperty -Path $e.Path -Name $e.Name -ErrorAction SilentlyContinue).($e.Name)
+        if ($cur -ne $e.Value) {
+          Set-ItemProperty -Path $e.Path -Name $e.Name -Value $e.Value -Type DWord
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
+
+# ======================== §4.2.8 Accessibility shortcuts off ========================
+# No more "Sticky Keys activated" popup when a game holds Shift, no Filter
+# Keys lag when you spam keys. Flags=506 → feature off + shortcut off.
+
+- name: Accessibility — disable Sticky/Filter/Toggle Keys shortcuts
+  ansible.windows.win_powershell:
+    script: |
+      $changed = $false
+      $entries = @(
+        @{Path='HKCU:\Control Panel\Accessibility\StickyKeys';        Name='Flags'; Value='506'},
+        @{Path='HKCU:\Control Panel\Accessibility\Keyboard Response'; Name='Flags'; Value='122'},
+        @{Path='HKCU:\Control Panel\Accessibility\ToggleKeys';        Name='Flags'; Value='58'}
+      )
+      foreach ($e in $entries) {
+        if (-not (Test-Path $e.Path)) { New-Item -Path $e.Path -Force | Out-Null }
+        $cur = (Get-ItemProperty -Path $e.Path -Name $e.Name -ErrorAction SilentlyContinue).($e.Name)
+        if ($cur -ne $e.Value) {
+          Set-ItemProperty -Path $e.Path -Name $e.Name -Value $e.Value -Type String
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ ansible_password }}"
+  when: accessibility_shortcuts_off | bool
+
+# ======================== §4.2.9 HPET disable (bare-metal only) ========================
+# 9800X3D has invariant TSC — Windows can use TSC as the OS timer, avoiding
+# the HPET round-trips that cost ~2-3% on 1% lows. On VM, hypervisor uses
+# HPET so this stays opt-in via hpet_disabled (false on VM host_vars).
+
+- name: HPET — remove useplatformclock from BCD (let Windows pick TSC)
+  ansible.windows.win_powershell:
+    script: |
+      $out = & bcdedit /enum '{current}' 2>&1 | Out-String
+      $hasPlatformClock = $out -match 'useplatformclock\s+Yes'
+      if ($hasPlatformClock) {
+        & bcdedit /deletevalue useplatformclock | Out-Null
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  when: hpet_disabled | bool
+
+- name: HPET — set tscsyncpolicy = Enhanced (better than default Default on Zen 5)
+  ansible.windows.win_powershell:
+    script: |
+      $out = & bcdedit /enum '{current}' 2>&1 | Out-String
+      $hasEnhanced = $out -match 'tscsyncpolicy\s+Enhanced'
+      if (-not $hasEnhanced) {
+        & bcdedit /set tscsyncpolicy Enhanced | Out-Null
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  when: hpet_disabled | bool

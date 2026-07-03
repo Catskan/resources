@@ -1,0 +1,7 @@
+---
+- name: Apply Firefox policies
+  ansible.builtin.include_tasks:
+    file: firefox_policies.yml
+    apply:
+      tags: [firefox]
+  tags: [firefox]

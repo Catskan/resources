@@ -1,0 +1,7 @@
+# NTLM chiffre la charge utile au niveau message même sur HTTP (5985),
+# donc le mot de passe local ne transite plus en clair sur le LAN.
+# La VM w11-vm-aurel override en HTTPS/5986 dans son host_vars.
+ansible_winrm_transport: ntlm
+ansible_port: 5985
+ansible_winrm_scheme: http
+ansible_connection: winrm

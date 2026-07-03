@@ -1,6 +1,0 @@
-# Lookup KeePass → adapte le path 'ansible/aurelien-gaming/local_user' à
-# l'emplacement réel de l'entrée dans Aurel-vault.kdbx.
-ansible_password: "{{ lookup('viczem.keepass.keepass', 'Local/Aurel-Gaming', 'password') }}"
-ansible_host: 192.168.1.4
-ansible_user: "{{ lookup('viczem.keepass.keepass', 'Local/Aurel-Gaming', 'username') }}"
-ansible_hostname: "Aurel-Gaming"

@@ -1,0 +1,250 @@
+# ============================================================================
+# Generic Win11 gaming optim vars — applied to ALL windows_hosts
+# (Phase 0 refactor — moved from host_vars/aurelien-gaming/main.yml)
+# Host-specific overrides go in inventory/host_vars/<host>/main.yml
+# ============================================================================
+
+# --- Defender (defender.yml) ---
+defender_exclusion_paths:
+  - 'C:\Program Files (x86)\Steam\steamapps'
+  - 'C:\Program Files\Epic Games'
+  - 'C:\Program Files (x86)\GOG Galaxy\Games'
+  - 'C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games'
+  - 'C:\Program Files\WindowsApps'
+  - 'C:\XboxGames'
+  - 'C:\Program Files\ModifiableWindowsApps'
+  - 'M:\'
+  - 'M:\XboxGames'
+defender_exclusion_processes:
+  - steam.exe
+  - EpicGamesLauncher.exe
+  - GalaxyClient.exe
+  - UbisoftConnect.exe
+  - gamingservices.exe
+  - XboxAppServices.exe
+  - GameBar.exe
+defender_exclusion_extensions:
+  - .dxvk-cache
+  - .cache
+  - .pak
+defender_maps_reporting: Disabled
+defender_submit_samples: NeverSend
+
+# --- VBS / HVCI (gaming_optim.yml) ---
+vbs_enabled: false
+vbs_weekly_reset:
+  enabled: true
+  day: sunday # monday, tuesday, wednesday, thursday, friday, saturday, sunday
+  time: "04:00"
+
+# --- Kernel & multimedia (gaming_optim.yml) ---
+system_responsiveness: 0
+network_throttling_index: 0xFFFFFFFF
+nagle_disable_on_gaming_nic: true
+
+# --- Game DVR / Mode (gaming_optim.yml) ---
+game_dvr_disabled: true
+game_mode_enabled: true
+
+# --- Deep optim toggles (gaming_optim.yml §4.2.6-§4.2.9) ---
+# HAGS: GPU does its own scheduling, lower input latency. Win11 25H2 standard.
+hags_enabled: true
+# Power Throttling: Win11 silently throttles background apps incl. launchers.
+power_throttling_off: true
+# VRR + Auto HDR: per-user DirectX global settings.
+vrr_optimize_enabled: true
+auto_hdr_enabled: true
+# Game Bar capture: keep manual screenshots (controller Xbox-button) alive,
+# kill only the heavy background buffer + mic capture.
+game_capture_historical_off: true
+game_capture_microphone_off: true
+# Accessibility shortcuts: no Sticky/Filter/Toggle Keys popup mid-game.
+accessibility_shortcuts_off: true
+# HPET via bcdedit — bare-metal only (VM hypervisor needs HPET). 2-3% on
+# X3D 1% lows. Per-host override on the VM (set to false).
+hpet_disabled: true
+
+# --- Xbox Mode / Full Screen Experience (xbox_mode.yml) ---
+# Boot into the Xbox app as console-like shell. Toggleable: flip to false
+# in host_vars/aurelien-gaming/main.yml to revert to classic desktop
+# (next `make windows ARGS='--tags xbox_mode'` removes DeviceForm +
+# clears GamingHomeApp). Even when enabled, Win key + Xbox-button menu
+# both switch back to desktop in 1 keypress — non-destructive UX.
+xbox_mode_enabled: true
+xbox_games_directory: 'M:\XboxGames'
+
+# --- Game launcher install paths (softwares_winget.yml / launcher configs) ---
+games_directory: 'M:\UbisoftGames'
+steam_library_directory: 'M:\SteamLibrary'
+epic_games_directory: 'M:\EpicGames'
+gog_games_directory: 'M:\GOGGames'
+ea_games_directory: 'M:\EAGames'
+rockstar_games_directory: 'M:\RockstarGames'
+
+# --- RDP (system_settings.yml) ---
+remote_desktop_port: "3535"
+
+# --- Windows Update Active Hours (system_settings.yml) ---
+# 24h-clock hours. No update install pop-up during these hours; Windows
+# reschedules to outside the window. 18h max span enforced by Win11.
+windows_update_active_hours:
+  start: 10
+  end: 23
+
+# --- Remote access (sunshine_setup.yml, rustdesk_setup.yml) ---
+# Both toggleable independently. LAN-only firewall scope (profile=private)
+# — WAN later via Tailscale or similar VPN, NEVER expose these ports to
+# the open internet.
+sunshine_enabled: true
+rustdesk_enabled: true
+
+# --- RGB control (openrgb_setup.yml) ---
+# Set & forget: OpenRGB launches minimized at startup, user configures
+# their RGB profile once manually, OpenRGB maintains the SMBus claim so
+# devices don't revert to firmware rainbow. ~20 Mo RAM resident, 0% CPU.
+openrgb_enabled: true
+
+# --- Sunshine config (sunshine.conf.j2) ---
+# Targets Radeon RX 9070 XT + 9800X3D. The GPU is AMD, so the encoder is
+# AMF/VCE (amfvce), NOT NVENC — the RDNA4 media engine does HEVC/AV1
+# encode in hardware. hevc_mode 2 prefers HEVC (better quality than H.264
+# at the same bitrate). Client FPS is negotiated by Moonlight, not capped
+# server-side (Apple TV 4K = 60Hz, iPad Pro M = 120Hz, Steam Deck = 90Hz).
+sunshine_encoder: amfvce # nvenc | qsv | amfvce | software
+sunshine_hevc_mode: 2 # 0=auto, 1=h264-only, 2=prefer HEVC, 3=force HEVC
+sunshine_lan_only_web_ui: true # restrict Web UI to LAN clients
+sunshine_upnp: false # never open ports to WAN automatically
+sunshine_log_level: warning # debug | info | warning | error
+# Pre-defined apps shown in every Moonlight client's library. "Desktop"
+# is auto-added by Sunshine. The Steam + Xbox entries launch the
+# respective shells (full-screen-friendly for controller use).
+sunshine_apps:
+  - name: "Steam Big Picture"
+    cmd: "steam://open/bigpicture"
+    image_path: ""
+  - name: "Xbox app (FSE)"
+    cmd: 'shell:AppsFolder\Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App'
+    image_path: ""
+
+# --- RustDesk config (rustdesk_setup.yml / RustDesk2.toml.j2) ---
+# Direct IP LAN mode = no relay, fastest path. Permanent password from
+# KeePass (rustdesk_permanent_password) is the only auth. Whitelist
+# optional but recommended on a multi-VLAN home network.
+rustdesk_version: "1.3.9" # GitHub release tag pulled by rustdesk_setup.yml
+rustdesk_direct_access: true
+rustdesk_lan_discovery: true # broadcast for autodiscovery on LAN
+# Empty list = accept connections from any LAN IP. Otherwise list of
+# IPs / CIDRs (e.g. ["192.168.1.0/24"]). Strongly recommended once you
+# know your client devices' IPs.
+rustdesk_whitelist: []
+
+# --- AppX bloatware (console_ux.yml) ---
+# Unified list (Phase 3 P3d — softwares_uninstall.yml deleted). Removing
+# AppX is sémantiquement debloat console UX, not a software install
+# workflow, so the loop lives in console_ux.yml.
+appx_bloatware:
+  # --- Core Win11 debloat ---
+  - Microsoft.549981C3F5F10 # Cortana
+  - Microsoft.BingSearch
+  - Microsoft.MicrosoftStickyNotes
+  - Microsoft.MixedReality.Portal
+  - Microsoft.Wallet
+  - Microsoft.WindowsCommunicationsApps # Mail + Calendar
+  - MicrosoftCorporationII.QuickAssist
+  - Microsoft.OutlookForWindows
+  - Microsoft.Windows.DevHome
+  - 5319275A.WhatsAppDesktop # WhatsApp from MS Store
+  - MSTeams # New Teams (work/school) — distinct from legacy MicrosoftTeams below
+  - Microsoft.WindowsCalculator
+  - Microsoft.WindowsSoundRecorder
+  - Microsoft.WindowsNotepad
+
+  # --- Migrated from softwares_uninstall.yml ---
+  - Microsoft.WindowsMaps
+  - Microsoft.ScreenSketch
+  - Microsoft.MicrosoftOfficeHub
+  - Microsoft.GetHelp
+  - Microsoft.ZuneMusic
+  - Microsoft.ZuneVideo
+  - Microsoft.WindowsCamera
+  - Microsoft.YourPhone
+  - Microsoft.WindowsAlarms
+  - Microsoft.BingWeather
+  - Microsoft.Todos
+  - Microsoft.BingNews
+  - Microsoft.People
+  - Clipchamp.Clipchamp
+  - MicrosoftTeams # Legacy consumer Teams (distinct from MSTeams above)
+  - SpotifyAB.SpotifyMusic
+  - Microsoft.MicrosoftSolitaireCollection
+  - Microsoft.Getstarted
+  - Microsoft.WindowsFeedbackHub
+
+# --- Console UX policies (console_ux.yml) ---
+cortana_disabled: true
+bing_search_disabled: true
+widgets_disabled: true
+onedrive_uninstall: true
+edge_neutralize: true
+notifications_globally_off: true
+background_apps_force_deny: true
+recommended_files_off: true
+startup_apps_disable:
+  - MSEdgeUpdate
+  - "Adobe ARM"
+  - iTunesHelper
+  - iCloudDrive
+  - Cortana
+telemetry_minimum: true
+firefox_set_default: true
+
+# --- Drivers (drivers.yml) — generic defaults, overridable per host ---
+amd_gpu_install: false
+
+# --- winget packages (softwares_winget.yml) ---
+# Apps installed from the default winget source. Hardware drivers (AMD
+# chipset, AMD GPU Adrenalin) are NOT here — they're not published to
+# winget; drivers.yml handles them via direct_url + silent install.
+winget_packages:
+  # --- Game launchers ---
+  - Valve.Steam
+  - EpicGames.EpicGamesLauncher
+  # Ubisoft.Connect moved to msstore_packages (winget manifest has broken hash)
+  - GOG.Galaxy
+  - ElectronicArts.EADesktop
+  - RockstarGames.Launcher
+
+  # --- User apps ---
+  - Mozilla.Firefox
+  - Notepad++.Notepad++
+  - VideoLAN.VLC
+  - CrystalDewWorld.CrystalDiskInfo
+  - Synology.DriveClient
+  - 7zip.7zip
+  - Microsoft.WindowsTerminal
+
+  - Microsoft.PowerShell
+
+  # --- Hardware tooling ---
+  # Afterburner removed from common list — conditional install in drivers.yml
+  # (only on NVIDIA GPUs, redundant with Adrenalin on AMD)
+
+  # --- Password manager ---
+  - KeePassXCTeam.KeePassXC # Vault opened from NAS via keepassxc_setup.yml
+
+  # --- Dev / scripting ---
+  - Python.Python.3.13 # No gaming-perf impact; useful for local scripts
+
+  # --- Remote access ---
+  - LizardByte.Sunshine # Game streaming — Moonlight clients (iPad, Apple TV, Steam Deck) via sunshine_setup.yml
+  # RustDesk removed from winget catalogue — installed via direct download in rustdesk_setup.yml
+  # - RustDesk.RustDesk
+
+  # --- RGB control ---
+  - OpenRGB.OpenRGB # Set & forget RGB — startup shortcut via openrgb_setup.yml
+
+# Apps that aren't in the winget catalogue but exist in MS Store — looped
+# with --source msstore by softwares_winget.yml.
+msstore_packages:
+  - XPDP2QW12DFSFK # Ubisoft Connect (winget source has broken installer hash)
+  - 9NBLGGH30XJ3 # Xbox Accessories (matches the legacy XboxAccessoires_id var)

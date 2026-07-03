@@ -24,12 +24,12 @@ help:
 	@echo ""
 	@echo "Tags : passe-les en variable, ex :"
 	@echo "  make windows ARGS='--tags rdp,wol'"
-	@echo "  make windows ARGS='--skip-tags softwares_download'"
+	@echo "  make windows ARGS='--skip-tags softwares_winget'"
 
 ARGS ?=
 
 test-keepass:
-	./scripts/run.sh ansible-playbook playbooks/test_keepass.yml
+	./scripts/run.sh ansible-playbook playbooks/test_keepass.yml $(ARGS)
 
 verify-windows:
 	./scripts/run.sh ansible-playbook playbooks/verify_gaming_optim.yml $(ARGS)
@@ -65,5 +65,5 @@ check-linux:
 	./scripts/run.sh ansible-playbook main_linux_playbook.yml --check --diff $(ARGS)
 
 lint:
-	yamllint -d relaxed .
-	ansible-lint main_*_playbook.yml
+	yamllint .
+	ansible-lint main_*.yml

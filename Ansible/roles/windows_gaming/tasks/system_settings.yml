@@ -1,0 +1,325 @@
+---
+##########################################Aurel-Gaming##########################################
+
+# ── Display language: English (US) with French keyboard ──────────────
+- name: Install English (US) language pack
+  ansible.windows.win_powershell:
+    script: |
+      $installed = Get-WindowsCapability -Online -Name 'Language.Basic~~~en-US~*' |
+                   Where-Object State -eq 'Installed'
+      if (-not $installed) {
+        Install-Language en-US -CopyToSettings
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  register: lang_install
+
+- name: Set display language to English (US) and keep FR keyboard
+  ansible.windows.win_powershell:
+    script: |
+      $override = Get-WinUILanguageOverride
+      $locale = Get-WinSystemLocale
+      $list = Get-WinUserLanguageList
+      $hasEnKeyboard = $list | Where-Object {
+        $_.InputMethodTips -contains '0409:00000409'
+      }
+
+      $needsChange = (
+        -not $override -or
+        $override.Name -ne 'en-US' -or
+        $locale.Name -ne 'en-US' -or
+        $hasEnKeyboard
+      )
+
+      if ($needsChange) {
+        Set-WinUILanguageOverride -Language en-US
+        Set-WinSystemLocale -SystemLocale en-US
+        Set-Culture -CultureInfo en-US
+
+        $newList = New-WinUserLanguageList en-US
+        $newList[0].InputMethodTips.Clear()
+        $newList[0].InputMethodTips.Add('040c:0000040c')  # French AZERTY
+        Set-WinUserLanguageList $newList -Force
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  register: lang_set
+
+- name: Reboot to apply language change
+  ansible.windows.win_reboot:
+    reboot_timeout: 300
+    test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+  when: lang_install.changed or lang_set.changed
+
+- name: Ensure WinRM starts when the system has settled and is ready to work reliably
+  ansible.windows.win_service:
+    name: WinRM
+    start_mode: delayed
+
+# Power plan is set at the END of drivers.yml (Balanced).
+
+# Set RDP
+- name: Configure RDP (connection, auth, client drives, port, firewall)
+  tags: [rdp]
+  block:
+    - name: Allow RDP TSConnection
+      ansible.windows.win_regedit:
+        path: HKLM:\System\CurrentControlSet\Control\Terminal Server
+        name: fDenyTSConnections
+        data: 0
+        type: dword
+    - name: Allow UserAuthentication
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+        name: UserAuthentication
+        data: 1
+        type: dword
+    - name: Allow Client Drives
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+        name: fAutoClientDrives
+        data: 1
+        type: dword
+    - name: Change RDP Port
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+        name: PortNumber
+        data: "{{ remote_desktop_port }}"
+        type: dword
+    - name: Add user to Remote Desktop Group
+      ansible.windows.win_group_membership:
+        name: Remote Desktop Users
+        members:
+          - "{{ user_name }}"
+        state: present
+    - name: Enable RDP inside the Firewall
+      community.windows.win_firewall_rule:
+        name: Remote Desktop
+        localport: "{{ remote_desktop_port }}"
+        action: allow
+        direction: in
+        protocol: tcp
+        profiles: private
+        state: present
+        enabled: yes
+
+# Windows enforces a 42-day default maximum password age. On this headless
+# box the local account password silently expires, which then breaks WinRM
+# auth *and* AdminAutoLogon. Pin the account to "never expires" and lift the
+# machine-wide max age so it can't recur.
+- name: Local account — password never expires
+  ansible.windows.win_powershell:
+    script: |
+      $u = Get-LocalUser -Name '{{ user_name }}'
+      if ($u.PasswordExpires -ne $null) {
+        Set-LocalUser -Name '{{ user_name }}' -PasswordNeverExpires $true
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Disable machine-wide maximum password age
+  ansible.windows.win_powershell:
+    script: |
+      # Select-String returns $null when the label is localized differently
+      # (e.g. before the en-US reboot). Guard against a null .ToString() crash.
+      $line = net accounts | Select-String 'Maximum password age'
+      if (-not $line -or $line.ToString() -notmatch 'Unlimited|Illimit') {
+        net accounts /maxpwage:unlimited | Out-Null
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Configure AdminAutoLogon (bootstrap — 1st install)
+  tags: [bootstrap]
+  block:
+    - name: Enable AdminAutoLogOn
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        name: "AutoAdminLogon"
+        data: "1"
+        type: string
+
+    - name: Set Username
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        name: "DefaultUserName"
+        data: "{{ user_name }}"
+        type: string
+
+    - name: Set Password
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        name: "DefaultPassword"
+        data: "{{ remote_local_user_name_password }}"
+        type: string
+      no_log: true
+
+##########################################Change hostname##########################################
+- name: Change W11 VM Aurel hostname
+  ansible.windows.win_hostname:
+    name: "{{ w11_vm_computer_hostname }}"
+  register: old_hostname
+  when: inventory_hostname == "w11-vm-aurel"
+
+- name: Reboot W11-VM-Aurel
+  ansible.windows.win_reboot:
+    test_command: 'exit (Get-Service -Name WinRM).Status -ne "Running"'
+  when: inventory_hostname == "w11-vm-aurel" and old_hostname is changed
+
+- name: Share mapped drives between elevated and normal sessions
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+    name: EnableLinkedConnections
+    data: 1
+    type: dword
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: Save NAS credentials in Credential Manager
+  community.windows.win_credential:
+    name: "{{ nas_url }}"
+    type: domain_password
+    username: "{{ nas_username }}"
+    secret: "{{ nas_password }}"
+    state: present
+    persistence: local
+  vars:
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: "{{ ansible_user }}"
+    ansible_become_pass: "{{ ansible_password }}"
+  no_log: true
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: Map NAS drives (persistent — visible after logon)
+  include_tasks: nas_drive_map.yml
+  loop: "{{ nas_mapped_drives }}"
+  loop_control:
+    label: "{{ item.letter }}:"
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: Save Microsoft Account Credentials to Credentials Store
+  block:
+    - name: Save the network credentials required for the mapped drive
+      community.windows.win_credential:
+        name: "MicrosoftAccount:user={{ microsoft_account_email }}"
+        type: generic_password
+        username: "{{ microsoft_account_email }}"
+        secret: "{{ microsoft_account_password }}"
+        state: present
+        persistence: local
+  vars:
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: "{{ ansible_user }}"
+    ansible_become_pass: "{{ ansible_password }}"
+  no_log: true
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: Enable Wake-on-LAN (Magic Packet) on all wired Ethernet adapters
+  tags: [wol]
+  ansible.windows.win_powershell:
+    # Idempotency: capture WakeOnMagicPacket state before and after the
+    # Enable call, compare as strings (works whether the cmdlet returns
+    # an enum object or an int). Only flag changed if the value moved.
+    # Virtual NICs (UTM RTL8139, etc.) sometimes report success without
+    # actual state change — this guard avoids spurious "changed" reports.
+    script: |
+      $changed = $false
+      $adapters = Get-NetAdapter -Physical |
+        Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' }
+      foreach ($a in $adapters) {
+        try {
+          $before = "$((Get-NetAdapterPowerManagement -Name $a.Name -ErrorAction SilentlyContinue).WakeOnMagicPacket)"
+          Enable-NetAdapterPowerManagement -Name $a.Name -WakeOnMagicPacket -ErrorAction Stop
+          $after  = "$((Get-NetAdapterPowerManagement -Name $a.Name -ErrorAction SilentlyContinue).WakeOnMagicPacket)"
+          if ($before -ne $after) { $changed = $true }
+        } catch {}
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: "{{ ansible_user }}"
+    ansible_become_pass: "{{ ansible_password }}"
+#     - name: Create a mapped drive that requires authentication
+#       win_mapped_drive:
+#         letter: N
+#         path: 'https://nas.mapn.fr:8171/Aurelien'
+#         state: present
+#     vars:
+#       # become is required to save and retrieve the credentials in the tasks
+#       ansible_become: yes
+#       ansible_become_method: runas
+#       ansible_become_user: '{{ ansible_user }}'
+#       ansible_become_pass: '{{ ansible_password }}'
+
+- name: Disable Nahimic Service (no-op if Asus audio driver not installed)
+  ansible.windows.win_service:
+    name: NahimicService
+    start_mode: disabled
+    state: stopped
+  failed_when: false
+
+# VSS access control — grant snapshot/backup rights to SYSTEM and the
+# interactive user so Restore Point / wbAdmin / 3rd-party snapshot tools
+# can capture volumes that hold redirected user folders on M:\.
+- name: Grant VSS access to NT Authority\System
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\VSS\VssAccessControl
+    name: 'NT Authority\System'
+    data: 1
+    type: dword
+
+- name: Grant VSS access to interactive user
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\VSS\VssAccessControl
+    name: '.\{{ ansible_user }}'
+    data: 1
+    type: dword
+
+##########################################Install all Windows Updates##########################################
+# - name: Unregister Scheduled job if one exists
+#   win_shell: 'Start-Process powershell.exe -ArgumentList "-Command  `"&{`Unregister-ScheduledJob  -name ansible-win-updates;}`"" -Wait -verb RunAs'
+- name: Turn off UAC
+  tags: [bootstrap]
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\policies\system
+    name: EnableLUA
+    data: 0
+    type: dword
+    state: present
+  register: output_uac
+
+- name: Reboot to apply UAC Turned off
+  tags: [bootstrap]
+  ansible.windows.win_reboot:
+  when: output_uac is changed
+
+# Windows Update Active Hours — no reboot/install pop-up during your typical
+# gaming window. The reg keys live under WindowsUpdate\UX\Settings. Values
+# are 24h-clock integers (hour-only, not minutes). ActiveHoursMaxRange=18
+# allows the manual range to span 18h (Win11 default is 18).
+- name: Windows Update Active Hours — start
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings
+    name: ActiveHoursStart
+    data: "{{ windows_update_active_hours.start }}"
+    type: dword
+
+- name: Windows Update Active Hours — end
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings
+    name: ActiveHoursEnd
+    data: "{{ windows_update_active_hours.end }}"
+    type: dword
+
+- name: Windows Update Active Hours — disable auto-detection (use manual range)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings
+    name: SmartActiveHoursState
+    data: 0
+    type: dword

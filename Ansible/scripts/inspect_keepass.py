@@ -42,8 +42,10 @@ def load_expected_paths() -> list[dict]:
 
 
 def open_kdbx() -> PyKeePass:
+    # Défaut aligné sur run.sh et keepass_apply_autotype.py : le partage SMB
+    # `home` du NAS Synology monté sous /Volumes/home. Override via KEEPASS_LOCATION.
     location = os.environ.get(
-        "KEEPASS_LOCATION", str(Path.home() / "Vault" / "Aurel-vault.kdbx")
+        "KEEPASS_LOCATION", "/Volumes/home/Drive/Vault/Aurel-vault.kdbx"
     )
     if not Path(location).is_file():
         print(f"KeePass DB introuvable : {location}", file=sys.stderr)

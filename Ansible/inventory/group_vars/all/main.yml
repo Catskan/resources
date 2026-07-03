@@ -1,0 +1,10 @@
+# Pont env -> variables Ansible pour le lookup viczem.keepass.keepass.
+# Le plugin lit `keepass_dbx` et `keepass_psw` comme variables ;
+# scripts/run.sh exporte KEEPASS_LOCATION et KEEPASS_PSW au lancement.
+keepass_dbx: "{{ lookup('env', 'KEEPASS_LOCATION') }}"
+keepass_psw: "{{ lookup('env', 'KEEPASS_PSW') }}"
+
+firefox_extension_id_videoDownloadHelper: "{b9db16a4-6edc-47ec-a1f4-b86292ed211d}"
+firefox_extension_id_uBlockOrigin: "uBlock0@raymondhill.net"
+firefox_extension_id_downThemAll: "{DDC359D1-844A-42a7-9AA1-88A850A938A8}"
+firefox_extension_id_keepassxc: "keepassxc-browser@keepassxc.org"

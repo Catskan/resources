@@ -1,0 +1,6 @@
+---
+offline: true
+
+exclude_paths:
+  - inventory/host_vars
+  - inventory/group_vars

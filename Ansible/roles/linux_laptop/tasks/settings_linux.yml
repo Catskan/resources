@@ -1,0 +1,55 @@
+---
+- name: Add mem_sleep_default=deep to the systemd-boot entry (XPS 7590)
+  ansible.builtin.replace:
+    path: /boot/loader/entries/arch.conf
+    # Negative lookahead: only append when the option is not already present,
+    # so the kernel cmdline does not grow on every run.
+    regexp: "^(options(?!.*mem_sleep_default).*)$"
+    replace: '\1 mem_sleep_default=deep'
+  vars:
+    ansible_become: true
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Enable service bluetooth
+  ansible.builtin.systemd:
+    name: bluetooth
+    enabled: true
+  vars:
+    ansible_become: true
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Enable service CUPS (Printer)
+  ansible.builtin.systemd:
+    name: cups
+    enabled: true
+  vars:
+    ansible_become: true
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Download DashToDock GNOME extension
+  ansible.builtin.get_url:
+    url: https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v75.shell-extension.zip
+    dest: /home/aurel/Downloads/dash-to-dock.shell-extension.zip
+    mode: "0644"
+
+- name: Install DashToDock (idempotent — skips if already extracted)
+  ansible.builtin.script: "{{ role_path }}/scripts/install_dashtodock.sh"
+  args:
+    creates: /home/aurel/.local/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com
+
+- name: Ensure the docker group exists
+  ansible.builtin.group:
+    name: docker
+    state: present
+  vars:
+    ansible_become: true
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Add aurel to the docker group
+  ansible.builtin.user:
+    name: aurel
+    groups: docker
+    append: true
+  vars:
+    ansible_become: true
+    ansible_become_pass: "{{ sudo_pwd }}"

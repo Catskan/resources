@@ -9,6 +9,12 @@
 
 set -euo pipefail
 
+if [[ $# -eq 0 ]]; then
+  echo "Usage: $0 <ansible-binary> [args…]" >&2
+  echo "  ex: $0 ansible-playbook main_windows_playbook.yml" >&2
+  exit 64
+fi
+
 # macOS fork() safety — sans ça, les workers Ansible crashent avec
 # "A worker was found in a dead state" à cause des frameworks Objective-C
 # qui refusent de fork() côté Python 3.x.

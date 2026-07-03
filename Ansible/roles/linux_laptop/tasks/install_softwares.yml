@@ -1,0 +1,213 @@
+---
+- name: Upgrade System (pacman -Syu)
+  community.general.pacman:
+    update_cache: true
+    upgrade: true
+  register: upgrade_summarized
+  vars:
+    ansible_become: yes
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Show upgraded packages
+  ansible.builtin.debug:
+    var: upgrade_summarized.packages
+
+- name: Install OpenVPN package for NetworkManager from pacman
+  community.general.pacman:
+    name: networkmanager-openvpn
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Install Gnome Modules
+  community.general.pacman:
+    name:
+      - bluez
+      - gnome-bluetooth
+      - gnome-shell
+      - gnome-control-center
+      - ntfs-3g
+      - cups
+      - system-config-printer
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+# - name: Install Gnome Bluetooth Nautilus
+#   community.general.pacman:
+#     name: nautlis-bluetooth
+#     state: present
+#     executable: yay
+#     extra_args: --answerdiff None --answerclean None
+#   vars:
+#     ansible_become: yes
+#     ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Install package Unzip from pacman
+  community.general.pacman:
+    name: unzip
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Install package LibreOffice Writer
+  community.general.pacman:
+    name: libreoffice-writer
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Install package CUPS
+  community.general.pacman:
+    name: cups
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Install package Virtualbox from pacman
+  community.general.pacman:
+    name:
+      - virtualbox-host-modules-arch
+      - virtualbox
+      - virtualbox-guest-iso
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+# - name: Untar i8ksutils
+#   ansible.builtin.command:
+#     argv:
+#       - /bin/tar
+#       - xzf
+#       - /home/aurel/Download_temp/i8kutils.tar.gz
+#       - -C
+#       - /home/aurel/Download_temp
+#   register: extract
+# - debug:
+#     var: extract.stdout
+
+# - name: makePKG i8ksutils
+#   ansible.builtin.command:
+#     argv:
+#       - /usr/bin/makepkg
+#       - -s
+#       - -f
+#     chdir: /home/aurel/Download_temp/i8kutils
+#   register: makepkg
+# - debug:
+#     var: makepkg.stdout_lines
+
+# - name: makePKG i8ksutils
+#   ansible.builtin.command:
+#     argv:
+#       - /usr/bin/makepkg
+#       - -i
+#     chdir: /home/aurel/Download_temp/i8kutils
+#   register: makepkginstall
+# - debug:
+#     var: makepkginstall.stdout_lines
+
+# - name: Install package i8kutils from pacman
+#   community.general.pacman:
+#     name: /home/aurel/Download_temp/i8kutils
+#     state: present
+#   vars:
+#     ansible_become: yes
+#     ansible_become_pass: "{{ sudo_pwd }}"
+- name: Install Firefox & Thunderbird
+  community.general.pacman:
+    name:
+      - firefox
+      - thunderbird
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_password: "{{ sudo_pwd }}"
+
+- name: Install Remmina
+  community.general.pacman:
+    name: remmina
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_pass: "{{ sudo_pwd }}"
+
+- name: Download VideoDownloadHelper Companion
+  ansible.builtin.get_url:
+    url: https://github.com/mi-g/vdhcoapp/releases/download/v1.6.3/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz
+    dest: /home/aurel/Downloads
+
+- name: Untar VideoDownloadHelper Companion
+  ansible.builtin.command: /bin/tar -xf /home/aurel/Downloads/net.downloadhelper.coapp-1.6.3-1_amd64.tar.gz -C /usr/local
+  args:
+    creates: /usr/local/net.downloadhelper.coapp-1.6.3
+  vars:
+    ansible_become: yes
+    ansible_become_password: "{{ sudo_pwd }}"
+
+- name: Install VideoDownloadHelper Companion
+  ansible.builtin.command: /usr/local/net.downloadhelper.coapp-1.6.3/bin/net.downloadhelper.coapp-linux-64 install --system
+  vars:
+    ansible_become: yes
+    ansible_become_password: "{{ sudo_pwd }}"
+
+# Bitwarden retiré : l'utilisateur est passé à KeePassXC (vault sur le NAS).
+
+- name: Install Dev softwares
+  community.general.pacman:
+    name: git
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_password: "{{ sudo_pwd }}"
+
+- name: Install VsCodium
+  community.general.pacman:
+    name: vscodium-bin
+    state: present
+    executable: yay
+  # vars:
+  #   ansible_become: yes
+  #   ansible_become_password: "{{ sudo_pwd }}"
+
+- name: Install DevOPS tools
+  community.general.pacman:
+    name:
+      - docker
+      - docker-buildx
+      - vagrant
+    state: present
+  vars:
+    ansible_become: yes
+    ansible_become_password: "{{ sudo_pwd }}"
+
+- name: Install Vagrant Environment variables plugin
+  # Sans become : les plugins Vagrant s'installent dans ~/.vagrant.d de
+  # l'utilisateur, pas en root. Idempotent via la liste des plugins installés.
+  ansible.builtin.command: vagrant plugin install vagrant-env
+  register: vagrant_plugin
+  changed_when: "'Installed the plugin' in vagrant_plugin.stdout"
+  failed_when:
+    - vagrant_plugin.rc != 0
+    - "'already installed' not in vagrant_plugin.stdout"
+# - name: Install Synology Drive
+#   ansible.builtin.command:
+#     argv:
+#       - /usr/bin/paru
+#       - -Sy
+#       - synology-drive
+#   register: synologyDrive
+# - debug:
+#     var: synologyDrive.stdout
+
+# - name: Install Synology Drive
+#   community.general.pacman:
+#     name: synology-drive
+#     state: present
+#     executable: yay

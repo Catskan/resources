@@ -1,0 +1,81 @@
+---
+# Configure KeePassXC on aurelien-gaming:
+#   1) Deploy %APPDATA%\KeePassXC\keepassxc.ini pointing the vault at the
+#      NAS UNC path (single source of truth, no local copy).
+#   2) Create a Startup shortcut so KeePassXC launches at login and sits
+#      in the tray with the vault already open.
+#   3) Add a Defender exclusion for the .kdbx (network share scanning
+#      would slow every save).
+#
+# Assumes KeePassXC has been installed by softwares_winget.yml
+# (KeePassXCTeam.KeePassXC in winget_packages). Gated on aurelien-gaming
+# because the vault UNC + NAS credentials only exist on bare-metal.
+
+- name: KeePassXC — ensure config directory exists
+  ansible.windows.win_file:
+    path: '{{ ansible_env.APPDATA }}\KeePassXC'
+    state: directory
+
+- name: KeePassXC — deploy keepassxc.ini (vault path + tray + Ctrl+Shift+V autotype)
+  ansible.windows.win_template:
+    src: keepassxc.ini.j2
+    dest: '{{ ansible_env.APPDATA }}\KeePassXC\keepassxc.ini'
+    # KeePassXC rewrites its own ini on close; force:true would create a
+    # permanent diff and clobber the user's manual UI settings each run.
+    force: false
+
+- name: KeePassXC — locate installed binary
+  ansible.windows.win_powershell:
+    script: |
+      $candidates = @(
+        "$env:ProgramFiles\KeePassXC\KeePassXC.exe",
+        "${env:ProgramFiles(x86)}\KeePassXC\KeePassXC.exe",
+        "$env:LOCALAPPDATA\Programs\KeePassXC\KeePassXC.exe"
+      )
+      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+      if (-not $exe) { throw "KeePassXC.exe not found — softwares_winget.yml didn't install KeePassXCTeam.KeePassXC?" }
+      $Ansible.Result = @{ path = $exe }
+      $Ansible.Changed = $false
+  register: keepassxc_exe
+  changed_when: false
+  # Read-only probe — must run in --check too, otherwise the startup script
+  # below references keepassxc_exe.result.path on a skipped register.
+  check_mode: false
+
+- name: KeePassXC — ensure scripts directory exists
+  ansible.windows.win_file:
+    path: 'C:\ProgramData\scripts'
+    state: directory
+
+- name: KeePassXC — deploy startup script (waits for NAS before launching)
+  ansible.windows.win_copy:
+    content: |
+      @echo off
+      :wait
+      if not exist "{{ keepassxc_vault_unc }}" (
+        timeout /t 5 /nobreak >nul
+        goto wait
+      )
+      start "" "{{ keepassxc_exe.result.path }}"
+    dest: 'C:\ProgramData\scripts\start-keepassxc.cmd'
+
+- name: KeePassXC — startup shortcut (launches at user login, minimized to tray)
+  community.windows.win_shortcut:
+    src: 'C:\ProgramData\scripts\start-keepassxc.cmd'
+    dest: '{{ ansible_env.APPDATA }}\Microsoft\Windows\Start Menu\Programs\Startup\KeePassXC.lnk'
+    description: KeePassXC vault auto-open at login
+    windowstyle: minimized
+
+- name: Defender — exclude the .kdbx vault from realtime scan (SMB latency)
+  ansible.windows.win_powershell:
+    parameters:
+      path: "{{ keepassxc_vault_unc }}"
+    script: |
+      param([string]$path)
+      $current = (Get-MpPreference).ExclusionPath
+      if ($current -notcontains $path) {
+        Add-MpPreference -ExclusionPath $path
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
