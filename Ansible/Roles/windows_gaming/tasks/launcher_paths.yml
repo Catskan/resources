@@ -1,0 +1,218 @@
+---
+# Configure game install directories for each launcher.
+# Each launcher section:
+#   1) Creates the target directory on the data drive (M:\).
+#   2) Patches the launcher's config to point at that directory.
+#
+# Tasks gracefully skip when a launcher isn't installed yet
+# (Test-Path checks on the launcher's install/config location).
+
+# ── Steam ───────────────────────────────────────────────────────────────
+
+- name: Steam — create library directory
+  ansible.windows.win_file:
+    path: '{{ steam_library_directory }}\steamapps'
+    state: directory
+
+- name: Steam — add library folder to libraryfolders.vdf
+  ansible.windows.win_powershell:
+    parameters:
+      libraryPath: "{{ steam_library_directory }}"
+    script: |
+      param([string]$libraryPath)
+
+      $vdfPath = "C:\Program Files (x86)\Steam\config\libraryfolders.vdf"
+      if (-not (Test-Path $vdfPath)) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Steam not installed — skipping VDF update"
+        return
+      }
+
+      $content = Get-Content $vdfPath -Raw
+      # Normalize path for comparison (VDF uses double backslashes)
+      $normalizedPath = $libraryPath.Replace('\', '\\')
+
+      if ($content -match [regex]::Escape($normalizedPath) -or
+          $content -match [regex]::Escape($libraryPath)) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Library path already present in VDF"
+        return
+      }
+
+      # Find the highest existing numeric key (0, 1, 2, …)
+      $keys = [regex]::Matches($content, '^\s+"(\d+)"', 'Multiline') |
+              ForEach-Object { [int]$_.Groups[1].Value }
+      $nextKey = if ($keys.Count -gt 0) { ($keys | Measure-Object -Maximum).Maximum + 1 } else { 1 }
+
+      # Build a minimal entry — Steam fills in the rest on next launch
+      $lines = @(
+        '',
+        ('  "{0}"' -f $nextKey),
+        '  {',
+        ('    "path"    "{0}"' -f $normalizedPath),
+        '  }'
+      )
+      $entry = $lines -join "`n"
+
+      # Insert before the final closing brace
+      $content = $content.TrimEnd() -replace ([regex]::Escape('}') + '$'), ($entry + "`n}")
+      Set-Content -Path $vdfPath -Value $content -NoNewline
+      $Ansible.Changed = $true
+      $Ansible.Result = "Added library path as key $nextKey"
+
+# ── Epic Games ──────────────────────────────────────────────────────────
+
+- name: Epic Games — create games directory
+  ansible.windows.win_file:
+    path: '{{ epic_games_directory }}'
+    state: directory
+
+- name: Epic Games — set default install location in GameUserSettings.ini
+  ansible.windows.win_powershell:
+    parameters:
+      installDir: "{{ epic_games_directory }}"
+    script: |
+      param([string]$installDir)
+
+      $iniDir = "$env:LOCALAPPDATA\EpicGamesLauncher\Saved\Config\Windows"
+      if (-not (Test-Path "$env:LOCALAPPDATA\EpicGamesLauncher")) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Epic Games Launcher not installed — skipping"
+        return
+      }
+
+      # Ensure the config directory tree exists
+      if (-not (Test-Path $iniDir)) {
+        New-Item -Path $iniDir -ItemType Directory -Force | Out-Null
+      }
+
+      $iniPath = Join-Path $iniDir "GameUserSettings.ini"
+
+      if (Test-Path $iniPath) {
+        $content = Get-Content $iniPath -Raw
+      } else {
+        $content = ""
+      }
+
+      # Check if the value is already set correctly
+      if ($content -match '(?m)^\s*DefaultAppInstallLocation\s*=\s*(.+)$') {
+        $current = $Matches[1].Trim()
+        if ($current -eq $installDir) {
+          $Ansible.Changed = $false
+          $Ansible.Result = "DefaultAppInstallLocation already set"
+          return
+        }
+        # Replace existing value
+        $content = $content -replace '(?m)^(\s*DefaultAppInstallLocation\s*=\s*).*$', "`${1}$installDir"
+      } else {
+        # Add [Launcher] section with the key if missing
+        if ($content -notmatch '(?m)^\[Launcher\]') {
+          $content += "`r`n[Launcher]`r`n"
+        }
+        $content = $content -replace '(?m)^(\[Launcher\]\s*)', "`${1}DefaultAppInstallLocation=$installDir`r`n"
+      }
+
+      Set-Content -Path $iniPath -Value $content -NoNewline
+      $Ansible.Changed = $true
+      $Ansible.Result = "DefaultAppInstallLocation set to $installDir"
+
+# ── GOG Galaxy ──────────────────────────────────────────────────────────
+
+- name: GOG Galaxy — create games directory
+  ansible.windows.win_file:
+    path: '{{ gog_games_directory }}'
+    state: directory
+
+- name: GOG Galaxy — set libraryPath in config.json
+  ansible.windows.win_powershell:
+    parameters:
+      gamesDir: "{{ gog_games_directory }}"
+    script: |
+      param([string]$gamesDir)
+
+      $configPath = "C:\ProgramData\GOG.com\Galaxy\config.json"
+      if (-not (Test-Path $configPath)) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "GOG Galaxy not installed — skipping"
+        return
+      }
+
+      $json = Get-Content $configPath -Raw | ConvertFrom-Json
+      $currentPath = $json.libraryPath
+
+      if ($currentPath -eq $gamesDir) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "libraryPath already set correctly"
+        return
+      }
+
+      $json | Add-Member -NotePropertyName "libraryPath" -NotePropertyValue $gamesDir -Force
+      $json | ConvertTo-Json -Depth 10 | Set-Content $configPath
+      $Ansible.Changed = $true
+      $Ansible.Result = "libraryPath updated from '$currentPath' to '$gamesDir'"
+
+# ── EA Desktop ──────────────────────────────────────────────────────────
+
+- name: EA Desktop — create games directory
+  ansible.windows.win_file:
+    path: '{{ ea_games_directory }}'
+    state: directory
+
+- name: EA Desktop — set download directory in user config
+  ansible.windows.win_powershell:
+    parameters:
+      gamesDir: "{{ ea_games_directory }}"
+    script: |
+      param([string]$gamesDir)
+
+      $eaDir = "$env:LOCALAPPDATA\Electronic Arts\EA Desktop"
+      if (-not (Test-Path $eaDir)) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "EA Desktop not installed — skipping"
+        return
+      }
+
+      $iniFile = Get-ChildItem -Path $eaDir -Filter "user_*.ini" -ErrorAction SilentlyContinue |
+                 Select-Object -First 1
+      if (-not $iniFile) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "No user_*.ini found — EA Desktop not logged in yet, skipping"
+        return
+      }
+
+      $iniPath = $iniFile.FullName
+      $content = Get-Content $iniPath -Raw
+
+      # Check current value
+      if ($content -match '(?m)^\s*user\.downloadinplacedir\s*=\s*(.+)$') {
+        $current = $Matches[1].Trim()
+        if ($current -eq $gamesDir) {
+          $Ansible.Changed = $false
+          $Ansible.Result = "user.downloadinplacedir already set"
+          return
+        }
+        $content = $content -replace '(?m)^(\s*user\.downloadinplacedir\s*=\s*).*$', "`${1}$gamesDir"
+      } else {
+        # Append the key
+        $content += "`r`nuser.downloadinplacedir=$gamesDir"
+      }
+
+      Set-Content -Path $iniPath -Value $content -NoNewline
+      $Ansible.Changed = $true
+      $Ansible.Result = "user.downloadinplacedir set to $gamesDir"
+
+# ── Rockstar Games Launcher ────────────────────────────────────────────
+
+- name: Rockstar — create games directory
+  ansible.windows.win_file:
+    path: '{{ rockstar_games_directory }}'
+    state: directory
+
+# ── Ubisoft Connect ─────────────────────────────────────────────────────
+# Install path is already handled via config-files/UbisoftConnect/settings.yaml
+# template (games_directory variable). Just ensure the target folder exists.
+
+- name: Ubisoft Connect — create games directory
+  ansible.windows.win_file:
+    path: '{{ games_directory }}'
+    state: directory

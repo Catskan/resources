@@ -18,8 +18,10 @@
 #                              (Phase 3 — remplace l'ancien chain
 #                              softwares_check/download/install)
 #   --tags firefox           : Firefox policies (cross-platform)
-#   --tags drivers           : AMD chipset (direct_url) + NVIDIA via
-#                              NVCleanstall + telemetry cleanup
+#   --tags launcher_paths    : game launcher install paths (Steam, Epic,
+#                              GOG, EA, Rockstar, Ubisoft)
+#   --tags drivers           : AMD chipset (direct_url) + AMD GPU
+#                              Adrenalin (direct_url)
 #   --tags keepassxc         : KeePassXC pointed at the NAS vault UNC +
 #                              tray autostart + Defender exclusion
 #                              (bare-metal only)
@@ -79,6 +81,13 @@
     apply:
       tags: [softwares_winget]
   tags: [softwares_winget]
+
+- name: Configure game launcher install paths (Steam, Epic, GOG, EA, Rockstar, Ubisoft)
+  ansible.builtin.include_tasks:
+    file: launcher_paths.yml
+    apply:
+      tags: [launcher_paths]
+  tags: [launcher_paths]
 
 - name: Install and tune GPU/chipset drivers
   ansible.builtin.include_tasks:

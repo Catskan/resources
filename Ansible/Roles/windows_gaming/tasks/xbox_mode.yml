@@ -43,6 +43,51 @@
     type: string
     state: "{{ 'present' if xbox_mode_enabled else 'absent' }}"
 
+- name: Xbox FSE — auto-start Full-Screen Experience at login
+  ansible.windows.win_regedit:
+    path: HKCU:\Software\Microsoft\Windows\CurrentVersion\GamingConfiguration
+    name: AutoStartGamingHome
+    data: "{{ 1 if xbox_mode_enabled else 0 }}"
+    type: dword
+
+- name: Xbox — ensure game install directory exists
+  ansible.windows.win_file:
+    path: '{{ xbox_games_directory }}'
+    state: directory
+  when: xbox_mode_enabled | bool
+
+- name: Xbox — set default game install location
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\XboxGaming
+    name: XboxContentDirectory
+    data: '{{ xbox_games_directory }}'
+    type: string
+  when: xbox_mode_enabled | bool
+
+- name: Xbox — enable startup at login
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\Microsoft.GamingApp_8wekyb3d8bbwe\Xbox.App.Tasks.FullTrustComponent'
+    name: UserEnabledStartupOnce
+    data: 1
+    type: dword
+  when: xbox_mode_enabled | bool
+
+- name: Xbox — set startup state to enabled
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\Microsoft.GamingApp_8wekyb3d8bbwe\Xbox.App.Tasks.FullTrustComponent'
+    name: State
+    data: 2
+    type: dword
+  when: xbox_mode_enabled | bool
+
+- name: Xbox — disable notifications
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\Microsoft.GamingApp_8wekyb3d8bbwe\Xbox.App.Tasks.FullTrustComponent'
+    name: ShowNotification
+    data: 0
+    type: dword
+  when: xbox_mode_enabled | bool
+
 - name: Xbox FSE — verify Xbox app is installed (Microsoft.GamingApp AUMID)
   # Safety net: Win11 ships with it but a fresh install may have removed
   # it via AppX bloatware sweep — in that case we surface the gap rather

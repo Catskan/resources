@@ -195,6 +195,12 @@
           <Description>Write the DHCP IPv4 address to C:\Aurel-Gaming-IP.txt for inventory update</Description>
           <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Get-NetIPAddress -AddressFamily IPv4 | Where-Object PrefixOrigin -eq 'Dhcp' | Select-Object IPAddress, InterfaceAlias | Out-File C:\Aurel-Gaming-IP.txt"</CommandLine>
         </SynchronousCommand>
+
+        <SynchronousCommand wcm:action="add">
+          <Order>14</Order>
+          <Description>Never expire the local account password (42-day default breaks headless WinRM + AutoLogon)</Description>
+          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Set-LocalUser -Name Aurel -PasswordNeverExpires $true; net accounts /maxpwage:unlimited"</CommandLine>
+        </SynchronousCommand>
       </FirstLogonCommands>
     </component>
   </settings>

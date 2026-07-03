@@ -102,9 +102,10 @@
 
     - name: Verify hibernation disabled
       ansible.windows.win_powershell:
+        # État réel (registre + hiberfil) plutôt que la sortie localisée de powercfg.
         script: |
-          $out = (powercfg /a) -join ' '
-          $Ansible.Result = @{ hibernation_disabled = $out -match "L'hibernation n'a pas été activée|Hibernation has not been enabled" }
+          $he = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Power' -Name HibernateEnabled -ErrorAction SilentlyContinue).HibernateEnabled
+          $Ansible.Result = @{ hibernation_disabled = ($he -ne 1 -and -not (Test-Path 'C:\hiberfil.sys')) }
       register: hibern_verify
       when: not hibernation_enabled # only meaningful when we actively disabled hibernation
       tags: [gaming_optim]
@@ -116,6 +117,35 @@
         fail_msg: "Hibernation state mismatch — got {{ hibern_verify.result }}"
         success_msg: "Hibernation state OK"
       when: not hibernation_enabled # paired with the verify task above
+      tags: [gaming_optim]
+
+    - name: Verify page file matches spec
+      ansible.windows.win_powershell:
+        # Vérifie que le page file fixe vit bien sur le volume cible, à la bonne
+        # taille, et qu'aucun résiduel ne subsiste ailleurs (ex. C:\pagefile.sys).
+        script: |
+          $drive = '{{ page_file.drive | default("C:") }}'.TrimEnd('\')
+          $all   = @(Get-CimInstance Win32_PageFileSetting)
+          $onTarget = $all | Where-Object { $_.Name -eq "$drive\pagefile.sys" }
+          $Ansible.Result = @{
+            drives_present = @($all.Name)
+            on_target      = [bool]$onTarget
+            size_ok        = ($onTarget -and $onTarget.InitialSize -eq {{ page_file.initial_size_mb }} -and $onTarget.MaximumSize -eq {{ page_file.max_size_mb }})
+            no_stray       = (@($all | Where-Object { $_.Name -ne "$drive\pagefile.sys" }).Count -eq 0)
+          }
+      register: pagefile_verify
+      when: page_file.strategy == 'fixed'
+      tags: [gaming_optim]
+
+    - name: Assert page file matches spec
+      ansible.builtin.assert:
+        that:
+          - pagefile_verify.result.on_target
+          - pagefile_verify.result.size_ok
+          - pagefile_verify.result.no_stray
+        fail_msg: "Page file mismatch — got {{ pagefile_verify.result }}"
+        success_msg: "Page file OK ({{ page_file.drive | default('C:') }}, {{ page_file.initial_size_mb }} Mo)"
+      when: page_file.strategy == 'fixed'
       tags: [gaming_optim]
 
     - name: Verify console_ux state — AppX residuals + Firefox default + OneDrive gone

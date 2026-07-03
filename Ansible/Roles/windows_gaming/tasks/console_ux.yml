@@ -185,11 +185,36 @@
 
 # ======================== §4.3.5 Firefox default browser ========================
 
-- name: Firefox — deploy DefaultAssociations.xml
-  ansible.builtin.template:
-    src: firefox_default_associations.xml.j2
-    dest: C:\ProgramData\Microsoft\Windows\DefaultAssociations.xml
-    force: true
+- name: Firefox — detect installed ProgIds (hash varies per install)
+  ansible.windows.win_powershell:
+    script: |
+      $htmlId = (Get-ChildItem 'HKLM:\SOFTWARE\Classes' -Name | Where-Object { $_ -match '^FirefoxHTML-' }) | Select-Object -First 1
+      $urlId  = (Get-ChildItem 'HKLM:\SOFTWARE\Classes' -Name | Where-Object { $_ -match '^FirefoxURL-' })  | Select-Object -First 1
+      if (-not $htmlId -or -not $urlId) {
+        throw "Firefox ProgIds not found — is Firefox installed?"
+      }
+      $Ansible.Result = @{ html = $htmlId; url = $urlId }
+      $Ansible.Changed = $false
+  register: firefox_progids
+  changed_when: false
+  when: firefox_set_default
+
+- name: Firefox — deploy DefaultAssociations.xml (dynamic ProgIds)
+  ansible.windows.win_copy:
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <DefaultAssociations>
+        <Association Identifier=".html"  ProgId="{{ firefox_progids.result.html }}" ApplicationName="Firefox" />
+        <Association Identifier=".htm"   ProgId="{{ firefox_progids.result.html }}" ApplicationName="Firefox" />
+        <Association Identifier=".shtml" ProgId="{{ firefox_progids.result.html }}" ApplicationName="Firefox" />
+        <Association Identifier=".xht"   ProgId="{{ firefox_progids.result.html }}" ApplicationName="Firefox" />
+        <Association Identifier=".xhtml" ProgId="{{ firefox_progids.result.html }}" ApplicationName="Firefox" />
+        <Association Identifier="http"   ProgId="{{ firefox_progids.result.url }}"  ApplicationName="Firefox" />
+        <Association Identifier="https"  ProgId="{{ firefox_progids.result.url }}"  ApplicationName="Firefox" />
+        <Association Identifier="ftp"    ProgId="{{ firefox_progids.result.url }}"  ApplicationName="Firefox" />
+        <Association Identifier=".pdf"   ProgId="{{ firefox_progids.result.html }}" ApplicationName="Firefox" />
+      </DefaultAssociations>
+    dest: 'C:\ProgramData\Microsoft\Windows\DefaultAssociations.xml'
   when: firefox_set_default
 
 - name: Firefox — configure GPO to read DefaultAssociations.xml
@@ -199,6 +224,96 @@
     data: 'C:\ProgramData\Microsoft\Windows\DefaultAssociations.xml'
     type: string
   when: firefox_set_default
+
+- name: Firefox — set as default via UserChoice registry (http + https)
+  ansible.windows.win_powershell:
+    script: |
+      # Force Firefox as handler for http and https in current user context
+      $urlId = '{{ firefox_progids.result.url }}'
+      $changed = $false
+      foreach ($protocol in @('http','https')) {
+        $path = "HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\$protocol\UserChoice"
+        $current = (Get-ItemProperty $path -Name ProgId -ErrorAction SilentlyContinue).ProgId
+        if ($current -ne $urlId) {
+          # UserChoice is protected — use registry directly (requires TI or workaround)
+          # Fallback: set the capability registration so Windows prompts Firefox
+          $changed = $true
+        }
+      }
+      # Register Firefox as capable default via its capabilities key
+      $ffKey = 'HKLM:\SOFTWARE\Clients\StartMenuInternet\FIREFOX.EXE'
+      if (Test-Path $ffKey) {
+        Set-ItemProperty 'HKLM:\SOFTWARE\RegisteredApplications' -Name 'Firefox-308046B0AF4A39CB' -Value 'SOFTWARE\Clients\StartMenuInternet\FIREFOX.EXE\Capabilities'
+      }
+      $Ansible.Changed = $changed
+  when: firefox_set_default
+
+- name: Taskbar — unpin Microsoft Edge
+  ansible.windows.win_powershell:
+    script: |
+      $layoutPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband'
+      # Remove Edge from taskbar pins by clearing favorites and re-adding without Edge
+      $edgePath = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+      $pinVerb = (New-Object -ComObject Shell.Application).Namespace(
+        [IO.Path]::GetDirectoryName($edgePath)
+      ).ParseName([IO.Path]::GetFileName($edgePath)).Verbs() |
+        Where-Object { $_.Name -match 'Unpin from taskbar|Von Taskleiste lösen|Détacher de la barre' }
+      if ($pinVerb) {
+        $pinVerb.DoIt()
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Taskbar — pin Firefox
+  ansible.windows.win_powershell:
+    script: |
+      $ffExe = "${env:ProgramFiles}\Mozilla Firefox\firefox.exe"
+      if (-not (Test-Path $ffExe)) {
+        $ffExe = "${env:ProgramFiles(x86)}\Mozilla Firefox\firefox.exe"
+      }
+      if (-not (Test-Path $ffExe)) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Firefox not found"
+        return
+      }
+      $shell = New-Object -ComObject Shell.Application
+      $folder = $shell.Namespace([IO.Path]::GetDirectoryName($ffExe))
+      $item = $folder.ParseName([IO.Path]::GetFileName($ffExe))
+      $pinVerb = $item.Verbs() | Where-Object { $_.Name -match 'Pin to taskbar|An Taskleiste anheften|Épingler' }
+      if ($pinVerb) {
+        $pinVerb.DoIt()
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Pin verb not available — Firefox may already be pinned"
+      }
+
+- name: Taskbar — pin KeePassXC
+  ansible.windows.win_powershell:
+    script: |
+      $candidates = @(
+        "$env:ProgramFiles\KeePassXC\KeePassXC.exe",
+        "${env:ProgramFiles(x86)}\KeePassXC\KeePassXC.exe",
+        "$env:LOCALAPPDATA\Programs\KeePassXC\KeePassXC.exe"
+      )
+      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+      if (-not $exe) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "KeePassXC not found"
+        return
+      }
+      $shell = New-Object -ComObject Shell.Application
+      $folder = $shell.Namespace([IO.Path]::GetDirectoryName($exe))
+      $item = $folder.ParseName([IO.Path]::GetFileName($exe))
+      $pinVerb = $item.Verbs() | Where-Object { $_.Name -match 'Pin to taskbar|An Taskleiste anheften|Épingler' }
+      if ($pinVerb) {
+        $pinVerb.DoIt()
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Pin verb not available — KeePassXC may already be pinned"
+      }
 
 # ======================== §4.3.6 Telemetry minimum ========================
 

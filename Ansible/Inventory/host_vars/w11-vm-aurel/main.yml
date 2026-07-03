@@ -17,8 +17,7 @@ pcie_link_state_power_off: false # NIC virtuel, irrelevant
 
 # --- Drivers — no real GPU/chipset on VM ---
 amd_chipset_install: false
-nvidia_driver_install_strategy: skip
-nvidia_telemetry_cleanup: false
+amd_gpu_install: false
 
 # --- HPET stays enabled on VM (hypervisor TSC drift without it) ---
 hpet_disabled: false

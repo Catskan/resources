@@ -71,6 +71,15 @@ hpet_disabled: true
 # clears GamingHomeApp). Even when enabled, Win key + Xbox-button menu
 # both switch back to desktop in 1 keypress — non-destructive UX.
 xbox_mode_enabled: true
+xbox_games_directory: 'M:\XboxGames'
+
+# --- Game launcher install paths (softwares_winget.yml / launcher configs) ---
+games_directory: 'M:\UbisoftGames'
+steam_library_directory: 'M:\SteamLibrary'
+epic_games_directory: 'M:\EpicGames'
+gog_games_directory: 'M:\GOGGames'
+ea_games_directory: 'M:\EAGames'
+rockstar_games_directory: 'M:\RockstarGames'
 
 # --- Windows Update Active Hours (system_settings.yml) ---
 # 24h-clock hours. No update install pop-up during these hours; Windows
@@ -189,18 +198,17 @@ telemetry_minimum: true
 firefox_set_default: true
 
 # --- Drivers (drivers.yml) — generic defaults, overridable per host ---
-nvidia_telemetry_cleanup: true
+amd_gpu_install: false
 
 # --- winget packages (softwares_winget.yml) ---
 # Apps installed from the default winget source. Hardware drivers (AMD
-# chipset, NVIDIA GeForce) are NOT here — empirically verified 2026-05-15
-# that they're not published to winget; drivers.yml handles them via
-# direct_url + NVCleanstall (which IS in winget below).
+# chipset, AMD GPU Adrenalin) are NOT here — they're not published to
+# winget; drivers.yml handles them via direct_url + silent install.
 winget_packages:
   # --- Game launchers ---
   - Valve.Steam
   - EpicGames.EpicGamesLauncher
-  - Ubisoft.Connect
+  # Ubisoft.Connect moved to msstore_packages (winget manifest has broken hash)
   - GOG.Galaxy
   - ElectronicArts.EADesktop
   - RockstarGames.Launcher
@@ -213,12 +221,12 @@ winget_packages:
   - Synology.DriveClient
   - 7zip.7zip
   - Microsoft.WindowsTerminal
-  - Microsoft.PowerToys
+
   - Microsoft.PowerShell
 
   # --- Hardware tooling ---
-  - MSI.Afterburner # GPU monitoring + OC + fan curves (RTX 3080)
-  - TechPowerUp.NVCleanstall # Clean NVIDIA driver install (no GFE / telemetry)
+  # Afterburner removed from common list — conditional install in drivers.yml
+  # (only on NVIDIA GPUs, redundant with Adrenalin on AMD)
 
   # --- Password manager ---
   - KeePassXCTeam.KeePassXC # Vault opened from NAS via keepassxc_setup.yml
@@ -228,12 +236,14 @@ winget_packages:
 
   # --- Remote access ---
   - LizardByte.Sunshine # Game streaming — Moonlight clients (iPad, Apple TV, Steam Deck) via sunshine_setup.yml
-  - RustDesk.RustDesk # Desktop remoting — see/control session without disconnecting via rustdesk_setup.yml
+  # RustDesk removed from winget catalogue — installed via direct download in rustdesk_setup.yml
+  # - RustDesk.RustDesk
 
   # --- RGB control ---
-  - CalcProgrammer1.OpenRGB  # Set & forget RGB — startup shortcut via openrgb_setup.yml
+  - OpenRGB.OpenRGB  # Set & forget RGB — startup shortcut via openrgb_setup.yml
 
 # Apps that aren't in the winget catalogue but exist in MS Store — looped
 # with --source msstore by softwares_winget.yml.
 msstore_packages:
+  - XPDP2QW12DFSFK # Ubisoft Connect (winget source has broken installer hash)
   - 9NBLGGH30XJ3 # Xbox Accessories (matches the legacy XboxAccessoires_id var)

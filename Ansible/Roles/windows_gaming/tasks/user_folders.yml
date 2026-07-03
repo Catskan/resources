@@ -74,3 +74,111 @@
       }
   loop_control:
     label: "{{ item.key }} → {{ item.path }}"
+
+# "Where new content is saved" — Settings → System → Storage
+# AppX/MS Store apps → M:\WindowsApps, everything else → M:\Aurel
+- name: Redirect default save locations to M:\
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: expandstring
+  loop:
+    - {
+        name: "{F42EE2D3-909F-4907-8871-4C22FC0BF756}",
+        data: '{{ root_user_directory }}\Documents',
+      } # New documents
+    - {
+        name: "{7D83EE9B-2244-4E70-B1F5-5393042AF1E4}",
+        data: '{{ root_user_directory }}\Downloads',
+      } # New downloads
+    - {
+        name: "{A0C69A99-21C8-4671-8703-7934162FCF1D}",
+        data: '{{ root_user_directory }}\Music',
+      } # New music
+    - {
+        name: "{0DDD015D-B06C-45D5-8C4C-F59713854639}",
+        data: '{{ root_user_directory }}\Pictures',
+      } # New pictures
+    - {
+        name: "{35286A68-3C57-41A1-BBB1-0EAE73D76C95}",
+        data: '{{ root_user_directory }}\Videos',
+      } # New videos
+  loop_control:
+    label: "{{ item.name }} → {{ item.data }}"
+
+- name: Redirect MS Store / Xbox app installs to M:\WindowsApps
+  ansible.windows.win_powershell:
+    script: |
+      # Move default app install volume to M:
+      $currentDefault = (Get-AppxDefaultVolume -ErrorAction SilentlyContinue).PackageStorePath
+      if ($currentDefault -and $currentDefault.StartsWith('M:\')) {
+        $Ansible.Changed = $false
+      } else {
+        $volume = Get-AppxVolume | Where-Object { $_.PackageStorePath -like 'M:\*' }
+        if (-not $volume) {
+          Add-AppxVolume -Path 'M:\WindowsApps'
+          $volume = Get-AppxVolume | Where-Object { $_.PackageStorePath -like 'M:\*' }
+        }
+        Set-AppxDefaultVolume -Volume $volume
+        $Ansible.Changed = $true
+      }
+
+# Windows Terminal opens every profile in %USERPROFILE% (C:\Users\Aurel) by
+# default. Point profiles.defaults.startingDirectory at the real data-drive
+# home so new tabs land in M:\Aurel. Runs in Aurel's user context so
+# %LOCALAPPDATA% resolves to the right package settings.json.
+- name: Windows Terminal — default starting directory = {{ root_user_directory }}
+  ansible.windows.win_powershell:
+    parameters:
+      Target: "{{ root_user_directory }}"
+    script: |
+      param([string]$Target)
+
+      # Cover both the stable and Preview package IDs.
+      $pkgRoots = @(
+        "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe",
+        "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe"
+      )
+
+      $changed = $false
+      foreach ($root in $pkgRoots) {
+        if (-not (Test-Path $root)) { continue }
+        $state = Join-Path $root 'LocalState'
+        if (-not (Test-Path $state)) { New-Item -ItemType Directory -Path $state -Force | Out-Null }
+        $file = Join-Path $state 'settings.json'
+
+        if (Test-Path $file) {
+          # Strip // and /* */ comments so PS 5.1 ConvertFrom-Json accepts JSONC.
+          $raw = Get-Content -LiteralPath $file -Raw
+          $noBlock = [regex]::Replace($raw, '/\*[\s\S]*?\*/', '')
+          $noLine  = ($noBlock -split "`n" | ForEach-Object { $_ -replace '^\s*//.*$', '' }) -join "`n"
+          try { $json = $noLine | ConvertFrom-Json } catch { $json = [pscustomobject]@{} }
+        } else {
+          $json = [pscustomobject]@{}
+        }
+
+        if (-not $json.PSObject.Properties['profiles']) {
+          $json | Add-Member -NotePropertyName profiles -NotePropertyValue ([pscustomobject]@{})
+        }
+        if (-not $json.profiles.PSObject.Properties['defaults']) {
+          $json.profiles | Add-Member -NotePropertyName defaults -NotePropertyValue ([pscustomobject]@{})
+        }
+
+        $current = $json.profiles.defaults.startingDirectory
+        if ($current -ne $Target) {
+          if ($json.profiles.defaults.PSObject.Properties['startingDirectory']) {
+            $json.profiles.defaults.startingDirectory = $Target
+          } else {
+            $json.profiles.defaults | Add-Member -NotePropertyName startingDirectory -NotePropertyValue $Target
+          }
+          $json | ConvertTo-Json -Depth 32 | Set-Content -LiteralPath $file -Encoding UTF8
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  vars:
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: "{{ user_name }}"
+    ansible_become_pass: "{{ remote_local_user_name_password }}"

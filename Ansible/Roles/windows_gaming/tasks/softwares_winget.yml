@@ -29,6 +29,13 @@
       }
   changed_when: false
 
+- name: Accept winget source agreements
+  ansible.windows.win_powershell:
+    script: |
+      winget list --accept-source-agreements --disable-interactivity *>$null
+      $Ansible.Changed = $false
+  changed_when: false
+
 - name: Snapshot currently-installed winget packages
   ansible.windows.win_powershell:
     script: |
@@ -51,22 +58,11 @@
         $Ansible.Changed = $false
         return
       }
-      $job = Start-Job -ScriptBlock {
-        param($id)
-        $a = @('install','--id',$id,'--exact','--silent',
-               '--accept-package-agreements','--accept-source-agreements',
-               '--disable-interactivity')
-        & winget @a *>$null
-        $LASTEXITCODE
-      } -ArgumentList $pkgId
-      if (-not (Wait-Job $job -Timeout 600)) {
-        Stop-Job $job
-        Remove-Job $job -Force
-        throw "winget install $pkgId timed out after 10 minutes"
-      }
-      $exitCode = Receive-Job $job
-      Remove-Job $job
-      if ($exitCode -ne 0) { throw "winget install $pkgId exited $exitCode" }
+      $a = @('install','--id',$pkgId,'--exact','--silent',
+             '--accept-package-agreements','--accept-source-agreements',
+             '--disable-interactivity')
+      & winget @a *>$null
+      if ($LASTEXITCODE -ne 0) { throw "winget install $pkgId exited $LASTEXITCODE" }
       $Ansible.Changed = $true
   loop: "{{ winget_packages | default([]) }}"
   loop_control:

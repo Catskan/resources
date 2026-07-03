@@ -57,7 +57,7 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 | `console_ux`       | Debloat (AppX bloatware, Cortana, Bing, Widgets, OneDrive, Edge neutral, Firefox default, telemetry, notifications)  |
 | `softwares_winget` | Install user apps + tooling via winget (Steam, Epic, Firefox, MSI Afterburner, NVCleanstall, …) + MS Store Xbox Acc. |
 | `firefox`          | Firefox policies (cross-platform, from `common` role)                                                                |
-| `drivers`          | AMD chipset (direct_url) + NVIDIA driver via NVCleanstall + NVIDIA telemetry off + power plan (AMD Ryzen Balanced)   |
+| `drivers`          | AMD chipset (direct_url) + AMD GPU Adrenalin (direct_url) + power plan (Balanced)                                   |
 | `keepassxc`        | KeePassXC pointed at NAS vault UNC + tray autostart + Ctrl+Shift+V Auto-Type + Defender exclusion (bare-metal only)  |
 | `xbox_mode`        | Win11 Xbox Full-Screen Experience — DeviceForm spoof + GamingHomeApp = Xbox app shell (bare-metal only)              |
 | `sunshine`         | Sunshine game streaming server + Moonlight app entries (Desktop / Steam BP / Xbox) + LAN firewall (bare-metal only)  |

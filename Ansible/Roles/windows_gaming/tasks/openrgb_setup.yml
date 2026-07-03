@@ -28,9 +28,13 @@
   check_mode: false
 
 - name: OpenRGB — startup shortcut (launches minimized at user login)
+  # The Aura USB controller keeps no hardware state, so we load a saved
+  # profile at login to re-apply zone sizes + colors. `--profile <name>`
+  # loads <name>.orp from %APPDATA%\OpenRGB (save it once via the UI).
+  # Falls back to plain --startminimized when openrgb_profile is empty.
   community.windows.win_shortcut:
     src: "{{ openrgb_exe.result.path }}"
-    args: "--startminimized"
+    args: "{{ ('--profile ' ~ openrgb_profile ~ ' --startminimized') if (openrgb_profile | default('') | length > 0) else '--startminimized' }}"
     dest: '{{ ansible_env.APPDATA }}\Microsoft\Windows\Start Menu\Programs\Startup\OpenRGB.lnk'
     description: OpenRGB — set & forget RGB control at login
 

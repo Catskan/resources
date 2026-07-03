@@ -167,30 +167,53 @@
 
 - name: Storage — disable hibernation
   ansible.windows.win_powershell:
+    # On teste l'état réel (registre + présence de hiberfil.sys) plutôt que de
+    # parser la sortie localisée de `powercfg /a` : sur Win11 26200 le libellé a
+    # changé et l'ancien -match ne détectait plus l'hibernation active, laissant
+    # traîner un hiberfil.sys de ~12 Go. powercfg /h off est idempotent.
     script: |
-      $info = powercfg /a
-      $hibern = ($info -join ' ') -match 'L''hibernation a été activée|Hibernation has been enabled'
-      if ($hibern) {
+      $he = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Power' -Name HibernateEnabled -ErrorAction SilentlyContinue).HibernateEnabled
+      if ($he -eq 1 -or (Test-Path 'C:\hiberfil.sys')) {
         powercfg /h off
         $Ansible.Changed = $true
       }
   when: not hibernation_enabled
 
-- name: Storage — configure fixed page file
+- name: Storage — configure fixed page file on {{ page_file.drive | default('C:') }}
   ansible.windows.win_powershell:
+    # Paramétrable par disque : tout page file hors du volume cible est supprimé
+    # (ex. migration C: -> E:), puis (re)créé/ajusté sur la cible. La suppression
+    # d'un page file en cours d'usage ne libère l'espace qu'après redémarrage.
     script: |
       $changed = $false
+      $drive   = '{{ page_file.drive | default("C:") }}'.TrimEnd('\')
+      $target  = "$drive\pagefile.sys"
+      $desiredInit = {{ page_file.initial_size_mb }}
+      $desiredMax  = {{ page_file.max_size_mb }}
+
+      if (-not (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$drive'" -ErrorAction SilentlyContinue)) {
+        throw "Volume cible du page file introuvable : $drive"
+      }
+
       $cs = Get-CimInstance Win32_ComputerSystem
       if ($cs.AutomaticManagedPagefile) {
         Set-CimInstance -InputObject $cs -Property @{ AutomaticManagedPagefile = $false } | Out-Null
         $changed = $true
       }
-      $pf = Get-CimInstance Win32_PageFileSetting -Filter "Name like 'C:%'"
-      $desiredInit = {{ page_file.initial_size_mb }}
-      $desiredMax  = {{ page_file.max_size_mb }}
+
+      # Purger tout page file qui n'est pas sur le volume cible (ex. C:\pagefile.sys)
+      foreach ($pf in Get-CimInstance Win32_PageFileSetting) {
+        if ($pf.Name -ne $target) {
+          Remove-CimInstance -InputObject $pf
+          $changed = $true
+        }
+      }
+
+      # Créer / ajuster le page file sur le volume cible
+      $pf = Get-CimInstance Win32_PageFileSetting | Where-Object { $_.Name -eq $target }
       if ($null -eq $pf) {
         New-CimInstance -ClassName Win32_PageFileSetting -Property @{
-          Name = 'C:\pagefile.sys'; InitialSize = $desiredInit; MaximumSize = $desiredMax
+          Name = $target; InitialSize = $desiredInit; MaximumSize = $desiredMax
         } | Out-Null
         $changed = $true
       } elseif ($pf.InitialSize -ne $desiredInit -or $pf.MaximumSize -ne $desiredMax) {
@@ -198,7 +221,13 @@
         $changed = $true
       }
       $Ansible.Changed = $changed
+  register: pagefile_cfg
   when: page_file.strategy == 'fixed'
+
+- name: Flag reboot if page file changed
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: pagefile_cfg is defined and pagefile_cfg.changed
 
 - name: Power — disable USB selective suspend
   ansible.windows.win_powershell:
@@ -223,6 +252,84 @@
       $Ansible.Changed = $true
   when: pcie_link_state_power_off
   changed_when: false
+
+# ======================== §4.2.4b Display — max refresh rate ========================
+
+- name: Display — set highest available refresh rate
+  ansible.windows.win_powershell:
+    script: |
+      Add-Type @'
+      using System;
+      using System.Runtime.InteropServices;
+      public class Display {
+        [DllImport("user32.dll")]
+        public static extern int EnumDisplaySettingsW(string device, int mode, ref DEVMODE dm);
+        [DllImport("user32.dll")]
+        public static extern int ChangeDisplaySettingsW(ref DEVMODE dm, int flags);
+        [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
+        public struct DEVMODE {
+          [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string dmDeviceName;
+          public short dmSpecVersion; public short dmDriverVersion; public short dmSize;
+          public short dmDriverExtra; public int dmFields; public int dmPositionX;
+          public int dmPositionY; public int dmDisplayOrientation; public int dmDisplayFixedOutput;
+          public short dmColor; public short dmDuplex; public short dmYResolution;
+          public short dmTTOption; public short dmCollate;
+          [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string dmFormName;
+          public short dmLogPixels; public int dmBitsPerPel; public int dmPelsWidth;
+          public int dmPelsHeight; public int dmDisplayFlags; public int dmDisplayFrequency;
+          public int dmICMMethod; public int dmICMIntent; public int dmMediaType;
+          public int dmDitherType; public int dmReserved1; public int dmReserved2;
+          public int dmPanningWidth; public int dmPanningHeight;
+        }
+      }
+      '@
+      # Get current settings
+      $current = New-Object Display+DEVMODE
+      $current.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($current)
+      [Display]::EnumDisplaySettingsW($null, -1, [ref]$current) | Out-Null
+      $currentHz = $current.dmDisplayFrequency
+
+      # Enumerate all modes at current resolution and find max Hz
+      $maxHz = $currentHz
+      $i = 0
+      $dm = New-Object Display+DEVMODE
+      $dm.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($dm)
+      while ([Display]::EnumDisplaySettingsW($null, $i, [ref]$dm)) {
+        if ($dm.dmPelsWidth -eq $current.dmPelsWidth -and
+            $dm.dmPelsHeight -eq $current.dmPelsHeight -and
+            $dm.dmBitsPerPel -eq $current.dmBitsPerPel -and
+            $dm.dmDisplayFrequency -gt $maxHz) {
+          $maxHz = $dm.dmDisplayFrequency
+        }
+        $i++
+      }
+
+      if ($maxHz -gt $currentHz) {
+        $current.dmDisplayFrequency = $maxHz
+        $current.dmFields = 0x400000  # DM_DISPLAYFREQUENCY
+        $result = [Display]::ChangeDisplaySettingsW([ref]$current, 0x01)  # CDS_UPDATEREGISTRY
+        $Ansible.Changed = $true
+        $Ansible.Result = "Refresh rate changed from ${currentHz}Hz to ${maxHz}Hz"
+      } else {
+        $Ansible.Changed = $false
+        $Ansible.Result = "Already at max refresh rate: ${currentHz}Hz"
+      }
+  when: inventory_hostname == "aurelien-gaming"
+
+# ======================== §4.2.4c Display — HDR ========================
+
+- name: Display — enable HDR (Auto HDR + streaming)
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\VideoSettings'
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+  loop:
+    - { name: EnableHDRForPlayback, data: 1 }
+    - { name: AutoHDR, data: 1 }
+  loop_control:
+    label: "{{ item.name }}"
+  when: inventory_hostname == "aurelien-gaming"
 
 # ======================== §4.2.5 Game DVR / Mode ========================
 
