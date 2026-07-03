@@ -51,10 +51,20 @@ nas_url: "192.168.1.7"
 
 # --- Storage & power (gaming_optim.yml) — sized for 32 GB RAM bare metal ---
 hibernation_enabled: false
+# Le C: (partition système du NVMe Fanxiang, 124 Go) était saturé à ~5 % libre,
+# causant des freezes I/O en jeu (post-mortem FH6 du 2026-07-03). Le page file
+# n'était utilisé qu'à ~86 Mo mais occupait 32-48 Go de C: — on le déporte sur
+# le SSD SATA E: (447 Go) et on le fixe à 16 Go (couvre le commit charge ~39 Go
+# avec la RAM, sans surdimensionnement). `drive` est géré par gaming_optim.yml.
 page_file:
   strategy: fixed # fixed | system_managed
-  initial_size_mb: 32768
-  max_size_mb: 49152
+  drive: "E:" # C: réservé au système ; page file principal déporté hors du disque système
+  initial_size_mb: 16384
+  max_size_mb: 16384
+  # Petit page file conservé sur le volume système (C:) pour que Windows puisse
+  # encore écrire un dump mémoire lors d'un BSOD (utile vu le debug TDR en cours).
+  # Mettre 0 pour n'avoir aucun page file sur C:.
+  system_dump_mb: 2048
 usb_selective_suspend: false
 pcie_link_state_power_off: true
 
@@ -66,15 +76,11 @@ pcie_link_state_power_off: true
 amd_chipset_install: true
 amd_chipset_url: "https://drivers.amd.com/drivers/amd_chipset_software_8.05.04.516.exe"
 
-# NVIDIA strategy: nvcleanstall (default, recommended), direct_url, or skip.
-# - nvcleanstall : assumes TechPowerUp.NVCleanstall is installed via
-#   softwares_winget.yml; drivers.yml invokes its CLI to clean-install
-#   the latest driver without GeForce Experience or telemetry.
-# - direct_url   : download from nvidia_driver_url + silent install
-#                  (fallback if NVCleanstall ever breaks).
-# - skip         : no-op.
-nvidia_driver_install_strategy: nvcleanstall
-nvidia_driver_url: "" # only consumed when strategy == 'direct_url'
+# AMD GPU driver (Adrenalin) — Radeon RX 9070 XT Sapphire Nitro+.
+# Bump amd_gpu_driver_url whenever AMD ships a new Adrenalin release.
+# The URL must point to the full offline installer (.exe, silent /S).
+amd_gpu_install: true
+amd_gpu_driver_url: "" # à remplir depuis amd.com/en/support avec l'URL du .exe Adrenalin pour RX 9070 XT
 
 # --- NAS mapped drives (system_settings.yml — bare metal only) ---
 # Uses the LAN IP defined above. Both shares live on the same NAS so the

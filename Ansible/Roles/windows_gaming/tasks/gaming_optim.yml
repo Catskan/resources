@@ -167,30 +167,53 @@
 
 - name: Storage — disable hibernation
   ansible.windows.win_powershell:
+    # On teste l'état réel (registre + présence de hiberfil.sys) plutôt que de
+    # parser la sortie localisée de `powercfg /a` : sur Win11 26200 le libellé a
+    # changé et l'ancien -match ne détectait plus l'hibernation active, laissant
+    # traîner un hiberfil.sys de ~12 Go. powercfg /h off est idempotent.
     script: |
-      $info = powercfg /a
-      $hibern = ($info -join ' ') -match 'L''hibernation a été activée|Hibernation has been enabled'
-      if ($hibern) {
+      $he = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Power' -Name HibernateEnabled -ErrorAction SilentlyContinue).HibernateEnabled
+      if ($he -eq 1 -or (Test-Path 'C:\hiberfil.sys')) {
         powercfg /h off
         $Ansible.Changed = $true
       }
   when: not hibernation_enabled
 
-- name: Storage — configure fixed page file
+- name: Storage — configure fixed page file on {{ page_file.drive | default('C:') }}
   ansible.windows.win_powershell:
+    # Paramétrable par disque : tout page file hors du volume cible est supprimé
+    # (ex. migration C: -> E:), puis (re)créé/ajusté sur la cible. La suppression
+    # d'un page file en cours d'usage ne libère l'espace qu'après redémarrage.
     script: |
       $changed = $false
+      $drive   = '{{ page_file.drive | default("C:") }}'.TrimEnd('\')
+      $target  = "$drive\pagefile.sys"
+      $desiredInit = {{ page_file.initial_size_mb }}
+      $desiredMax  = {{ page_file.max_size_mb }}
+
+      if (-not (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$drive'" -ErrorAction SilentlyContinue)) {
+        throw "Volume cible du page file introuvable : $drive"
+      }
+
       $cs = Get-CimInstance Win32_ComputerSystem
       if ($cs.AutomaticManagedPagefile) {
         Set-CimInstance -InputObject $cs -Property @{ AutomaticManagedPagefile = $false } | Out-Null
         $changed = $true
       }
-      $pf = Get-CimInstance Win32_PageFileSetting -Filter "Name like 'C:%'"
-      $desiredInit = {{ page_file.initial_size_mb }}
-      $desiredMax  = {{ page_file.max_size_mb }}
+
+      # Purger tout page file qui n'est pas sur le volume cible (ex. C:\pagefile.sys)
+      foreach ($pf in Get-CimInstance Win32_PageFileSetting) {
+        if ($pf.Name -ne $target) {
+          Remove-CimInstance -InputObject $pf
+          $changed = $true
+        }
+      }
+
+      # Créer / ajuster le page file sur le volume cible
+      $pf = Get-CimInstance Win32_PageFileSetting | Where-Object { $_.Name -eq $target }
       if ($null -eq $pf) {
         New-CimInstance -ClassName Win32_PageFileSetting -Property @{
-          Name = 'C:\pagefile.sys'; InitialSize = $desiredInit; MaximumSize = $desiredMax
+          Name = $target; InitialSize = $desiredInit; MaximumSize = $desiredMax
         } | Out-Null
         $changed = $true
       } elseif ($pf.InitialSize -ne $desiredInit -or $pf.MaximumSize -ne $desiredMax) {
@@ -198,7 +221,13 @@
         $changed = $true
       }
       $Ansible.Changed = $changed
+  register: pagefile_cfg
   when: page_file.strategy == 'fixed'
+
+- name: Flag reboot if page file changed
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: pagefile_cfg is defined and pagefile_cfg.changed
 
 - name: Power — disable USB selective suspend
   ansible.windows.win_powershell:

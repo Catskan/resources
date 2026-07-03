@@ -198,13 +198,12 @@ telemetry_minimum: true
 firefox_set_default: true
 
 # --- Drivers (drivers.yml) — generic defaults, overridable per host ---
-nvidia_telemetry_cleanup: true
+amd_gpu_install: false
 
 # --- winget packages (softwares_winget.yml) ---
 # Apps installed from the default winget source. Hardware drivers (AMD
-# chipset, NVIDIA GeForce) are NOT here — empirically verified 2026-05-15
-# that they're not published to winget; drivers.yml handles them via
-# direct_url + NVCleanstall (which IS in winget below).
+# chipset, AMD GPU Adrenalin) are NOT here — they're not published to
+# winget; drivers.yml handles them via direct_url + silent install.
 winget_packages:
   # --- Game launchers ---
   - Valve.Steam
@@ -226,8 +225,8 @@ winget_packages:
   - Microsoft.PowerShell
 
   # --- Hardware tooling ---
-  - Guru3D.Afterburner # GPU monitoring + OC + fan curves (RTX 3080)
-  - TechPowerUp.NVCleanstall # Clean NVIDIA driver install (no GFE / telemetry)
+  # Afterburner removed from common list — conditional install in drivers.yml
+  # (only on NVIDIA GPUs, redundant with Adrenalin on AMD)
 
   # --- Password manager ---
   - KeePassXCTeam.KeePassXC # Vault opened from NAS via keepassxc_setup.yml

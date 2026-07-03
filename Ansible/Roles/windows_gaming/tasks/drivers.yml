@@ -1,23 +1,15 @@
 ---
 # GPU + chipset drivers — Phase 3 refactor.
-# AMD chipset and NVIDIA driver are NOT in the winget catalog (verified
-# 2026-05-15), so drivers stay in their own file with these strategies:
+# AMD chipset and AMD GPU driver are NOT in the winget catalog, so
+# drivers stay in their own file with direct_url + silent install:
 #
 #   AMD chipset → direct_url (from amd_chipset_url in host_vars), silent
 #                 .exe install. Critical on 9800X3D for the v-cache aware
 #                 scheduler.
 #
-#   NVIDIA → choice of:
-#     • nvcleanstall  (default): assumes TechPowerUp.NVCleanstall was
-#                                installed in softwares_winget.yml. Runs
-#                                its CLI: -clean -nogfe -notlm -nophysx →
-#                                downloads + clean-installs latest driver
-#                                without GeForce Experience or telemetry.
-#     • direct_url    : download from nvidia_driver_url + silent install.
-#     • skip          : no-op (used on the VM — no real GPU).
-#
-# Telemetry cleanup (services + scheduled task) runs unconditionally when
-# nvidia_telemetry_cleanup is true.
+#   AMD GPU (Adrenalin) → direct_url from amd_gpu_driver_url, silent
+#                          .exe install. Set amd_gpu_install: false on
+#                          hosts without a discrete AMD GPU (e.g. VM).
 
 # ======================== §4.4.1 AMD chipset ========================
 
@@ -38,7 +30,7 @@
           'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
         )
         $present = ($paths | ForEach-Object { Get-ItemProperty $_ -ErrorAction SilentlyContinue } |
-          Where-Object { $_.DisplayName -like '*AMD Chipset*' -or $_.DisplayName -like '*AMD Software*' } |
+          Where-Object { $_.DisplayName -like '*AMD Chipset*' } |
           Measure-Object).Count -gt 0
       }
       $Ansible.Result = @{ present = $present }
@@ -71,79 +63,51 @@
     reboot_required: true
   when: amd_install_result.changed | default(false)
 
-# ======================== §4.4.2 NVIDIA driver ========================
+# ======================== §4.4.2 NVIDIA cleanup (migration to AMD) ========================
+# One-shot cleanup for the RTX 3080 → RX 9070 XT migration.
+# Safe to leave in place — every task is idempotent and no-ops once
+# NVIDIA is gone.
 
-- name: NVIDIA — detect existing driver
+- name: NVIDIA cleanup — uninstall driver via setup API
   ansible.windows.win_powershell:
     script: |
-      $nv = Get-PnpDevice -Class Display -ErrorAction SilentlyContinue |
-            Where-Object FriendlyName -match 'NVIDIA'
-      $Ansible.Result = @{ present = [bool]$nv }
-      $Ansible.Changed = $false
-  register: nvidia_check
-  changed_when: false
-  when: nvidia_driver_install_strategy != 'skip'
-
-- name: NVIDIA — install driver via NVCleanstall (clean, no GFE / no telemetry)
-  ansible.windows.win_powershell:
-    script: |
-      # NVCleanstall is installed by softwares_winget.yml (TechPowerUp.NVCleanstall).
-      # Locate the exe — winget drops it under user-scope %LOCALAPPDATA% by default,
-      # but with --scope machine it lands under Program Files. Probe both.
-      $candidates = @(
-        "$env:LOCALAPPDATA\Programs\NVCleanstall\NVCleanstall.exe",
-        "$env:ProgramFiles\NVCleanstall\NVCleanstall.exe",
-        "${env:ProgramFiles(x86)}\NVCleanstall\NVCleanstall.exe"
+      # Find NVIDIA display driver uninstall string in registry
+      $paths = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
       )
-      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-      if (-not $exe) { throw "NVCleanstall.exe not found — softwares_winget.yml didn't install TechPowerUp.NVCleanstall?" }
-      # -clean: clean driver install
-      # -nogfe: skip GeForce Experience
-      # -notlm: skip telemetry
-      # -nophysx: skip PhysX (lighter footprint; remove this flag if PhysX needed)
+      $nv = $paths | ForEach-Object { Get-ItemProperty $_ -ErrorAction SilentlyContinue } |
+        Where-Object { $_.DisplayName -like '*NVIDIA Graphics Driver*' -or $_.DisplayName -like '*NVIDIA Display Driver*' } |
+        Select-Object -First 1
+      if (-not $nv) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "No NVIDIA driver found — already clean"
+        return
+      }
+      $uninstall = $nv.UninstallString
+      if (-not $uninstall) {
+        $Ansible.Changed = $false
+        $Ansible.Result = "NVIDIA entry found but no UninstallString"
+        return
+      }
+      # Run the uninstaller silently
       $job = Start-Job -ScriptBlock {
-        param($p)
-        & $p -clean -nogfe -notlm -nophysx *>$null
+        param($cmd)
+        & cmd /c "$cmd -s -clean" *>$null
         $LASTEXITCODE
-      } -ArgumentList $exe
-      if (-not (Wait-Job $job -Timeout 1800)) {
+      } -ArgumentList $uninstall
+      if (-not (Wait-Job $job -Timeout 600)) {
         Stop-Job $job; Remove-Job $job -Force
-        throw "NVCleanstall driver install timed out after 30 minutes"
+        throw "NVIDIA uninstall timed out after 10 minutes"
       }
       $exitCode = Receive-Job $job
       Remove-Job $job
-      if ($exitCode -ne 0) { throw "NVCleanstall exited $exitCode" }
       $Ansible.Changed = $true
-  register: nvidia_install_result
-  when:
-    - nvidia_driver_install_strategy == 'nvcleanstall'
-    - not (nvidia_check.result.present | default(false))
+      $Ansible.Result = "NVIDIA driver uninstalled (exit $exitCode)"
+  register: nvidia_uninstall_result
+  when: inventory_hostname == "aurelien-gaming"
 
-- name: NVIDIA — install driver via direct URL (one-shot)
-  block:
-    - name: Download NVIDIA driver installer
-      ansible.windows.win_get_url:
-        url: "{{ nvidia_driver_url }}"
-        dest: 'C:\Windows\Temp\nvidia-driver.exe'
-    - name: Run NVIDIA installer silently
-      ansible.windows.win_command:
-        cmd: 'C:\Windows\Temp\nvidia-driver.exe -s -clean'
-      register: nvidia_directurl_install
-  when:
-    - nvidia_driver_install_strategy == 'direct_url'
-    - not (nvidia_check.result.present | default(false))
-    - nvidia_driver_url | length > 0
-
-- name: Flag reboot after NVIDIA install
-  ansible.builtin.set_fact:
-    reboot_required: true
-  when: >
-    (nvidia_install_result.changed | default(false)) or
-    (nvidia_directurl_install.changed | default(false))
-
-# ======================== §4.4.3 NVIDIA telemetry cleanup ========================
-
-- name: NVIDIA — disable telemetry services
+- name: NVIDIA cleanup — stop and disable telemetry services
   ansible.windows.win_service:
     name: "{{ item }}"
     start_mode: disabled
@@ -154,16 +118,97 @@
     - NvContainerNetworkService
     - NVDisplay.ContainerLocalSystem
   failed_when: false
-  when: nvidia_telemetry_cleanup | bool
+  when: inventory_hostname == "aurelien-gaming"
 
-- name: NVIDIA — remove telemetry crash report scheduled task
+- name: NVIDIA cleanup — remove telemetry scheduled task
   community.windows.win_scheduled_task:
     name: NvTmRep_CrashReport
     state: absent
   failed_when: false
-  when: nvidia_telemetry_cleanup | bool
+  when: inventory_hostname == "aurelien-gaming"
 
-# ======================== §4.4.4 Power plan ========================
+- name: NVIDIA cleanup — remove leftover files
+  ansible.windows.win_file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - 'C:\Program Files\NVIDIA Corporation'
+    - 'C:\Program Files (x86)\NVIDIA Corporation'
+    - 'C:\ProgramData\NVIDIA Corporation'
+    - 'C:\Windows\Temp\nvidia-driver.exe'
+  failed_when: false
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: NVIDIA cleanup — uninstall NVCleanstall (no longer needed)
+  ansible.windows.win_powershell:
+    script: |
+      $result = & winget uninstall --id TechPowerUp.NVCleanstall --silent --accept-source-agreements 2>&1
+      if ($LASTEXITCODE -eq 0) {
+        $Ansible.Changed = $true
+      } else {
+        # Package not found = already gone
+        $Ansible.Changed = $false
+      }
+  failed_when: false
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: Flag reboot after NVIDIA cleanup
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: nvidia_uninstall_result.changed | default(false)
+
+# ======================== §4.4.3 AMD GPU driver (Adrenalin) ========================
+
+- name: AMD GPU — check if Adrenalin is already installed
+  ansible.windows.win_powershell:
+    script: |
+      $present = $false
+      # Method 1: AMD registry key (Adrenalin sets this on install)
+      $key = 'HKLM:\SOFTWARE\AMD\CN'
+      if (Test-Path $key) {
+        $present = $null -ne (Get-ItemProperty -Path $key -ErrorAction SilentlyContinue).DriverVersion
+      }
+      # Method 2: Uninstall registry
+      if (-not $present) {
+        $paths = @(
+          'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+          'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+        )
+        $present = ($paths | ForEach-Object { Get-ItemProperty $_ -ErrorAction SilentlyContinue } |
+          Where-Object { $_.DisplayName -like '*AMD Software: Adrenalin*' -or $_.DisplayName -like '*AMD Adrenalin*' } |
+          Measure-Object).Count -gt 0
+      }
+      $Ansible.Result = @{ present = $present }
+      $Ansible.Changed = $false
+  register: amd_gpu_check
+  changed_when: false
+  when: amd_gpu_install | bool
+
+- name: AMD GPU — download Adrenalin installer
+  ansible.windows.win_get_url:
+    url: "{{ amd_gpu_driver_url }}"
+    dest: 'C:\Windows\Temp\amd_gpu_adrenalin.exe'
+    force: false
+  when:
+    - amd_gpu_install | bool
+    - not (amd_gpu_check.result.present | default(false))
+    - amd_gpu_driver_url | length > 0
+
+- name: AMD GPU — silent install
+  ansible.windows.win_command:
+    cmd: 'C:\Windows\Temp\amd_gpu_adrenalin.exe /S'
+  register: amd_gpu_install_result
+  when:
+    - amd_gpu_install | bool
+    - not (amd_gpu_check.result.present | default(false))
+    - amd_gpu_driver_url | length > 0
+
+- name: Flag reboot after AMD GPU install
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: amd_gpu_install_result.changed | default(false)
+
+# ======================== §4.4.5 Power plan ========================
 # Set AFTER the AMD chipset install, because the chipset package is what
 # ships the `AMD Ryzen Balanced` plan — running this earlier would force
 # a 2-run convergence on fresh provisions.
@@ -171,28 +216,78 @@
 # (Tom's Hardware + AMD guidance 2026) — High Performance breaks the
 # X3D cache-aware boost behavior.
 
-# ======================== MSI Afterburner — auto-start ========================
+# ======================== MSI Afterburner — NVIDIA only ========================
+# Redundant with Adrenalin on AMD GPUs. Only install + configure on NVIDIA.
 
-- name: Afterburner — start with Windows
+- name: Afterburner — install via winget (NVIDIA only)
   ansible.windows.win_powershell:
     script: |
-      $exe = "${env:ProgramFiles(x86)}\MSI Afterburner\MSIAfterburner.exe"
-      if (-not (Test-Path $exe)) {
+      $result = & winget install --id Guru3D.Afterburner --silent --accept-source-agreements --accept-package-agreements 2>&1
+      if ($LASTEXITCODE -eq 0) {
+        $Ansible.Changed = $true
+      } else {
+        # Already installed or no update
+        $Ansible.Changed = $false
+      }
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - not (amd_gpu_install | bool)
+
+- name: Afterburner — ensure config has start with Windows + minimized
+  ansible.windows.win_powershell:
+    script: |
+      $cfgPath = "${env:ProgramFiles(x86)}\MSI Afterburner\Profiles\MSIAfterburner.cfg"
+      if (-not (Test-Path $cfgPath)) {
         $Ansible.Changed = $false
         $Ansible.Result = "MSI Afterburner not installed — skipping"
         return
       }
-      $regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
-      $current = (Get-ItemProperty $regPath -Name 'MSI Afterburner' -ErrorAction SilentlyContinue).'MSI Afterburner'
-      if ($current -eq $exe) {
-        $Ansible.Changed = $false
-      } else {
-        Set-ItemProperty $regPath -Name 'MSI Afterburner' -Value $exe
-        $Ansible.Changed = $true
+      $content = Get-Content $cfgPath -Raw
+      $changed = $false
+      @{
+        'StartWithWindows' = '1'
+        'StartMinimized'   = '1'
+      }.GetEnumerator() | ForEach-Object {
+        $key = $_.Key; $val = $_.Value
+        if ($content -match "(?m)^$key=(.+)$") {
+          if ($Matches[1].Trim() -ne $val) {
+            $content = $content -replace "(?m)^$key=.+$", "$key=$val"
+            $changed = $true
+          }
+        }
       }
-  when: inventory_hostname == "aurelien-gaming"
+      if ($changed) {
+        Set-Content $cfgPath -Value $content -NoNewline
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - not (amd_gpu_install | bool)
 
-# ======================== Power plan ========================
+- name: Afterburner — remove duplicate Run registry key (app manages its own startup)
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+    name: MSI Afterburner
+    state: absent
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - not (amd_gpu_install | bool)
+
+- name: Afterburner — uninstall (not needed on AMD GPU)
+  ansible.windows.win_powershell:
+    script: |
+      $result = & winget uninstall --id Guru3D.Afterburner --silent --accept-source-agreements 2>&1
+      if ($LASTEXITCODE -eq 0) {
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+  failed_when: false
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - amd_gpu_install | bool
 
 - name: Power plan — set Balanced
   community.windows.win_power_plan:
