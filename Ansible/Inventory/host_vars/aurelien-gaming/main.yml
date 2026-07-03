@@ -91,3 +91,22 @@ nas_mapped_drives:
 # the Mac controller + Windows desktop). The `home` share is the
 # Synology User Home Service mirror of /Volumes/home/ on macOS.
 keepassxc_vault_unc: '\\{{ nas_url }}\home\Drive\Vault\Aurel-Vault.kdbx'
+
+# --- OpenRGB profile (openrgb_setup.yml) ---
+# The ASUS B850 Aura USB controller reports "Saving Not Supported" — it keeps
+# NO state in hardware, so OpenRGB must re-apply a saved profile at every
+# login. The profile is saved once in the OpenRGB UI (Save Profile) under this
+# exact name; the startup shortcut then launches `--profile <name>`.
+#
+# Two RGB devices are controlled:
+#   1) "ASUS B850 MAX GAMING WIFI W" (Aura via USB HID 0B05:19AF) — zones:
+#        Aura Addressable 1 = Bykski CPU waterblock
+#        Aura Addressable 2 = 3× Thermalright fans (resize to 50 LEDs)
+#        Aura Addressable 3 = unused (nothing wired)
+#   2) "Sapphire Radeon RX 9070 XT Nitro+" (native GPU ARGB, I2C ADL @ 0x28)
+# The .orp profile stores zone sizes + colors for BOTH devices.
+#
+# ⚠️ Never use OpenRGB "Rescan Devices": it wedges the GPU I2C bus and the GPU
+# vanishes until a full reboot. To re-detect, reboot (or close/relaunch OpenRGB).
+# Leave openrgb_profile empty to fall back to plain --startminimized.
+openrgb_profile: "rainbow"
