@@ -52,7 +52,7 @@
 
 - name: Xbox — ensure game install directory exists
   ansible.windows.win_file:
-    path: '{{ xbox_games_directory }}'
+    path: "{{ xbox_games_directory }}"
     state: directory
   when: xbox_mode_enabled | bool
 
@@ -60,7 +60,7 @@
   ansible.windows.win_regedit:
     path: HKLM:\SOFTWARE\Microsoft\XboxGaming
     name: XboxContentDirectory
-    data: '{{ xbox_games_directory }}'
+    data: "{{ xbox_games_directory }}"
     type: string
   when: xbox_mode_enabled | bool
 
@@ -86,6 +86,47 @@
     name: ShowNotification
     data: 0
     type: dword
+  when: xbox_mode_enabled | bool
+
+# ── Zero-touch console polish (Win11 25H2 « Xbox mode ») ──────────────
+# Supprime les popups de confirmation à l'entrée/sortie du mode Xbox : une
+# console ne demande jamais « voulez-vous entrer en mode jeu ? ». Ruche
+# GamingConfiguration\SystemDialogResults (nomenclature "GamingPosture").
+- name: Xbox FSE — suppress enter/exit confirmation prompts (zero-click switch)
+  ansible.windows.win_regedit:
+    path: HKCU:\Software\Microsoft\Windows\CurrentVersion\GamingConfiguration\SystemDialogResults
+    name: "{{ item }}"
+    data: 1
+    type: dword
+  loop:
+    - EnterGamingPostureConfirmation_NoReboot
+    - ExitGamingPostureConfirmation_Minimal
+  loop_control:
+    label: "{{ item }}"
+  when:
+    - xbox_mode_enabled | bool
+    - xbox_prompts_suppress | bool
+
+# Intègre « Xbox mode » dans Task View + affiche les hints de navigation
+# manette (A = premier plan, X = fermer, LB/RB = naviguer). Noter les 2
+# ruches distinctes : GamingConfiguration et GameBar.
+- name: Xbox FSE — show Xbox mode in Task View + controller nav hints
+  ansible.windows.win_regedit:
+    path: "{{ item.path }}"
+    name: "{{ item.name }}"
+    data: 1
+    type: dword
+  loop:
+    - {
+        path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\GamingConfiguration',
+        name: ShowOnDesktopSwitcher,
+      }
+    - {
+        path: 'HKCU:\Software\Microsoft\GameBar',
+        name: TaskSwitcherNexusInjectionEnabled,
+      }
+  loop_control:
+    label: "{{ item.name }}"
   when: xbox_mode_enabled | bool
 
 - name: Xbox FSE — verify Xbox app is installed (Microsoft.GamingApp AUMID)

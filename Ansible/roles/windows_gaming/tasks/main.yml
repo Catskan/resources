@@ -73,6 +73,22 @@
       tags: [system, console_ux]
   tags: [system, console_ux]
 
+- name: Apply power & console-appliance UX (sleep, lock screen, nags, taskbar)
+  ansible.builtin.include_tasks:
+    file: power_ux.yml
+    apply:
+      tags: [power_ux]
+  tags: [power_ux]
+  when: inventory_hostname == "aurelien-gaming"
+
+- name: Control Windows Update (no surprise reboot, pin version, exclude drivers)
+  ansible.builtin.include_tasks:
+    file: windows_update.yml
+    apply:
+      tags: [wu_control]
+  tags: [wu_control]
+  when: inventory_hostname == "aurelien-gaming"
+
 - name: Apply Firefox policies (cross-platform)
   ansible.builtin.include_role:
     name: common

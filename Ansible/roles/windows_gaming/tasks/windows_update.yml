@@ -1,0 +1,74 @@
+---
+# Windows Update « invisible » — jamais de reboot en pleine session (le PC a
+# une session ouverte 24/7 via autologon), version épinglée, pilotes exclus
+# (l'Adrenalin est géré par drivers.yml). Les updates s'installent toujours :
+# on contrôle le QUAND, pas le SI (sécurité préservée). Le reboot d'update
+# est regroupé le dimanche ~04:00, dans la fenêtre du vbs_weekly_reset.
+#
+# Bare-metal only — gaté dans main.yml sur inventory_hostname=aurelien-gaming.
+
+- name: WU — no auto-reboot with logged-on users (AUOptions=4 requis)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+  loop:
+    - { name: NoAutoRebootWithLoggedOnUsers, data: 1 }
+    - { name: AUOptions, data: 4 }
+  loop_control:
+    label: "{{ item.name }}"
+  when: windows_update_no_reboot | bool
+
+- name: WU — pin feature update version ({{ windows_feature_pin }})
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: "{{ item.type }}"
+  loop:
+    - { name: TargetReleaseVersion, data: 1, type: dword }
+    - {
+        name: TargetReleaseVersionInfo,
+        data: "{{ windows_feature_pin }}",
+        type: string,
+      }
+    - { name: ProductVersion, data: "Windows 11", type: string }
+  loop_control:
+    label: "{{ item.name }}"
+  when: windows_feature_pin | length > 0
+
+- name: WU — exclude drivers from quality updates (protège l'Adrenalin de drivers.yml)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate
+    name: ExcludeWUDriversInQualityUpdate
+    data: 1
+    type: dword
+  when: wu_exclude_drivers | bool
+
+- name: WU — disable the UpdateOrchestrator Reboot task (Windows peut le réarmer)
+  community.windows.win_scheduled_task:
+    name: Reboot
+    path: \Microsoft\Windows\UpdateOrchestrator\
+    enabled: false
+    state: present
+  failed_when: false # tâche protégée SYSTEM/TrustedInstaller : best-effort
+  when: windows_update_no_reboot | bool
+
+- name: WU — weekly update reboot (Sunday 04:00, only if a reboot is pending)
+  community.windows.win_scheduled_task:
+    name: Weekly-Update-Reboot
+    description: "Reboot regroupé des mises à jour, uniquement si RebootRequired présent"
+    actions:
+      - path: powershell.exe
+        arguments: >-
+          -NoProfile -WindowStyle Hidden -Command "if (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired') { shutdown /g /t 60 /c 'Reboot hebdomadaire des mises a jour' }"
+    triggers:
+      - type: weekly
+        days_of_week: sunday
+        start_boundary: "2026-01-04T04:00:00"
+    username: SYSTEM
+    run_level: highest
+    state: present
+    enabled: true
+  when: wu_weekly_reboot | bool

@@ -64,6 +64,14 @@ accessibility_shortcuts_off: true
 # X3D 1% lows. Per-host override on the VM (set to false).
 hpet_disabled: true
 
+# --- Perf sûres (gaming_optim.yml §4.2.10-14) ---
+win32_priority_separation: 0x2A # short/fixed/high boost ; rollback 0x2 (défaut Win11)
+ntfs_optimize: true # disablelastaccess + disable8dot3
+ntfs_strip_8dot3: false # one-shot : purge les noms 8.3 existants sur M:\ (opt-in)
+mouse_accel_off: true # « améliorer la précision du pointeur » off (visée 1:1)
+nic_power_savings_off: true # RTL8125 : EEE/Green/Flow Control/Interrupt Moderation off
+bios_checks: true # report ReBAR/EXPO/write-cache (n'échoue jamais)
+
 # --- Xbox Mode / Full Screen Experience (xbox_mode.yml) ---
 # Boot into the Xbox app as console-like shell. Toggleable: flip to false
 # in host_vars/aurelien-gaming/main.yml to revert to classic desktop
@@ -90,6 +98,13 @@ remote_desktop_port: "3535"
 windows_update_active_hours:
   start: 10
   end: 23
+
+# --- Windows Update control (windows_update.yml) ---
+# Contrôle le QUAND, pas le SI (sécurité préservée). Reboot regroupé dimanche 4h.
+windows_update_no_reboot: true # jamais de reboot auto en session ouverte
+windows_feature_pin: "25H2" # épingle la version (vide = pas de pin)
+wu_exclude_drivers: true # WU n'écrase plus l'Adrenalin géré par drivers.yml
+wu_weekly_reboot: true # reboot d'update planifié dimanche 04:00 si pending
 
 # --- Remote access (sunshine_setup.yml, rustdesk_setup.yml) ---
 # Both toggleable independently. LAN-only firewall scope (profile=private)
@@ -197,6 +212,20 @@ startup_apps_disable:
   - Cortana
 telemetry_minimum: true
 firefox_set_default: true
+
+# --- Xbox mode polish (xbox_mode.yml) ---
+# Supprime les popups de confirmation entrée/sortie du mode Xbox (zéro-clic).
+xbox_prompts_suppress: true
+
+# --- Power & console-appliance UX (power_ux.yml) ---
+# Modèle d'alim : veille S3 + WoL (réveil bouton power / Moonlight, pas manette).
+power_button_sleep: true # bouton power = veille
+force_s3_sleep: true # force S3 si le firmware l'expose (sinon no-op + avertissement)
+power_monitor_timeout_min: 10 # écran éteint après 10 min d'inactivité
+power_standby_timeout_min: 30 # veille S3 après 30 min (jeux/Sunshine bloquent la veille)
+lock_screen_disabled: true # pas de lock screen ni de mot de passe au réveil + ARSO
+console_nags_suppress: true # SCOOBE, Spotlight, backup reminder, first-logon, startup sound off
+taskbar_autohide: true # barre des tâches auto-masquée + pas de badges/flashing
 
 # --- Drivers (drivers.yml) — generic defaults, overridable per host ---
 amd_gpu_install: false

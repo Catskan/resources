@@ -1,0 +1,214 @@
+---
+# Power & console-appliance UX — rapproche le comportement d'une Xbox :
+# bouton power = veille, réveil instantané sans lock screen, aucun nag/pub,
+# boot silencieux. Modèle d'alimentation retenu : VEILLE S3 + WoL (le magic
+# packet est déjà configuré par system_settings.yml / tag wol). Pas de
+# réveil manette (BT coupé en S3) — réveil via bouton power ou Moonlight/WoL.
+#
+# Les tâches win_powershell gardent explicitement $Ansible.CheckMode pour
+# qu'un `--check` soit un vrai dry-run (le module exécute sinon le script).
+#
+# Bare-metal only — gaté dans main.yml sur inventory_hostname=aurelien-gaming.
+
+# ── Bouton power → Veille (pas de menu, pas d'arrêt) ──────────────────
+- name: Power — bouton d'alimentation = veille (S3)
+  ansible.windows.win_powershell:
+    script: |
+      $q = powercfg /query SCHEME_CURRENT SUB_BUTTONS PBUTTONACTION
+      $cur = [regex]::Match(($q -join "`n"), 'Current AC Power Setting Index:\s*0x([0-9a-fA-F]+)').Groups[1].Value
+      $need = (-not $cur -or [convert]::ToInt32($cur,16) -ne 1)
+      if (-not $need) { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS PBUTTONACTION 1 | Out-Null  # 1 = Sleep
+      powercfg /setdcvalueindex SCHEME_CURRENT SUB_BUTTONS PBUTTONACTION 1 | Out-Null
+      powercfg /setactive SCHEME_CURRENT | Out-Null
+      $Ansible.Changed = $true
+  when: power_button_sleep | bool
+
+# ── Forcer la veille profonde S3 (si le firmware l'expose) ────────────
+- name: Power — forcer S3 (veille profonde) si disponible, sinon avertir
+  ansible.windows.win_powershell:
+    script: |
+      $states = (powercfg /a) -join "`n"
+      if ($states -notmatch 'Standby \(S3\)') {
+        # Firmware sans S3 exposé : ne PAS forcer (laisserait la machine sans veille).
+        $Ansible.Changed = $false
+        $Ansible.Result = "S3 non exposé par le firmware — override non appliqué (vérifier BIOS)"
+        return
+      }
+      $p = 'HKLM:\System\CurrentControlSet\Control\Power'
+      $cur = (Get-ItemProperty -Path $p -Name PlatformAoAcOverride -EA SilentlyContinue).PlatformAoAcOverride
+      if ($cur -eq 0) { $Ansible.Changed = $false; $Ansible.Result = "S3 déjà forcé"; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      Set-ItemProperty -Path $p -Name PlatformAoAcOverride -Value 0 -Type DWord
+      $Ansible.Changed = $true
+      $Ansible.Result = "S3 forcé (PlatformAoAcOverride=0) — reboot requis"
+  register: s3_state
+  when: force_s3_sleep | bool
+
+- name: Flag reboot if S3 override changed
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: s3_state.changed | default(false)
+
+# ── Timeouts : écran s'éteint, veille S3 après inactivité ─────────────
+# Les jeux (SetThreadExecutionState) et Sunshine gardent le système éveillé
+# pendant une session/stream → la veille ne coupe jamais une partie.
+- name: Power — timeouts écran + veille (AC)
+  ansible.windows.win_powershell:
+    script: |
+      if ($Ansible.CheckMode) { $Ansible.Changed = $false; return }
+      powercfg /change monitor-timeout-ac {{ power_monitor_timeout_min }} | Out-Null
+      powercfg /change standby-timeout-ac {{ power_standby_timeout_min }} | Out-Null
+      $Ansible.Changed = $false
+  changed_when: false
+
+# ── Pas de mot de passe au réveil (CONSOLELOCK=0) ─────────────────────
+- name: Power — ne pas exiger le mot de passe au réveil
+  ansible.windows.win_powershell:
+    script: |
+      $q = powercfg /query SCHEME_CURRENT SUB_NONE CONSOLELOCK
+      $cur = [regex]::Match(($q -join "`n"), 'Current AC Power Setting Index:\s*0x([0-9a-fA-F]+)').Groups[1].Value
+      $need = (-not $cur -or [convert]::ToInt32($cur,16) -ne 0)
+      if (-not $need) { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      powercfg /setacvalueindex SCHEME_CURRENT SUB_NONE CONSOLELOCK 0 | Out-Null
+      powercfg /setdcvalueindex SCHEME_CURRENT SUB_NONE CONSOLELOCK 0 | Out-Null
+      powercfg /setactive SCHEME_CURRENT | Out-Null
+      $Ansible.Changed = $true
+  when: lock_screen_disabled | bool
+
+# ── Lock screen off + ARSO (reconnexion auto après reboot d'update) ───
+- name: UX — registre lock screen + ARSO (DWORD)
+  ansible.windows.win_regedit:
+    path: "{{ item.path }}"
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+  loop:
+    - {
+        path: 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization',
+        name: NoLockScreen,
+        data: 1,
+      }
+    - {
+        path: 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System',
+        name: DisableAutomaticRestartSignOn,
+        data: 0,
+      }
+    - {
+        path: 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System',
+        name: AutomaticRestartSignOnConfig,
+        data: 1,
+      }
+  loop_control:
+    label: "{{ item.name }}"
+  when: lock_screen_disabled | bool
+
+- name: UX — screensaver off (HKCU)
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Control Panel\Desktop'
+    name: ScreenSaveActive
+    data: "0"
+    type: string
+  when: lock_screen_disabled | bool
+
+# ── Nags / Spotlight / pubs / boot silencieux ─────────────────────────
+- name: UX — supprimer nags, Spotlight, first-logon animation, startup sound (DWORD)
+  ansible.windows.win_regedit:
+    path: "{{ item.path }}"
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+  loop:
+    # SCOOBE « Let's finish setting up your device »
+    - {
+        path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement',
+        name: ScoobeSystemSettingEnabled,
+        data: 0,
+      }
+    # ContentDeliveryManager : spotlight, tips, welcome, suggestions
+    - {
+        path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager',
+        name: RotatingLockScreenEnabled,
+        data: 0,
+      }
+    - {
+        path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager',
+        name: RotatingLockScreenOverlayEnabled,
+        data: 0,
+      }
+    - {
+        path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager',
+        name: SubscribedContent-338389Enabled,
+        data: 0,
+      }
+    - {
+        path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager',
+        name: SubscribedContent-310093Enabled,
+        data: 0,
+      }
+    - {
+        path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager',
+        name: SubscribedContent-338387Enabled,
+        data: 0,
+      }
+    # Backup reminder toast + account notifications dans Start
+    - {
+        path: 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.BackupReminder',
+        name: Enabled,
+        data: 0,
+      }
+    - {
+        path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced',
+        name: Start_AccountNotifications,
+        data: 0,
+      }
+    # Boot : pas d'animation de première connexion, pas de son de démarrage
+    - {
+        path: 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon',
+        name: EnableFirstLogonAnimation,
+        data: 0,
+      }
+    - {
+        path: 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\BootAnimation',
+        name: DisableStartupSound,
+        data: 1,
+      }
+    # OOBE : pas d'écran vie privée sur profil neuf (complète l'autounattend)
+    - {
+        path: 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE',
+        name: DisablePrivacyExperience,
+        data: 1,
+      }
+  loop_control:
+    label: "{{ item.name }}"
+  when: console_nags_suppress | bool
+
+# ── Barre des tâches : auto-hide + pas de badges/flashing ─────────────
+- name: UX — taskbar badges + flashing off (HKCU)
+  ansible.windows.win_regedit:
+    path: 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    name: "{{ item }}"
+    data: 0
+    type: dword
+  loop:
+    - TaskbarBadges
+    - TaskbarFlashing
+  loop_control:
+    label: "{{ item }}"
+  when: taskbar_autohide | bool
+
+- name: UX — taskbar auto-hide (StuckRects3, bit 0 de l'octet 8)
+  ansible.windows.win_powershell:
+    script: |
+      $p = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3'
+      $v = (Get-ItemProperty -Path $p -Name Settings -EA SilentlyContinue).Settings
+      if (-not $v) { $Ansible.Changed = $false; $Ansible.Result = 'StuckRects3 absent'; return }
+      if (($v[8] -band 1) -eq 1) { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      $v[8] = $v[8] -bor 1
+      Set-ItemProperty -Path $p -Name Settings -Value $v
+      Stop-Process -Force -Name explorer -EA SilentlyContinue   # explorer réécrit le blob à sa fermeture
+      $Ansible.Changed = $true
+  when: taskbar_autohide | bool
