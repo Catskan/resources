@@ -121,18 +121,27 @@
 
     - name: Verify page file matches spec
       ansible.windows.win_powershell:
-        # Vérifie que le page file fixe vit bien sur le volume cible, à la bonne
-        # taille, et qu'aucun résiduel ne subsiste ailleurs (ex. C:\pagefile.sys).
+        # Reconstruit l'ensemble voulu (principal + éventuel dump système) et vérifie
+        # que les page files présents correspondent exactement (volumes + tailles),
+        # sans résiduel (ex. l'ancien C: 32 Go).
         script: |
-          $drive = '{{ page_file.drive | default("C:") }}'.TrimEnd('\')
-          $all   = @(Get-CimInstance Win32_PageFileSetting)
-          $onTarget = $all | Where-Object { $_.Name -eq "$drive\pagefile.sys" }
-          $Ansible.Result = @{
-            drives_present = @($all.Name)
-            on_target      = [bool]$onTarget
-            size_ok        = ($onTarget -and $onTarget.InitialSize -eq {{ page_file.initial_size_mb }} -and $onTarget.MaximumSize -eq {{ page_file.max_size_mb }})
-            no_stray       = (@($all | Where-Object { $_.Name -ne "$drive\pagefile.sys" }).Count -eq 0)
+          $drive     = '{{ page_file.drive | default("C:") }}'.TrimEnd('\')
+          $sysDumpMb = {{ page_file.system_dump_mb | default(0) }}
+          $desired = @{}
+          $desired[$drive] = @{ Init = {{ page_file.initial_size_mb }}; Max = {{ page_file.max_size_mb }} }
+          if ($sysDumpMb -gt 0 -and $env:SystemDrive -ne $drive) {
+            $desired[$env:SystemDrive] = @{ Init = $sysDumpMb; Max = $sysDumpMb }
           }
+          $all = @(Get-CimInstance Win32_PageFileSetting)
+          $present = @{}
+          foreach ($pf in $all) { $present[$pf.Name.Substring(0,2)] = $pf }
+          $matches = $true
+          foreach ($d in $desired.Keys) {
+            $pf = $present[$d]
+            if (-not $pf -or $pf.InitialSize -ne $desired[$d].Init -or $pf.MaximumSize -ne $desired[$d].Max) { $matches = $false }
+          }
+          foreach ($d in $present.Keys) { if (-not $desired.ContainsKey($d)) { $matches = $false } }
+          $Ansible.Result = @{ present = @($all.Name); main_on = $drive; matches = $matches }
       register: pagefile_verify
       when: page_file.strategy == 'fixed'
       tags: [gaming_optim]
@@ -140,11 +149,9 @@
     - name: Assert page file matches spec
       ansible.builtin.assert:
         that:
-          - pagefile_verify.result.on_target
-          - pagefile_verify.result.size_ok
-          - pagefile_verify.result.no_stray
+          - pagefile_verify.result.matches
         fail_msg: "Page file mismatch — got {{ pagefile_verify.result }}"
-        success_msg: "Page file OK ({{ page_file.drive | default('C:') }}, {{ page_file.initial_size_mb }} Mo)"
+        success_msg: "Page file OK (principal {{ page_file.drive | default('C:') }} {{ page_file.initial_size_mb }} Mo{{ ', dump C: ' ~ page_file.system_dump_mb ~ ' Mo' if (page_file.system_dump_mb | default(0) | int) > 0 else '' }})"
       when: page_file.strategy == 'fixed'
       tags: [gaming_optim]
 

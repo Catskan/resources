@@ -2,6 +2,22 @@
 
 > **Audience**: a fresh Claude Code session picking up this repo on another machine. Read this top-to-bottom before answering. Trust `git log` and the current state of files over anything in this doc if there's a conflict — this is a 2026-05-18 snapshot.
 
+## Update 2026-07-03 — storage fix from the NAS (page file relocation + robust hibernation)
+
+> Done from the NAS "brain" container over `run-on` (SSHFS-mounted repo), **not** from the MacBook. Syntax-checked with `ansible-playbook --syntax-check` on the MacBook; **not yet applied** to the physical machine (needs `make windows ARGS='--tags gaming_optim'` + a reboot).
+
+**Context**: the physical `aurelien-gaming` rig is now built and running — **Sapphire RX 9070 XT Nitro+** (the "RTX 3080" mentioned lower in this doc is obsolete), Ryzen 9800X3D, 2×16 GB DDR5-6000 CL30, Win11 build 26200. A HWiNFO capture of an in-game freeze in **Forza Horizon 6** (`M:\Aurel\Documents\Overclocking\lag-fh6.CSV`) showed a multi-second stall with the GPU **starved, not throttled** (GPU Busy 0.9 ms / GPU Wait 485 ms, no power/thermal/current limit) → an **I/O + memory hitch, not a GPU/TDR issue** (the older FHC02 TDR is a separate problem, last seen 2026-06-05, likely fixed by the 2026-06-28 driver). Root cause: `C:` (124 GB system partition of the NVMe) sat at **4.8 % free**, and the IaC itself was placing a **32→48 GB fixed page file on C:**, plus a stale **12.5 GB `hiberfil.sys`**.
+
+**Changes (this repo, `gaming_optim` tag)**:
+
+- `inventory/host_vars/aurelien-gaming/main.yml` — `page_file` is now `{ strategy: fixed, drive: "E:", initial=max=16384, system_dump_mb: 2048 }`. The 16 GB main page file moves off the system disk onto the SATA SSD `E:`; a small **2 GB page file stays on `C:`** so BSOD memory dumps still work (relevant while debugging crashes).
+- `roles/windows_gaming/tasks/gaming_optim.yml` — page file task rewritten to be **multi-disk / declarative**: it builds the desired set, deletes any page file on a non-desired volume (purges the old 32 GB `C:\pagefile.sys`), creates/adjusts the wanted ones, and flags `reboot_required`. Hibernation task now keys off the registry `HibernateEnabled` value + `hiberfil.sys` presence instead of parsing the **localized** `powercfg /a` text — the FR string changed on Win11 26200, which is why hibernation had silently drifted back on despite `hibernation_enabled: false`.
+- `playbooks/verify_gaming_optim.yml` — hibernation check aligned to the robust method + new **page file assertion** (exact desired volumes + sizes, no stray).
+
+**Expected after apply + reboot**: ~+44 GB freed on `C:` (hiberfil 12.5 + old C: pagefile 32).
+
+**Still open — deep root cause**: `C:` is only 124 GB and partitioning was done **manually** (the autounattend `w11-baremetal.xml` has no `<DiskConfiguration>`, see PR #6). A reproducible `<DiskConfiguration>` with a larger `C:` (~250 GB) would fix it at the next bare-metal reinstall.
+
 ## TL;DR — what this repo is and where it stands
 
 Personal infra monorepo. The center of gravity is `Ansible/`, which provisions Aurélien's machines (Windows gaming PC `aurelien-gaming`, Arch Linux laptop `arch-linux-laptop`, MacBook Air = controller, NAS, Win11 ARM VM `w11-vm-aurel`). Everything in `Containers/`, `Microsoft-Resources/`, `Linux-Resources/`, etc. is reference material or self-contained side projects.

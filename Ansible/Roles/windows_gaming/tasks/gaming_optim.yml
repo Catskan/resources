@@ -179,20 +179,30 @@
       }
   when: not hibernation_enabled
 
-- name: Storage — configure fixed page file on {{ page_file.drive | default('C:') }}
+- name: Storage — configure fixed page file(s) — main on {{ page_file.drive | default('C:') }}
   ansible.windows.win_powershell:
-    # Paramétrable par disque : tout page file hors du volume cible est supprimé
-    # (ex. migration C: -> E:), puis (re)créé/ajusté sur la cible. La suppression
-    # d'un page file en cours d'usage ne libère l'espace qu'après redémarrage.
+    # Construit l'ensemble des page files voulus (principal sur le volume cible +
+    # petit page file de dump sur le volume système si system_dump_mb > 0), puis
+    # réconcilie : supprime tout page file non voulu (ex. l'ancien C: 32 Go) et
+    # crée/ajuste les voulus. La suppression d'un page file en cours d'usage ne
+    # libère l'espace qu'après redémarrage.
     script: |
       $changed = $false
-      $drive   = '{{ page_file.drive | default("C:") }}'.TrimEnd('\')
-      $target  = "$drive\pagefile.sys"
-      $desiredInit = {{ page_file.initial_size_mb }}
-      $desiredMax  = {{ page_file.max_size_mb }}
+      $drive     = '{{ page_file.drive | default("C:") }}'.TrimEnd('\')
+      $sysDumpMb = {{ page_file.system_dump_mb | default(0) }}
 
-      if (-not (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$drive'" -ErrorAction SilentlyContinue)) {
-        throw "Volume cible du page file introuvable : $drive"
+      # Ensemble voulu : { 'E:' = @{Init;Max}; 'C:' = @{Init;Max} }
+      $desired = @{}
+      $desired[$drive] = @{ Init = {{ page_file.initial_size_mb }}; Max = {{ page_file.max_size_mb }} }
+      if ($sysDumpMb -gt 0 -and $env:SystemDrive -ne $drive) {
+        $desired[$env:SystemDrive] = @{ Init = $sysDumpMb; Max = $sysDumpMb }
+      }
+
+      # Garde-fou : chaque volume voulu doit exister
+      foreach ($d in $desired.Keys) {
+        if (-not (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$d'" -ErrorAction SilentlyContinue)) {
+          throw "Volume cible du page file introuvable : $d"
+        }
       }
 
       $cs = Get-CimInstance Win32_ComputerSystem
@@ -201,24 +211,29 @@
         $changed = $true
       }
 
-      # Purger tout page file qui n'est pas sur le volume cible (ex. C:\pagefile.sys)
+      # Supprimer tout page file dont le volume n'est pas voulu (ex. ancien C: 32 Go)
       foreach ($pf in Get-CimInstance Win32_PageFileSetting) {
-        if ($pf.Name -ne $target) {
+        $vol = $pf.Name.Substring(0, 2)  # 'C:' depuis 'C:\pagefile.sys'
+        if (-not $desired.ContainsKey($vol)) {
           Remove-CimInstance -InputObject $pf
           $changed = $true
         }
       }
 
-      # Créer / ajuster le page file sur le volume cible
-      $pf = Get-CimInstance Win32_PageFileSetting | Where-Object { $_.Name -eq $target }
-      if ($null -eq $pf) {
-        New-CimInstance -ClassName Win32_PageFileSetting -Property @{
-          Name = $target; InitialSize = $desiredInit; MaximumSize = $desiredMax
-        } | Out-Null
-        $changed = $true
-      } elseif ($pf.InitialSize -ne $desiredInit -or $pf.MaximumSize -ne $desiredMax) {
-        Set-CimInstance -InputObject $pf -Property @{ InitialSize = $desiredInit; MaximumSize = $desiredMax } | Out-Null
-        $changed = $true
+      # Créer / ajuster chaque page file voulu
+      foreach ($d in $desired.Keys) {
+        $path = "$d\pagefile.sys"
+        $want = $desired[$d]
+        $pf = Get-CimInstance Win32_PageFileSetting | Where-Object { $_.Name -eq $path }
+        if ($null -eq $pf) {
+          New-CimInstance -ClassName Win32_PageFileSetting -Property @{
+            Name = $path; InitialSize = $want.Init; MaximumSize = $want.Max
+          } | Out-Null
+          $changed = $true
+        } elseif ($pf.InitialSize -ne $want.Init -or $pf.MaximumSize -ne $want.Max) {
+          Set-CimInstance -InputObject $pf -Property @{ InitialSize = $want.Init; MaximumSize = $want.Max } | Out-Null
+          $changed = $true
+        }
       }
       $Ansible.Changed = $changed
   register: pagefile_cfg
