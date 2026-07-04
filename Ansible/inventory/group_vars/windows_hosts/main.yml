@@ -126,6 +126,9 @@ openrgb_enabled: true
 # at the same bitrate). Client FPS is negotiated by Moonlight, not capped
 # server-side (Apple TV 4K = 60Hz, iPad Pro M = 120Hz, Steam Deck = 90Hz).
 sunshine_install_vigembus: true # pilote manette virtuelle (entrées manette Moonlight)
+sunshine_install_hidhide: true # masque une manette branchée sur le PC (config dans l'appli HidHide)
+sunshine_force_xinput: true # manette Xbox Series → force l'émulation Xbox 360 (jamais DS4)
+sunshine_back_button_timeout: 2000 # maintenir Back ~2s = bouton Guide/Xbox (-1 = off)
 sunshine_encoder: amfvce # nvenc | qsv | amfvce | software
 sunshine_hevc_mode: 2 # 0=auto, 1=h264-only, 2=prefer HEVC, 3=force HEVC
 sunshine_lan_only_web_ui: true # restrict Web UI to LAN clients

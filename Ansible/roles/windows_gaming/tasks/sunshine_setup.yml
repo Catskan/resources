@@ -52,6 +52,32 @@
     - not (vigembus is skipped)
     - (vigembus.result.winget_rc | default(0)) != 0
 
+- name: Sunshine — install HidHide (hide host-connected controllers from games)
+  # Empêche le double-input quand une manette est branchée SUR le PC pendant le
+  # streaming (jeux ne voient que le pad virtuel ViGEmBus). Best-effort. Les
+  # règles de masquage (quelle manette / quels jeux) se configurent dans l'appli
+  # HidHide — Ansible ne fait qu'installer le pilote.
+  ansible.windows.win_powershell:
+    script: |
+      $listed = winget list --id Nefarius.HidHide --exact --disable-interactivity 2>&1 | Out-String
+      if ($listed -match 'Nefarius\.HidHide') { $Ansible.Changed = $false; $Ansible.Result = @{ winget_rc = 0; state = 'already-installed' }; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      $out = (& winget install --id Nefarius.HidHide --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1 | Out-String)
+      $rc = $LASTEXITCODE
+      $Ansible.Result = @{ winget_rc = $rc; winget_output = $out }
+      $Ansible.Changed = ($rc -eq 0)
+  register: hidhide
+  failed_when: false
+  when: sunshine_install_hidhide | bool
+
+- name: Sunshine — HidHide install diagnostic (only if winget didn't succeed)
+  ansible.builtin.debug:
+    msg: "HidHide winget rc={{ hidhide.result.winget_rc }} — {{ hidhide.result.winget_output | default('') }}"
+  when:
+    - sunshine_install_hidhide | bool
+    - not (hidhide is skipped)
+    - (hidhide.result.winget_rc | default(0)) != 0
+
 - name: Sunshine — locate installed binary
   ansible.windows.win_powershell:
     script: |

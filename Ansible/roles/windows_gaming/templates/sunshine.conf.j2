@@ -31,3 +31,13 @@ upnp = {{ 'on' if sunshine_upnp else 'off' }}
 # pairing a new Moonlight client (default 60s is too short on TV-class
 # devices).
 pin_allow_seconds = 600
+
+# ---- Gamepad ----
+{% if sunshine_force_xinput %}
+# Manette Xbox Series X/S = XInput natif (pas de gyro/touchpad) : on force
+# l'émulation Xbox 360 (jamais DS4) → compat maximale avec les jeux PC.
+motion_as_ds4 = disabled
+touchpad_as_ds4 = disabled
+{% endif %}
+# Maintenir Back/Select ce nb de ms émule le bouton Guide/Xbox (-1 = désactivé).
+back_button_timeout = {{ sunshine_back_button_timeout }}
