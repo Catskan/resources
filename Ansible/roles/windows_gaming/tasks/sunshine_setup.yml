@@ -33,10 +33,10 @@
   # Sunshine, ou release GitHub Nefarius.ViGEmBus.
   ansible.windows.win_powershell:
     script: |
-      $listed = winget list --id Nefarius.ViGEmBus --exact --disable-interactivity 2>&1 | Out-String
-      if ($listed -match 'Nefarius\.ViGEmBus') { $Ansible.Changed = $false; $Ansible.Result = @{ winget_rc = 0; state = 'already-installed' }; return }
+      $listed = winget list --id ViGEm.ViGEmBus --exact --disable-interactivity 2>&1 | Out-String
+      if ($listed -match 'ViGEm\.ViGEmBus') { $Ansible.Changed = $false; $Ansible.Result = @{ winget_rc = 0; state = 'already-installed' }; return }
       if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
-      $out = (& winget install --id Nefarius.ViGEmBus --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1 | Out-String)
+      $out = (& winget install --id ViGEm.ViGEmBus --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1 | Out-String)
       $rc = $LASTEXITCODE
       $Ansible.Result = @{ winget_rc = $rc; winget_output = $out }
       $Ansible.Changed = ($rc -eq 0)
