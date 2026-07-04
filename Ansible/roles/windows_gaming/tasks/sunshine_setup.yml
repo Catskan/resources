@@ -67,6 +67,20 @@
     path: 'C:\ProgramData\Sunshine'
     state: directory
 
+- name: Sunshine — ensure cover-art assets directory exists
+  ansible.windows.win_file:
+    path: 'C:\ProgramData\Sunshine\assets'
+    state: directory
+
+- name: Sunshine — download app cover art (apps with image_url)
+  ansible.windows.win_get_url:
+    url: "{{ item.image_url }}"
+    dest: 'C:\ProgramData\Sunshine\assets\{{ item.name | regex_replace("[^A-Za-z0-9]+", "_") }}.png'
+    force: false
+  loop: "{{ sunshine_apps | selectattr('image_url', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Sunshine — deploy sunshine.conf (encoder + LAN restrictions + log level)
   ansible.windows.win_template:
     src: sunshine.conf.j2

@@ -10,7 +10,7 @@
     {
       "name": {{ app.name | to_json }},
       "cmd": {{ app.cmd | to_json }},
-      "image-path": {{ app.image_path | default('') | to_json }}
+      "image-path": {{ (('C:\\ProgramData\\Sunshine\\assets\\' ~ (app.name | regex_replace('[^A-Za-z0-9]+', '_')) ~ '.png') if app.image_url is defined else (app.image_path | default(''))) | to_json }}
     }{% endfor %}
   ]
 }

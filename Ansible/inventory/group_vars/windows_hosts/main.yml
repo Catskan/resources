@@ -137,10 +137,16 @@ sunshine_log_level: warning # debug | info | warning | error
 sunshine_apps:
   - name: "Steam Big Picture"
     cmd: "steam://open/bigpicture"
-    image_path: ""
   - name: "Xbox app (FSE)"
     cmd: 'shell:AppsFolder\Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App'
-    image_path: ""
+  # --- Jeux non-Steam lancés directement depuis Moonlight ---
+  # cmd = AppID du menu Démarrer (shell:AppsFolder\<AppID>) pour les jeux
+  # UWP/Store, ou URI launcher (uplay://launch/<id>/0) pour Ubisoft.
+  # Optionnel : `image_url:` = cover portrait téléchargée dans les assets
+  # Sunshine par sunshine_setup.yml (sinon Moonlight met un placeholder).
+  - name: "Forza Horizon 6"
+    cmd: 'shell:AppsFolder\Microsoft.ForteBaseGame_8wekyb3d8bbwe!Forzahorizon6'
+    # image_url: "https://…/forza-horizon-6-cover.png"
 
 # --- RustDesk config (rustdesk_setup.yml / RustDesk2.toml.j2) ---
 # Direct IP LAN mode = no relay, fastest path. Permanent password from

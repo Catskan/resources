@@ -11,9 +11,14 @@
 > Cette liste sert de **checklist** post-bare-metal pour ne rien oublier.
 > À compléter/mettre à jour à la main (Aurélien).
 
-## Xbox / Game Pass (app Xbox → installer sur `M:\XboxGames`)
+## Xbox / MS Store (app Xbox → installer sur `M:\XboxGames`)
 
-- [ ] **Forza Horizon 6** (+ Expansion 1, Expansion 2)
+- [ ] **Forza Horizon 6** (+ Expansion 1, Expansion 2) — **acheté**, licence sur
+      le compte Microsoft (pas Game Pass). ⚠️ **Non installable via winget** :
+      absent du catalogue `winget --source msstore` (les gros jeux Xbox passent
+      par l'app Xbox / Gaming Services, sans CLI). Réinstall : se connecter à
+      l'app Xbox avec le compte MS (creds déjà enregistrées par le rôle) → le jeu
+      apparaît comme « possédé » → installer.
 
 ## Ubisoft Connect (login → bibliothèque → installer)
 
