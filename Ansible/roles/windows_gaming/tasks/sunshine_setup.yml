@@ -26,23 +26,25 @@
 # AND on sunshine_enabled.
 
 - name: Sunshine — install ViGEmBus (virtual gamepad driver for Moonlight controller input)
+  # ViGEmBus est un PILOTE → son install winget exige un token admin élevé
+  # (sinon exit -1978335212 = COMMAND_REQUIRES_ADMIN). D'où become runas, alors
+  # que les apps winget classiques (softwares_winget.yml) n'en ont pas besoin.
   ansible.windows.win_powershell:
     script: |
-      # Pilote de manette virtuelle requis par Sunshine pour injecter les
-      # entrées manette des clients Moonlight. Idempotent via winget.
       $listed = winget list --id Nefarius.ViGEmBus --exact --disable-interactivity 2>&1 | Out-String
       if ($listed -match 'Nefarius\.ViGEmBus') { $Ansible.Changed = $false; return }
       if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
-      $job = Start-Job -ScriptBlock {
-        & winget install --id Nefarius.ViGEmBus --exact --silent `
-          --accept-package-agreements --accept-source-agreements --disable-interactivity *>$null
-        $LASTEXITCODE
-      }
-      if (-not (Wait-Job $job -Timeout 300)) { Stop-Job $job; Remove-Job $job -Force; throw "ViGEmBus install timed out" }
-      $rc = Receive-Job $job; Remove-Job $job
-      # 0 = installé, -1978335189 = déjà à jour/installé selon winget
+      & winget install --id Nefarius.ViGEmBus --exact --silent `
+        --accept-package-agreements --accept-source-agreements --disable-interactivity *>$null
+      $rc = $LASTEXITCODE
+      # 0 = installé ; -1978335189 = déjà installé/à jour
       if ($rc -ne 0 -and $rc -ne -1978335189) { throw "winget install Nefarius.ViGEmBus exited $rc" }
       $Ansible.Changed = ($rc -eq 0)
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ ansible_user }}"
+    ansible_become_pass: "{{ ansible_password }}"
   when: sunshine_install_vigembus | bool
 
 - name: Sunshine — locate installed binary
