@@ -586,25 +586,33 @@
 
 # ======================== §4.2.13 NIC Realtek — anti économie d'énergie ========================
 # EEE/Green/Flow Control/Interrupt Moderation off = latence réseau plus plate
-# (source n°1 de micro-lags sur RTL8125). Exécuté EN DERNIER : la modif reset
-# brièvement le lien → sous WinRM la connexion peut tomber 2-3 s.
-- name: Network — disable NIC power-saving / latency features (best-effort)
+# (source n°1 de micro-lags sur RTL8125). ⚠️ Ces changements RÉINITIALISENT le
+# lien réseau, or WinRM passe par ce même NIC → la session tombe. On lance donc
+# la modif en fire-and-forget (async/poll:0), puis on attend la reconnexion :
+# sinon tout le reste du run est avorté (UNREACHABLE).
+- name: Network — disable NIC power-saving / latency features (best-effort, resets link)
   ansible.windows.win_powershell:
     script: |
       $nic = Get-NetAdapter -Physical | Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' } | Select-Object -First 1
-      if (-not $nic) { $Ansible.Changed = $false; $Ansible.Result = 'no active 802.3 NIC'; return }
-      $changed = $false
+      if (-not $nic) { return }
       foreach ($kw in 'Energy*Efficient*','Green*','*EEE*','Gigabit Lite','Power Saving*','Flow Control','Interrupt Moderation') {
         Get-NetAdapterAdvancedProperty -Name $nic.Name -DisplayName $kw -EA SilentlyContinue | ForEach-Object {
           if ($_.DisplayValue -ne 'Disabled') {
             Set-NetAdapterAdvancedProperty -Name $nic.Name -DisplayName $_.DisplayName -DisplayValue 'Disabled' -EA SilentlyContinue
-            $changed = $true
           }
         }
       }
       Disable-NetAdapterPowerManagement -Name $nic.Name -EA SilentlyContinue
-      $Ansible.Changed = $changed
-  failed_when: false
+  async: 120
+  poll: 0
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - nic_power_savings_off | bool
+
+- name: Network — wait for WinRM to recover after the NIC link reset
+  ansible.builtin.wait_for_connection:
+    delay: 8
+    timeout: 180
   when:
     - inventory_hostname == "aurelien-gaming"
     - nic_power_savings_off | bool
