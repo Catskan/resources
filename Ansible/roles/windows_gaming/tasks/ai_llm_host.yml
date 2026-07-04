@@ -1,0 +1,173 @@
+---
+# Nœud d'inférence LLM pour vinted-bot (voir /volume1/Aurelien/Scripts/vinted-bot).
+# Le bot NAS réveille ce PC par WoL (tag wol, déjà configuré), fait ssh en tant
+# qu'Aurel pour lancer `lms server start --bind 0.0.0.0` + `lms load`, interroge
+# http://<PC>:1234/v1, puis éteint. Ce tag provisionne le CÔTÉ WINDOWS :
+#   - LM Studio (runtime Vulkan) + CLI `lms` sur le PATH
+#   - répertoire de modèles sur D:\LocalLLM (JAMAIS sur C:) + pull du modèle
+#   - OpenSSH Server + clé publique vintedbot (compte admin → administrators_authorized_keys)
+#   - firewall LAN : SSH (22) + API LM Studio (1234)
+#
+# LM Studio n'est PAS lancé au boot (gaming-first) : c'est le bot qui démarre le
+# serveur à la demande. Les tâches win_powershell gardent $Ansible.CheckMode.
+#
+# Bare-metal only — gaté dans main.yml sur inventory_hostname=aurelien-gaming
+# ET ai_llm_host_enabled.
+
+# ── Répertoire de modèles hors-C: ─────────────────────────────────────
+- name: AI — ensure LLM models directory exists ({{ ai_llm_models_dir }})
+  ansible.windows.win_file:
+    path: "{{ ai_llm_models_dir }}"
+    state: directory
+
+# ── LM Studio (runtime Vulkan bundlé) ─────────────────────────────────
+- name: AI — install LM Studio (winget ElementLabs.LMStudio)
+  ansible.windows.win_powershell:
+    script: |
+      if (Test-Path 'C:\Program Files\LM Studio\LM Studio.exe') { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      $job = Start-Job -ScriptBlock {
+        & winget install --id ElementLabs.LMStudio --exact --silent `
+          --accept-package-agreements --accept-source-agreements --disable-interactivity *>$null
+        $LASTEXITCODE
+      }
+      if (-not (Wait-Job $job -Timeout 900)) { Stop-Job $job; Remove-Job $job -Force; throw "LM Studio install timed out" }
+      $rc = Receive-Job $job; Remove-Job $job
+      if ($rc -ne 0) { throw "winget install ElementLabs.LMStudio exited $rc" }
+      $Ansible.Changed = $true
+
+- name: AI — locate lms.exe (bundled in the app)
+  ansible.windows.win_powershell:
+    parameters:
+      modelsdir: "{{ ai_llm_models_dir }}"
+    script: |
+      param([string]$modelsdir)
+      $candidates = @(
+        (Join-Path $modelsdir 'bin\lms.exe'),
+        "$env:USERPROFILE\.lmstudio\bin\lms.exe",
+        "C:\Program Files\LM Studio\resources\app\.webpack\lms.exe"
+      )
+      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+      if (-not $exe) { $exe = (Get-ChildItem 'C:\Program Files\LM Studio' -Recurse -Filter lms.exe -EA SilentlyContinue | Select-Object -First 1).FullName }
+      if (-not $exe) { throw "lms.exe introuvable — LM Studio est-il installé ?" }
+      $Ansible.Result = @{ path = $exe }
+      $Ansible.Changed = $false
+  register: lms_exe
+  changed_when: false
+  check_mode: false
+
+- name: AI — bootstrap the lms CLI onto PATH (if not already)
+  ansible.windows.win_powershell:
+    parameters:
+      exe: "{{ lms_exe.result.path }}"
+    script: |
+      param([string]$exe)
+      if (Get-Command lms -ErrorAction SilentlyContinue) { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      & $exe bootstrap *>$null
+      $Ansible.Changed = $true
+
+# ── Répertoire de modèles = D:\LocalLLM dans settings.json ────────────
+# Garantit que `lms get` télécharge sur D:, jamais sur le défaut C:\...\.lmstudio\models.
+- name: AI — set LM Studio downloadsFolder to {{ ai_llm_models_dir }}
+  ansible.windows.win_powershell:
+    parameters:
+      want: "{{ ai_llm_models_dir }}"
+    script: |
+      param([string]$want)
+      $f = "$env:USERPROFILE\.lmstudio\settings.json"
+      if (Test-Path $f) {
+        $j = Get-Content $f -Raw | ConvertFrom-Json
+        if ($j.downloadsFolder -eq $want) { $Ansible.Changed = $false; return }
+        if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+        $j | Add-Member -NotePropertyName downloadsFolder -NotePropertyValue $want -Force
+        ($j | ConvertTo-Json -Depth 100) | Set-Content $f -Encoding UTF8
+      } else {
+        if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+        New-Item -ItemType Directory -Force -Path (Split-Path $f) | Out-Null
+        "{ `"downloadsFolder`": `"$($want -replace '\\','\\')`" }" | Set-Content $f -Encoding UTF8
+      }
+      $Ansible.Changed = $true
+
+# ── Modèle LLM (sur D:) — idempotent via `lms ls` ─────────────────────
+- name: AI — pull the LLM model if missing ({{ ai_llm_model }})
+  ansible.windows.win_powershell:
+    parameters:
+      exe: "{{ lms_exe.result.path }}"
+      model: "{{ ai_llm_model }}"
+      dir: "{{ ai_llm_models_dir }}"
+      glob: "{{ ai_llm_model_glob }}"
+    script: |
+      param([string]$exe, [string]$model, [string]$dir, [string]$glob)
+      # Guard déterministe : présence du .gguf sous le répertoire de modèles
+      # (indépendant du format de sortie de `lms ls`). Évite tout re-download.
+      $have = Get-ChildItem -Path $dir -Recurse -Filter $glob -File -ErrorAction SilentlyContinue | Select-Object -First 1
+      if ($have) { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      $job = Start-Job -ScriptBlock { param($e, $m) & $e get $m --yes *>$null; $LASTEXITCODE } -ArgumentList $exe, $model
+      if (-not (Wait-Job $job -Timeout 3600)) { Stop-Job $job; Remove-Job $job -Force; throw "lms get $model timed out (1h)" }
+      $rc = Receive-Job $job; Remove-Job $job
+      if ($rc -ne 0) { throw "lms get $model exited $rc" }
+      $Ansible.Changed = $true
+  when: ai_llm_auto_pull_model | bool
+
+# ── OpenSSH Server (le NAS ssh en tant qu'Aurel pour piloter lms) ─────
+- name: AI — install OpenSSH Server capability
+  ansible.windows.win_powershell:
+    script: |
+      $cap = Get-WindowsCapability -Online -Name 'OpenSSH.Server*' | Where-Object State -ne 'Installed'
+      if (-not $cap) { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      Add-WindowsCapability -Online -Name 'OpenSSH.Server~~~~0.0.1.0' | Out-Null
+      $Ansible.Changed = $true
+
+- name: AI — sshd service auto-start
+  ansible.windows.win_service:
+    name: sshd
+    start_mode: auto
+    state: started
+
+- name: AI — OpenSSH default shell = PowerShell (pour que `lms` marche via ssh)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\OpenSSH
+    name: DefaultShell
+    data: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+    type: string
+
+# ── Clé publique vintedbot — compte admin → administrators_authorized_keys ──
+- name: AI — authorize vintedbot key + lock down ACL (admin account)
+  ansible.windows.win_powershell:
+    parameters:
+      key: "{{ ai_ssh_authorized_key }}"
+    script: |
+      param([string]$key)
+      $f = 'C:\ProgramData\ssh\administrators_authorized_keys'
+      New-Item -ItemType Directory -Force -Path (Split-Path $f) | Out-Null
+      $existing = if (Test-Path $f) { Get-Content $f -Raw } else { '' }
+      $needKey = ($existing -notmatch [regex]::Escape($key))
+      # ACL requise par sshd : SYSTEM + Administrators uniquement, héritage coupé.
+      $acl = if (Test-Path $f) { (icacls $f) -join "`n" } else { '' }
+      $needAcl = ($acl -notmatch 'BUILTIN\\Administrators:\(F\)') -or ($acl -match ':\(I\)')
+      if (-not $needKey -and -not $needAcl) { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      if ($needKey) { Add-Content -Path $f -Value $key -Encoding ascii }
+      icacls $f /inheritance:r /grant 'SYSTEM:F' /grant 'BUILTIN\Administrators:F' *>$null
+      $Ansible.Changed = $true
+  no_log: false
+
+# ── Firewall LAN : SSH + API LM Studio ────────────────────────────────
+- name: AI — firewall allow SSH (22) + LM Studio API ({{ ai_llm_server_port }}) LAN only
+  community.windows.win_firewall_rule:
+    name: "{{ item.name }}"
+    localport: "{{ item.port }}"
+    protocol: tcp
+    direction: in
+    action: allow
+    enabled: true
+    profiles: private
+    state: present
+  loop:
+    - { name: "OpenSSH SSH Server (LAN)", port: 22 }
+    - { name: "LM Studio API (LAN)", port: "{{ ai_llm_server_port }}" }
+  loop_control:
+    label: "{{ item.name }} :{{ item.port }}"

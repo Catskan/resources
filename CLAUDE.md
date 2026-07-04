@@ -46,26 +46,27 @@ Standard Ansible role layout. Playbooks call real roles via `roles:`, vars load 
 
 ### Tags (rôle `windows_gaming`)
 
-| Tag                | What it does                                                                                                                                         |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bootstrap`        | WinRM startup, UAC, AdminAutoLogon (1ʳᵉ install only)                                                                                                |
-| `system`           | services, NAS mounts, MS account credential, Active Hours, UAC, VSS                                                                                  |
-| `rdp`, `wol`       | the corresponding subsystems                                                                                                                         |
-| `user_folders`     | redirect User Shell Folders to `M:\Aurel`                                                                                                            |
-| `defender`         | Defender exclusions paths/processes/extensions + cloud reporting off                                                                                 |
-| `gaming_optim`     | VBS off + weekly safety-reset + kernel/network/storage tweaks + Game DVR/Mode                                                                        |
-| `console_ux`       | Debloat (AppX bloatware, Cortana, Bing, Widgets, OneDrive, Edge neutral, Firefox default, telemetry, notifications)                                  |
-| `softwares_winget` | Install user apps + tooling via winget (Steam, Epic, Firefox, MSI Afterburner, NVCleanstall, …) + MS Store Xbox Acc.                                 |
-| `launcher_paths`   | Game launcher install/library paths on `M:\` (Steam, Epic, GOG, EA, Rockstar, Ubisoft) (bare-metal only)                                             |
-| `firefox`          | Firefox policies (cross-platform, from `common` role)                                                                                                |
-| `drivers`          | AMD chipset (direct_url) + AMD GPU Adrenalin (direct_url) + power plan (Balanced)                                                                    |
-| `keepassxc`        | KeePassXC pointed at NAS vault UNC + tray autostart + Ctrl+Shift+V Auto-Type + Defender exclusion (bare-metal only)                                  |
-| `xbox_mode`        | Win11 Xbox Full-Screen Experience — DeviceForm spoof + GamingHomeApp = Xbox app shell (bare-metal only)                                              |
-| `sunshine`         | Sunshine game streaming server + Moonlight app entries (Desktop / Steam BP / Xbox) + LAN firewall (bare-metal only)                                  |
-| `openrgb`          | OpenRGB startup shortcut (minimized) + Defender exclusion (bare-metal only)                                                                          |
-| `rustdesk`         | RustDesk desktop remoting (LAN direct IP + permanent password, config seeded once) + LAN firewall (bare-metal only)                                  |
-| `power_ux`         | Console-appliance UX : bouton power→veille S3, lock screen off + ARSO, timeouts, nags/Spotlight off, taskbar auto-hide (bare-metal only)             |
-| `wu_control`       | Windows Update sans reboot surprise : `NoAutoRebootWithLoggedOnUsers` + pin version + exclusion drivers + reboot planifié dimanche (bare-metal only) |
+| Tag                | What it does                                                                                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bootstrap`        | WinRM startup, UAC, AdminAutoLogon (1ʳᵉ install only)                                                                                                 |
+| `system`           | services, NAS mounts, MS account credential, Active Hours, UAC, VSS                                                                                   |
+| `rdp`, `wol`       | the corresponding subsystems                                                                                                                          |
+| `user_folders`     | redirect User Shell Folders to `M:\Aurel`                                                                                                             |
+| `defender`         | Defender exclusions paths/processes/extensions + cloud reporting off                                                                                  |
+| `gaming_optim`     | VBS off + weekly safety-reset + kernel/network/storage tweaks + Game DVR/Mode                                                                         |
+| `console_ux`       | Debloat (AppX bloatware, Cortana, Bing, Widgets, OneDrive, Edge neutral, Firefox default, telemetry, notifications)                                   |
+| `softwares_winget` | Install user apps + tooling via winget (Steam, Epic, Firefox, MSI Afterburner, NVCleanstall, …) + MS Store Xbox Acc.                                  |
+| `launcher_paths`   | Game launcher install/library paths on `M:\` (Steam, Epic, GOG, EA, Rockstar, Ubisoft) (bare-metal only)                                              |
+| `firefox`          | Firefox policies (cross-platform, from `common` role)                                                                                                 |
+| `drivers`          | AMD chipset (direct_url) + AMD GPU Adrenalin (direct_url) + power plan (Balanced)                                                                     |
+| `keepassxc`        | KeePassXC pointed at NAS vault UNC + tray autostart + Ctrl+Shift+V Auto-Type + Defender exclusion (bare-metal only)                                   |
+| `xbox_mode`        | Win11 Xbox Full-Screen Experience — DeviceForm spoof + GamingHomeApp = Xbox app shell (bare-metal only)                                               |
+| `sunshine`         | Sunshine game streaming server + Moonlight app entries (Desktop / Steam BP / Xbox) + LAN firewall (bare-metal only)                                   |
+| `openrgb`          | OpenRGB startup shortcut (minimized) + Defender exclusion (bare-metal only)                                                                           |
+| `rustdesk`         | RustDesk desktop remoting (LAN direct IP + permanent password, config seeded once) + LAN firewall (bare-metal only)                                   |
+| `power_ux`         | Console-appliance UX : bouton power→veille S3, lock screen off + ARSO, timeouts, nags/Spotlight off, taskbar auto-hide (bare-metal only)              |
+| `wu_control`       | Windows Update sans reboot surprise : `NoAutoRebootWithLoggedOnUsers` + pin version + exclusion drivers + reboot planifié dimanche (bare-metal only)  |
+| `ai`               | Nœud LLM vinted-bot : LM Studio (Vulkan) + `lms` CLI + modèle sur `D:\LocalLLM` + OpenSSH Server + clé vintedbot + firewall 22/1234 (bare-metal only) |
 
 ### Running things
 

@@ -153,6 +153,21 @@ rustdesk_lan_discovery: true # broadcast for autodiscovery on LAN
 # know your client devices' IPs.
 rustdesk_whitelist: []
 
+# --- AI / LLM node for vinted-bot (ai_llm_host.yml, tag ai) ---
+# Le PC est le nœud d'inférence LLM du bot NAS (réveillé par WoL, piloté par SSH).
+# Modèles sur D:\LocalLLM (JAMAIS C:). Runtime Vulkan. Voir la spec 2026-07-03.
+ai_llm_host_enabled: true
+ai_llm_models_dir: 'D:\LocalLLM'
+ai_llm_model: "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF@Q3_K_S"
+# Glob de présence du .gguf sous ai_llm_models_dir : guard déterministe du pull
+# (aucun re-download si le fichier est là), indépendant du format de `lms ls`.
+ai_llm_model_glob: "*Mistral-Small-3.2-24B*Q3_K_S*.gguf"
+ai_llm_auto_pull_model: true # `lms get` seulement si le .gguf est absent
+ai_llm_server_port: 1234
+# Clé PUBLIQUE du bot vinted (NAS) autorisée à ssh en tant qu'Aurel (admin →
+# administrators_authorized_keys). Publique : pas de secret, pas de KeePass.
+ai_ssh_authorized_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKgYJpkCm90qKk1yQYT0yh3q5298mON8OmpMOXPJOXdy catskan-vintedbot-nas"
+
 # --- AppX bloatware (console_ux.yml) ---
 # Unified list (Phase 3 P3d — softwares_uninstall.yml deleted). Removing
 # AppX is sémantiquement debloat console UX, not a software install

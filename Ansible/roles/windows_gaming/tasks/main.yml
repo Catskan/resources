@@ -165,6 +165,16 @@
     - inventory_hostname == "aurelien-gaming"
     - rustdesk_enabled | bool
 
+- name: Provision LLM inference node for vinted-bot (LM Studio + OpenSSH, models on D:)
+  ansible.builtin.include_tasks:
+    file: ai_llm_host.yml
+    apply:
+      tags: [ai]
+  tags: [ai]
+  when:
+    - inventory_hostname == "aurelien-gaming"
+    - ai_llm_host_enabled | bool
+
 - name: Reboot if any task flagged it
   ansible.windows.win_reboot:
     reboot_timeout: 600

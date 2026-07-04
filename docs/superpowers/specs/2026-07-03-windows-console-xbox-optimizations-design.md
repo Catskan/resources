@@ -60,6 +60,13 @@ Core parking (mono-CCD), `disabledynamictick`, ISLC/purge standby, timer resolut
 
 Nouveaux toggles : `xbox_prompts_suppress`, `windows_update_no_reboot`, `windows_feature_pin` (ex. `"25H2"`), `wu_exclude_drivers`, `power_button_sleep`, `force_s3_sleep`, `lock_screen_disabled`, `nic_power_savings_off`, `ntfs_optimize`, `win32_priority_separation` (0x2A), `mouse_accel_off`. Aucun secret nouveau.
 
-## Hors périmètre (parké)
+## Hors périmètre (parké) — tag `ai` (nœud LLM vinted-bot)
 
-Tag `ai` (nœud LLM LM Studio/Vulkan pour vinted-bot) : design séparé, en attente du chemin/ID exact du modèle. ComfyUI + PyTorch/ROCm : tag distinct éventuel.
+Design séparé, quasi complet. Faits figés via probe de la config réelle :
+
+- Runtime **Vulkan** (`llama.cpp-win-x86_64-vulkan-avx2`), pas ROCm. LM Studio winget `ElementLabs.LMStudio` ; `lms.exe` bundlé (`cliInstalled: false` → faire `lms bootstrap`).
+- **Modèles sur `D:\LocalLLM`** (`settings.json` → `downloadsFolder`) — le tag doit fixer cette valeur pour que `lms get` ne dépose PAS sur C:.
+- Modèle : `unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF` quant **Q3_K_S**.
+- Serveur : port 1234, `0.0.0.0`, `autoStartOnLaunch: true`. SSH user `Aurel` (admin) → clé dans `administrators_authorized_keys`. Firewall 22 + 1234 LAN. WoL déjà OK.
+- **Décidé** : `C:\Users\Aurel\.lmstudio\.internal` (données/cache/index) reste sur C: (footprint léger, nœud headless). Junction vers D: = opt-in ultérieur si besoin (à créer avant le 1er lancement LM Studio sur bare-metal neuf).
+- ComfyUI + PyTorch/ROCm : stack séparé, tag distinct éventuel.
