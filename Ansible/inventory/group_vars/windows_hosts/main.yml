@@ -147,6 +147,13 @@ sunshine_apps:
   - name: "Forza Horizon 6"
     cmd: 'shell:AppsFolder\Microsoft.ForteBaseGame_8wekyb3d8bbwe!Forzahorizon6'
     # image_url: "https://…/forza-horizon-6-cover.png"
+  # Ubisoft Connect : lanceur pour The Crew Motorfest & autres jeux Ubisoft.
+  # Le direct-launch uplay://launch/<id>/0 n'a pas pu être découvert (registre
+  # Ubisoft vide, pas de raccourci Démarrer) ; on passe par le launcher. Si tu
+  # confirmes l'id (tester uplay://launch/<id>/0), on ajoutera une entrée directe.
+  - name: "Ubisoft Connect"
+    cmd: 'shell:AppsFolder\Ubisoft.UPC.MainProcess'
+    # image_url: "https://…/ubisoft-connect-cover.png"
 
 # --- RustDesk config (rustdesk_setup.yml / RustDesk2.toml.j2) ---
 # Direct IP LAN mode = no relay, fastest path. Permanent password from
