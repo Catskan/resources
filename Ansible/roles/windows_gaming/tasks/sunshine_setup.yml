@@ -25,6 +25,26 @@
 # Bare-metal only — gated in main.yml on inventory_hostname=aurelien-gaming
 # AND on sunshine_enabled.
 
+- name: Sunshine — install ViGEmBus (virtual gamepad driver for Moonlight controller input)
+  ansible.windows.win_powershell:
+    script: |
+      # Pilote de manette virtuelle requis par Sunshine pour injecter les
+      # entrées manette des clients Moonlight. Idempotent via winget.
+      $listed = winget list --id Nefarius.ViGEmBus --exact --disable-interactivity 2>&1 | Out-String
+      if ($listed -match 'Nefarius\.ViGEmBus') { $Ansible.Changed = $false; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      $job = Start-Job -ScriptBlock {
+        & winget install --id Nefarius.ViGEmBus --exact --silent `
+          --accept-package-agreements --accept-source-agreements --disable-interactivity *>$null
+        $LASTEXITCODE
+      }
+      if (-not (Wait-Job $job -Timeout 300)) { Stop-Job $job; Remove-Job $job -Force; throw "ViGEmBus install timed out" }
+      $rc = Receive-Job $job; Remove-Job $job
+      # 0 = installé, -1978335189 = déjà à jour/installé selon winget
+      if ($rc -ne 0 -and $rc -ne -1978335189) { throw "winget install Nefarius.ViGEmBus exited $rc" }
+      $Ansible.Changed = ($rc -eq 0)
+  when: sunshine_install_vigembus | bool
+
 - name: Sunshine — locate installed binary
   ansible.windows.win_powershell:
     script: |

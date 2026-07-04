@@ -125,6 +125,7 @@ openrgb_enabled: true
 # encode in hardware. hevc_mode 2 prefers HEVC (better quality than H.264
 # at the same bitrate). Client FPS is negotiated by Moonlight, not capped
 # server-side (Apple TV 4K = 60Hz, iPad Pro M = 120Hz, Steam Deck = 90Hz).
+sunshine_install_vigembus: true # pilote manette virtuelle (entrées manette Moonlight)
 sunshine_encoder: amfvce # nvenc | qsv | amfvce | software
 sunshine_hevc_mode: 2 # 0=auto, 1=h264-only, 2=prefer HEVC, 3=force HEVC
 sunshine_lan_only_web_ui: true # restrict Web UI to LAN clients
