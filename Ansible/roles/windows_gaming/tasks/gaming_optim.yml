@@ -595,16 +595,18 @@
     script: |
       $nic = Get-NetAdapter -Physical | Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' } | Select-Object -First 1
       if (-not $nic) { return }
-      foreach ($kw in 'Energy*Efficient*','Green*','*EEE*','Gigabit Lite','Power Saving*','Flow Control','Interrupt Moderation') {
+      # NB : on NE touche PAS Disable-NetAdapterPowerManagement (désactiverait le
+      # Wake-on-LAN, essentiel pour vinted-bot). Seules les propriétés de latence.
+      foreach ($kw in 'Energy*Efficient*','Green*','*EEE*','Gigabit Lite','Advanced EEE','Flow Control','Interrupt Moderation') {
         Get-NetAdapterAdvancedProperty -Name $nic.Name -DisplayName $kw -EA SilentlyContinue | ForEach-Object {
           if ($_.DisplayValue -ne 'Disabled') {
             Set-NetAdapterAdvancedProperty -Name $nic.Name -DisplayName $_.DisplayName -DisplayValue 'Disabled' -EA SilentlyContinue
           }
         }
       }
-      Disable-NetAdapterPowerManagement -Name $nic.Name -EA SilentlyContinue
-  async: 120
-  poll: 0
+  # La modif reset le lien → WinRM (même NIC) peut tomber : on tolère l'unreachable
+  # puis on attend la reprise (sinon le reste du run est avorté).
+  ignore_unreachable: true
   when:
     - inventory_hostname == "aurelien-gaming"
     - nic_power_savings_off | bool

@@ -221,6 +221,10 @@
 
 - name: Enable Wake-on-LAN (Magic Packet) on all wired Ethernet adapters
   tags: [wol]
+  # Ré-activer WakeOnMagicPacket reconfigure le power-management du NIC et peut
+  # réinitialiser le lien → WinRM (même NIC) tombe. On tolère l'unreachable puis
+  # on attend la reprise, sinon tout le reste du run est avorté.
+  ignore_unreachable: true
   ansible.windows.win_powershell:
     # Idempotency: capture WakeOnMagicPacket state before and after the
     # Enable call, compare as strings (works whether the cmdlet returns
@@ -245,6 +249,12 @@
     ansible_become_method: runas
     ansible_become_user: "{{ ansible_user }}"
     ansible_become_pass: "{{ ansible_password }}"
+
+- name: Wait for WinRM to recover after the WoL NIC reconfiguration
+  ansible.builtin.wait_for_connection:
+    delay: 8
+    timeout: 180
+  when: inventory_hostname == "aurelien-gaming"
 #     - name: Create a mapped drive that requires authentication
 #       win_mapped_drive:
 #         letter: N
