@@ -121,7 +121,8 @@ openrgb_enabled: true
 
 # --- Sunshine config (sunshine.conf.j2) ---
 # Targets Radeon RX 9070 XT + 9800X3D. The GPU is AMD, so the encoder is
-# AMF/VCE (amfvce), NOT NVENC — the RDNA4 media engine does HEVC/AV1
+# AMF/VCE (amdvce — vérifié dans le binaire Sunshine ; "amfvce" n'existe pas
+# et provoque un fallback logiciel), NOT NVENC — the RDNA4 media engine does HEVC/AV1
 # encode in hardware. hevc_mode 2 prefers HEVC (better quality than H.264
 # at the same bitrate). Client FPS is negotiated by Moonlight, not capped
 # server-side (Apple TV 4K = 60Hz, iPad Pro M = 120Hz, Steam Deck = 90Hz).
@@ -129,11 +130,27 @@ sunshine_install_vigembus: true # pilote manette virtuelle (entrées manette Moo
 sunshine_install_hidhide: true # masque une manette branchée sur le PC (config dans l'appli HidHide)
 sunshine_force_xinput: true # manette Xbox Series → force l'émulation Xbox 360 (jamais DS4)
 sunshine_back_button_timeout: 2000 # maintenir Back ~2s = bouton Guide/Xbox (-1 = off)
-sunshine_encoder: amfvce # nvenc | qsv | amfvce | software
+sunshine_encoder: amdvce # nvenc | qsv | amdvce | software (AMD AMF = amdvce, PAS amfvce)
 sunshine_hevc_mode: 2 # 0=auto, 1=h264-only, 2=prefer HEVC, 3=force HEVC
 sunshine_lan_only_web_ui: true # restrict Web UI to LAN clients
 sunshine_upnp: false # never open ports to WAN automatically
 sunshine_log_level: warning # debug | info | warning | error
+# --- Encodage AMF faible latence (RX 9070 XT / RDNA4) ---
+# Ces valeurs sont les défauts Sunshine orientés faible latence, rendus
+# explicites pour documenter l'intention et résister à un changement de
+# défaut upstream. HEVC reste préféré (hevc_mode 2) : ne PAS forcer l'AV1,
+# qui déborde son bitrate cible en CBR sur 9070 XT (packet loss/déconnexions).
+sunshine_amd_usage: ultralowlatency # profil latence mini (jamais 'transcoding')
+sunshine_amd_rc: vbr_latency # rate control robuste sur Radeon (évite l'overshoot CBR)
+sunshine_amd_quality: balanced # impact latence négligeable sur RDNA4 ('speed' possible)
+sunshine_amd_preanalysis: disabled # +qualité mais +latence, et refusé en AV1
+sunshine_amd_vbaq: enabled # meilleure qualité subjective, coût latence faible
+sunshine_amd_enforce_hrd: disabled # évite des artefacts sur certaines cartes
+sunshine_capture: ddx # Desktop Duplication (mature, OK en service ; pas 'wgc')
+sunshine_minimum_fps_target: 0 # défaut (l'ancien min_fps_factor a été supprimé)
+# --- Audio : streamer le son en coupant les enceintes du host pendant la session ---
+sunshine_virtual_sink: "Steam Streaming Speakers" # vide "" = capture la sortie Windows courante
+sunshine_install_steam_audio: true # installe le driver Steam Streaming Speakers
 # Pre-defined apps shown in every Moonlight client's library. "Desktop"
 # is auto-added by Sunshine. The Steam + Xbox entries launch the
 # respective shells (full-screen-friendly for controller use).

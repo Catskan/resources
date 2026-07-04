@@ -3,7 +3,7 @@
 # Manual edits to this file will be overwritten on the next role run.
 
 # ---- Encoder ----
-# amfvce = AMD AMF/VCE (RX 9070 XT → HEVC/AV1 encode in hardware)
+# amdvce = AMD AMF/VCE (RX 9070 XT → HEVC/AV1 encode in hardware)
 # nvenc = NVIDIA NVENC | qsv = Intel QuickSync | software = CPU (x264)
 # hevc_mode: 0=auto, 1=h264-only, 2=prefer HEVC, 3=force HEVC
 encoder = {{ sunshine_encoder }}
@@ -14,6 +14,23 @@ hevc_mode = {{ sunshine_hevc_mode }}
 # p1 (fastest) ... p7 (best quality). p4 = balanced.
 nvenc_preset = 4
 {% endif %}
+{% if sunshine_encoder == 'amdvce' %}
+# ---- AMD AMF (RX 9070 XT / RDNA4) — faible latence ----
+# Défauts orientés latence mini, explicités. Voir group_vars sunshine_amd_*.
+amd_usage = {{ sunshine_amd_usage }}
+amd_rc = {{ sunshine_amd_rc }}
+amd_quality = {{ sunshine_amd_quality }}
+amd_preanalysis = {{ sunshine_amd_preanalysis }}
+amd_vbaq = {{ sunshine_amd_vbaq }}
+amd_enforce_hrd = {{ sunshine_amd_enforce_hrd }}
+{% endif %}
+
+# ---- Capture ----
+# ddx = Desktop Duplication (mature, pas de cap 60 fps, OK en service).
+# wgc = Windows.Graphics.Capture (beta, incompatible service, écran noir 24H2).
+capture = {{ sunshine_capture }}
+# 0 = défaut Sunshine (l'ancien min_fps_factor a été supprimé upstream).
+minimum_fps_target = {{ sunshine_minimum_fps_target }}
 
 # ---- Web UI access scope ----
 # lan = restrict to LAN clients (192.168.x, 10.x). pc = localhost only. wan = open.
@@ -31,6 +48,16 @@ upnp = {{ 'on' if sunshine_upnp else 'off' }}
 # pairing a new Moonlight client (default 60s is too short on TV-class
 # devices).
 pin_allow_seconds = 600
+
+# ---- Audio ----
+{% if sunshine_virtual_sink %}
+# Streame l'audio via ce périphérique virtuel en coupant les enceintes du
+# host pendant la session (l'audio local est restauré à la déconnexion).
+virtual_sink = {{ sunshine_virtual_sink }}
+{% endif %}
+{% if sunshine_install_steam_audio | default(false) %}
+install_steam_audio_drivers = enabled
+{% endif %}
 
 # ---- Gamepad ----
 {% if sunshine_force_xinput %}

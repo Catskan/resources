@@ -399,6 +399,25 @@
     reboot_required: true
   when: hags_key.changed
 
+- name: MPO — disable Multi-Plane Overlay (fixes AMD flicker + Sunshine black-capture, TDR workaround)
+  # OverlayTestMode=5 désactive le MPO (scintillement, écran noir de capture
+  # Sunshine, et workaround TDR AMD). OverlayMinFPS=0 est requis en plus sur
+  # Win11 24H2+. Était appliqué manuellement le 2026-06-30 — désormais reproductible.
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\Dwm
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+  loop:
+    - { name: OverlayTestMode, data: 5 }
+    - { name: OverlayMinFPS, data: 0 }
+  register: mpo_keys
+
+- name: Flag reboot if MPO changed
+  ansible.builtin.set_fact:
+    reboot_required: true
+  when: mpo_keys.changed
+
 - name: Power Throttling — system-wide off (prevents Win11 from throttling background launchers)
   ansible.windows.win_regedit:
     path: HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling

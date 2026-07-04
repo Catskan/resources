@@ -164,10 +164,13 @@
         $Ansible.Changed = $false
       }
 
-- name: Sunshine — service auto-start (restart if config changed)
+- name: Sunshine — service delayed auto-start (restart if config changed)
+  # Démarrage DIFFÉRÉ : laisse le driver AMD s'initialiser avant Sunshine.
+  # Évite la race d'init Sunshine <-> driver au boot (bug #4065) qui peut
+  # déclencher un TDR sur RX 9070 / Win11 24H2 (à croiser avec le crash FHC02).
   ansible.windows.win_service:
     name: SunshineService
-    start_mode: auto
+    start_mode: delayed
     state: "{{ 'restarted' if (sunshine_conf.changed or sunshine_apps_file.changed) else 'started' }}"
 
 - name: Sunshine — firewall TCP ports (Web UI + pairing + control), LAN only
