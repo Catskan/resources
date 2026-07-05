@@ -98,9 +98,11 @@
       $entry = Get-ItemProperty $roots -ErrorAction SilentlyContinue |
         Where-Object { $_.DisplayName -match '^Vibeshine' } |
         Select-Object -First 1
-      # ARP annonce "1.17.0.0" pour la release "1.17.0" : on normalise en
-      # tronquant les ".0" terminaux pour comparer avec vibeshine_version.
-      $v = if ($entry) { $entry.DisplayVersion -replace '(\.0)+$', '' } else { '' }
+      # ARP annonce "1.17.0.0" (4 composants) pour la release "1.17.0" : on
+      # retire UNIQUEMENT le 4e composant nul pour comparer à vibeshine_version.
+      # (Ne pas utiliser '(\.0)+$' : ça donnerait "1.17" et casserait
+      # l'idempotence — l'install se rejouerait à chaque run.)
+      $v = if ($entry) { $entry.DisplayVersion -replace '^(\d+\.\d+\.\d+)\.0$', '$1' } else { '' }
       $Ansible.Result = @{ installed_version = $v }
       $Ansible.Changed = $false
   register: vibeshine_installed
