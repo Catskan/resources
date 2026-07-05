@@ -263,10 +263,11 @@ startup_apps_disable:
 telemetry_minimum: true
 firefox_set_default: true
 # Le DefaultAssociations.xml ne s'applique qu'aux profils neufs (1er login).
-# SetUserFTA force les assocs http/https/.html vers Firefox sur le profil
-# EXISTANT (calcule le hash UserChoice anti-falsification). Binaire tiers kolbi.cz.
-firefox_setuserfta: true
-setuserfta_url: "https://kolbi.cz/SetUserFTA.zip"
+# SFTA.ps1 (PowerShell pur, embarqué dans le rôle files/) force les assocs
+# http/https/.html vers Firefox sur le profil EXISTANT en calculant le hash
+# UserChoice anti-falsification. (SetUserFTA, l'alternative binaire, est devenu
+# payant en 2026 → on utilise le script open-source DanysysTeam/PS-SFTA.)
+firefox_force_fta: true
 
 # --- Xbox mode polish (xbox_mode.yml) ---
 # Supprime les popups de confirmation entrée/sortie du mode Xbox (zéro-clic).
