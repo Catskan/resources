@@ -95,20 +95,20 @@
   # reference sunshine_exe.result.path on a skipped register.
   check_mode: false
 
-- name: Sunshine — ensure ProgramData config directory exists
+- name: Sunshine — ensure config directory exists
   ansible.windows.win_file:
-    path: 'C:\ProgramData\Sunshine'
+    path: "{{ sunshine_config_dir }}"
     state: directory
 
 - name: Sunshine — ensure cover-art assets directory exists
   ansible.windows.win_file:
-    path: 'C:\ProgramData\Sunshine\assets'
+    path: '{{ sunshine_config_dir }}\assets'
     state: directory
 
 - name: Sunshine — download app cover art (apps with image_url)
   ansible.windows.win_get_url:
     url: "{{ item.image_url }}"
-    dest: 'C:\ProgramData\Sunshine\assets\{{ item.name | regex_replace("[^A-Za-z0-9]+", "_") }}.png'
+    dest: '{{ sunshine_config_dir }}\assets\{{ item.name | regex_replace("[^A-Za-z0-9]+", "_") }}.png'
     force: false
   loop: "{{ sunshine_apps | selectattr('image_url', 'defined') | list }}"
   loop_control:
@@ -117,13 +117,13 @@
 - name: Sunshine — deploy sunshine.conf (encoder + LAN restrictions + log level)
   ansible.windows.win_template:
     src: sunshine.conf.j2
-    dest: 'C:\ProgramData\Sunshine\sunshine.conf'
+    dest: '{{ sunshine_config_dir }}\sunshine.conf'
   register: sunshine_conf
 
 - name: "Sunshine — deploy apps.json (Moonlight library: Desktop + Steam Big Picture + Xbox)"
   ansible.windows.win_template:
     src: sunshine_apps.json.j2
-    dest: 'C:\ProgramData\Sunshine\apps.json'
+    dest: '{{ sunshine_config_dir }}\apps.json'
   register: sunshine_apps_file
 
 - name: Sunshine — set Web UI admin credentials (from KeePass)

@@ -126,6 +126,13 @@ openrgb_enabled: true
 # encode in hardware. hevc_mode 2 prefers HEVC (better quality than H.264
 # at the same bitrate). Client FPS is negotiated by Moonlight, not capped
 # server-side (Apple TV 4K = 60Hz, iPad Pro M = 120Hz, Steam Deck = 90Hz).
+# Sunshine lit sa config dans son dossier d'install (Program Files\Sunshine\
+# config) : c'est là que vivent sunshine_state.json, le log et le apps.json
+# réellement servi aux clients. NE PAS pointer vers %ProgramData% — Sunshine
+# ne l'utilise pas sur Windows (le service tourne via tools\sunshinesvc.exe,
+# config dir = dossier config à côté de l'exe). Diagnostiqué 2026-07-05 :
+# les jeux n'apparaissaient pas car apps.json était écrit dans ProgramData.
+sunshine_config_dir: 'C:\Program Files\Sunshine\config'
 sunshine_install_vigembus: true # pilote manette virtuelle (entrées manette Moonlight)
 sunshine_install_hidhide: true # masque une manette branchée sur le PC (config dans l'appli HidHide)
 sunshine_force_xinput: true # manette Xbox Series → force l'émulation Xbox 360 (jamais DS4)
