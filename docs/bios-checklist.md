@@ -37,6 +37,12 @@
 - [ ] **Advanced Shader Delivery = ON** — shaders pré-compilés cloud → fini le
       stutter de compilation (très « esprit console »).
 - [ ] Vérifier **Smart Access Memory: Enabled** (reflète ReBAR côté BIOS).
+- [ ] **Enhanced Sync = Enabled** (Gaming → Graphics, global) — réduit la latence
+      d'~1 frame en streaming Sunshine (reco AMD). Stocké dans `gmdb.blb` (blob
+      binaire, vérifié : modifié pile à l'activation) → **non scriptable**, à
+      ré-cocher après un DDU / reset pilote.
+- [ ] Ne **PAS** activer Radeon Chill ni Radeon Boost (ajoutent de la latence input ;
+      les clés `KMD_ChillEnabled` / `KMD_RadeonBoostEnabled` sont déjà à `0`).
 
 ## Déjà géré par Ansible (rien à faire au BIOS/manuel)
 
