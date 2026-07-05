@@ -106,12 +106,26 @@ windows_feature_pin: "25H2" # épingle la version (vide = pas de pin)
 wu_exclude_drivers: true # WU n'écrase plus l'Adrenalin géré par drivers.yml
 wu_weekly_reboot: true # reboot d'update planifié dimanche 04:00 si pending
 
-# --- Remote access (sunshine_setup.yml, rustdesk_setup.yml) ---
+# --- Remote access (vibeshine_setup.yml, rustdesk_setup.yml) ---
 # Both toggleable independently. LAN-only firewall scope (profile=private)
 # — WAN later via Tailscale or similar VPN, NEVER expose these ports to
 # the open internet.
 sunshine_enabled: true
 rustdesk_enabled: true
+
+# --- Vibeshine (vibeshine_setup.yml — remplace LizardByte.Sunshine) ---
+# Fork de Sunshine par Nonary, choisi le 2026-07-05 : écran virtuel par
+# client (fini le curseur fantôme et la capture de l'écran physique
+# 240 Hz), display automation, fork activement maintenu. S'installe
+# IN-PLACE dans Program Files\Sunshine (mêmes chemins conf/apps.json,
+# service renommé VibeshineService) et migre l'ancien Sunshine tout seul.
+# Après migration : ré-apparier chaque client Moonlight (cert serveur neuf).
+vibeshine_version: "1.17.0"
+vibeshine_installer_url: "https://github.com/Nonary/vibeshine/releases/download/v{{ vibeshine_version }}/VibeshineSetup-v{{ vibeshine_version }}.exe"
+vibeshine_installer_sha256: "1de56876a63feaa3b69f42ac3fa4b460c95bc44c00ce7c0e32082e30405fe435"
+# false = driver d'écran virtuel Vibeshine (défaut installeur, testé par le
+# dev) ; true = SudoVDA (celui d'Apollo) via INSTALL_VIRTUAL_DISPLAY_DRIVER=0.
+vibeshine_use_sudovda: false
 
 # --- RGB control (openrgb_setup.yml) ---
 # Set & forget: OpenRGB launches minimized at startup, user configures
@@ -339,7 +353,8 @@ winget_packages:
   - Python.Python.3.13 # No gaming-perf impact; useful for local scripts
 
   # --- Remote access ---
-  - LizardByte.Sunshine # Game streaming — Moonlight clients (iPad, Apple TV, Steam Deck) via sunshine_setup.yml
+  # Sunshine (LizardByte.Sunshine) remplacé par Vibeshine — installé via
+  # release GitHub épinglée dans vibeshine_setup.yml, pas via winget.
   # RustDesk removed from winget catalogue — installed via direct download in rustdesk_setup.yml
   # - RustDesk.RustDesk
 

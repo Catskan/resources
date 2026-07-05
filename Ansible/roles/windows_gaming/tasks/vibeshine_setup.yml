@@ -1,0 +1,245 @@
+---
+# Vibeshine — serveur de streaming de jeu auto-hébergé (protocole
+# GameStream/Moonlight). Fork de Sunshine par Nonary, choisi le 2026-07-05
+# pour remplacer LizardByte.Sunshine :
+#   - écran virtuel par client (résolution/fréquence natives du client,
+#     plus de curseur fantôme ni de capture 240 Hz -> 60 fps de l'écran
+#     physique) — driver "Vibeshine Display Driver" par défaut, SudoVDA
+#     en option (vibeshine_use_sudovda)
+#   - display automation (restauration du layout après crash/reboot)
+#   - fork activement maintenu (Apollo est figé depuis mi-2025)
+#
+# Points d'architecture hérités du bootstrapper (packaging/windows/) :
+#   - S'installe DANS %ProgramFiles%\Sunshine (remplacement in-place) :
+#     sunshine.exe, config\sunshine.conf et config\apps.json gardent
+#     exactement les mêmes chemins — nos templates restent valides.
+#   - L'installeur MSI détecte et migre/désinstalle un Sunshine, Apollo ou
+#     Vibepollo existant tout seul (remove_conflicting_products).
+#   - Service Windows : VibeshineService (SunshineService est supprimé).
+#   - Install silencieux : options MSI standard (/qn).
+#
+# Ce task file :
+#   1) Installe ViGEmBus + HidHide (pilotes manette, best-effort winget)
+#   2) Installe/upgrade Vibeshine depuis la release GitHub épinglée
+#      (vibeshine_version + SHA-256) si la version ARP diffère
+#   3) Déploie sunshine.conf + apps.json (mêmes templates qu'avant)
+#   4) Seed les credentials Web UI depuis KeePass (--creds)
+#   5) Service en démarrage différé + firewall LAN
+#
+# Après le run, étapes interactives (une fois) :
+#   - Ouvrir https://<aurel-gaming>:47990, login avec les creds KeePass
+#   - RÉ-APPARIER chaque client Moonlight (le certificat serveur change
+#     de host, l'appairage Sunshine n'est pas repris)
+#
+# Bare-metal only — gated in main.yml on inventory_hostname=aurelien-gaming
+# AND on sunshine_enabled.
+
+- name: Vibeshine — install ViGEmBus (virtual gamepad driver for Moonlight controller input)
+  # ViGEmBus est un PILOTE : son install winget échoue en contexte WinRM non
+  # interactif (exit -1978335212), y compris en runas. Best-effort — on
+  # n'interrompt PAS le run et on capture la sortie winget pour diagnostic
+  # (voir la tâche debug suivante). L'installeur Vibeshine embarque aussi un
+  # vigembus_installer.exe en fallback manuel.
+  ansible.windows.win_powershell:
+    script: |
+      $listed = winget list --id ViGEm.ViGEmBus --exact --disable-interactivity 2>&1 | Out-String
+      if ($listed -match 'ViGEm\.ViGEmBus') { $Ansible.Changed = $false; $Ansible.Result = @{ winget_rc = 0; state = 'already-installed' }; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      $out = (& winget install --id ViGEm.ViGEmBus --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1 | Out-String)
+      $rc = $LASTEXITCODE
+      $Ansible.Result = @{ winget_rc = $rc; winget_output = $out }
+      $Ansible.Changed = ($rc -eq 0)
+  register: vigembus
+  failed_when: false
+  when: sunshine_install_vigembus | bool
+
+- name: Vibeshine — ViGEmBus install diagnostic (only if winget didn't succeed)
+  ansible.builtin.debug:
+    msg: "ViGEmBus winget rc={{ vigembus.result.winget_rc }} — {{ vigembus.result.winget_output | default('') }}"
+  when:
+    - sunshine_install_vigembus | bool
+    - not (vigembus is skipped)
+    - (vigembus.result.winget_rc | default(0)) != 0
+
+- name: Vibeshine — install HidHide (hide host-connected controllers from games)
+  # Empêche le double-input quand une manette est branchée SUR le PC pendant le
+  # streaming (jeux ne voient que le pad virtuel ViGEmBus). Best-effort. Les
+  # règles de masquage (quelle manette / quels jeux) se configurent dans l'appli
+  # HidHide — Ansible ne fait qu'installer le pilote.
+  ansible.windows.win_powershell:
+    script: |
+      $listed = winget list --id Nefarius.HidHide --exact --disable-interactivity 2>&1 | Out-String
+      if ($listed -match 'Nefarius\.HidHide') { $Ansible.Changed = $false; $Ansible.Result = @{ winget_rc = 0; state = 'already-installed' }; return }
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      $out = (& winget install --id Nefarius.HidHide --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1 | Out-String)
+      $rc = $LASTEXITCODE
+      $Ansible.Result = @{ winget_rc = $rc; winget_output = $out }
+      $Ansible.Changed = ($rc -eq 0)
+  register: hidhide
+  failed_when: false
+  when: sunshine_install_hidhide | bool
+
+- name: Vibeshine — HidHide install diagnostic (only if winget didn't succeed)
+  ansible.builtin.debug:
+    msg: "HidHide winget rc={{ hidhide.result.winget_rc }} — {{ hidhide.result.winget_output | default('') }}"
+  when:
+    - sunshine_install_hidhide | bool
+    - not (hidhide is skipped)
+    - (hidhide.result.winget_rc | default(0)) != 0
+
+- name: Vibeshine — read installed version (ARP registry)
+  ansible.windows.win_powershell:
+    script: |
+      $roots = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+      )
+      $entry = Get-ItemProperty $roots -ErrorAction SilentlyContinue |
+        Where-Object { $_.DisplayName -match '^Vibeshine' } |
+        Select-Object -First 1
+      $Ansible.Result = @{ installed_version = if ($entry) { $entry.DisplayVersion } else { '' } }
+      $Ansible.Changed = $false
+  register: vibeshine_installed
+  changed_when: false
+  # Read-only probe — must run in --check too, otherwise the tasks below
+  # reference vibeshine_installed.result on a skipped register.
+  check_mode: false
+
+- name: Vibeshine — download pinned installer (GitHub release, SHA-256 verified)
+  ansible.windows.win_get_url:
+    url: "{{ vibeshine_installer_url }}"
+    dest: '%TEMP%\VibeshineSetup-v{{ vibeshine_version }}.exe'
+    checksum: "{{ vibeshine_installer_sha256 }}"
+    checksum_algorithm: sha256
+  when: vibeshine_installed.result.installed_version != vibeshine_version
+
+- name: Vibeshine — silent install/upgrade (migrates legacy Sunshine/Apollo itself)
+  # /qn = MSI silencieux. INSTALL_VIRTUAL_DISPLAY_DRIVER=0 bascule sur SudoVDA
+  # au lieu du driver Vibeshine (vibeshine_use_sudovda). L'installeur stoppe et
+  # retire SunshineService/legacy Sunshine tout seul ; le service devient
+  # VibeshineService. Peut couper une session de stream en cours — le run
+  # Ansible ne se lance pas pendant une partie de toute façon.
+  ansible.windows.win_powershell:
+    parameters:
+      version: "{{ vibeshine_version }}"
+      useSudoVda: "{{ vibeshine_use_sudovda | bool }}"
+    script: |
+      param([string]$version, [bool]$useSudoVda)
+      if ($Ansible.CheckMode) { $Ansible.Changed = $true; return }
+      $exe = Join-Path $env:TEMP "VibeshineSetup-v$version.exe"
+      $args = @('/qn')
+      if ($useSudoVda) { $args += 'INSTALL_VIRTUAL_DISPLAY_DRIVER=0' }
+      $p = Start-Process -FilePath $exe -ArgumentList $args -Wait -PassThru
+      if ($p.ExitCode -ne 0) { throw "VibeshineSetup exit code $($p.ExitCode)" }
+      $Ansible.Changed = $true
+  when: vibeshine_installed.result.installed_version != vibeshine_version
+
+- name: Vibeshine — locate installed binary
+  ansible.windows.win_powershell:
+    script: |
+      # Vibeshine garde le binaire et le layout de Sunshine (install in-place
+      # dans Program Files\Sunshine).
+      $candidates = @(
+        "$env:ProgramFiles\Sunshine\sunshine.exe",
+        "${env:ProgramFiles(x86)}\Sunshine\sunshine.exe"
+      )
+      $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+      if (-not $exe) { throw "sunshine.exe not found — VibeshineSetup install failed?" }
+      $Ansible.Result = @{ path = $exe }
+      $Ansible.Changed = $false
+  register: vibeshine_exe
+  changed_when: false
+  check_mode: false
+
+- name: Vibeshine — ensure config directory exists
+  ansible.windows.win_file:
+    path: "{{ sunshine_config_dir }}"
+    state: directory
+
+- name: Vibeshine — ensure cover-art assets directory exists
+  ansible.windows.win_file:
+    path: '{{ sunshine_config_dir }}\assets'
+    state: directory
+
+- name: Vibeshine — download app cover art (apps with image_url)
+  ansible.windows.win_get_url:
+    url: "{{ item.image_url }}"
+    dest: '{{ sunshine_config_dir }}\assets\{{ item.name | regex_replace("[^A-Za-z0-9]+", "_") }}.png'
+    force: false
+  loop: "{{ sunshine_apps | selectattr('image_url', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Vibeshine — deploy sunshine.conf (encoder + LAN restrictions + log level)
+  ansible.windows.win_template:
+    src: sunshine.conf.j2
+    dest: '{{ sunshine_config_dir }}\sunshine.conf'
+  register: sunshine_conf
+
+- name: "Vibeshine — deploy apps.json (Moonlight library: Desktop + jeux + launchers)"
+  ansible.windows.win_template:
+    src: sunshine_apps.json.j2
+    dest: '{{ sunshine_config_dir }}\apps.json'
+  register: sunshine_apps_file
+
+- name: Vibeshine — set Web UI admin credentials (from KeePass)
+  ansible.windows.win_powershell:
+    parameters:
+      exe: "{{ vibeshine_exe.result.path }}"
+      adminUser: "{{ sunshine_admin_user }}"
+      adminPw: "{{ sunshine_admin_password }}"
+    script: |
+      param([string]$exe, [string]$adminUser, [string]$adminPw)
+      # --creds rewrites the credentials hash. Safe to re-run with the same
+      # values — bcrypt produces a fresh hash each time but the resulting
+      # "this user/pass authenticates" semantics are identical.
+      & $exe --creds $adminUser $adminPw 2>&1 | Out-Null
+      $Ansible.Changed = $false
+  no_log: true
+  changed_when: false
+
+- name: Vibeshine — legacy SunshineService must be gone (installer removes it)
+  # Filet de sécurité : si l'installeur n'a pas retiré l'ancien service (cas
+  # d'un Sunshine winget très ancien), on le neutralise pour éviter deux
+  # serveurs en concurrence sur les ports 47989/47990.
+  ansible.windows.win_powershell:
+    script: |
+      $svc = Get-Service -Name 'SunshineService' -ErrorAction SilentlyContinue
+      if ($svc) {
+        Stop-Service $svc -Force -ErrorAction SilentlyContinue
+        Set-Service $svc -StartupType Disabled
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Vibeshine — service delayed auto-start (restart if config changed)
+  # Démarrage DIFFÉRÉ : laisse le driver AMD s'initialiser avant Vibeshine.
+  # Évite la race d'init host <-> driver au boot (bug Sunshine #4065) qui peut
+  # déclencher un TDR sur RX 9070 / Win11 24H2.
+  ansible.windows.win_service:
+    name: VibeshineService
+    start_mode: delayed
+    state: "{{ 'restarted' if (sunshine_conf.changed or sunshine_apps_file.changed) else 'started' }}"
+
+- name: Vibeshine — firewall TCP ports (Web UI + pairing + control), LAN only
+  community.windows.win_firewall_rule:
+    name: Sunshine TCP (LAN)
+    localport: 47984,47989,47990,48010
+    protocol: tcp
+    direction: in
+    action: allow
+    enabled: true
+    profiles: private
+    state: present
+
+- name: Vibeshine — firewall UDP ports (video/audio/control RTP), LAN only
+  community.windows.win_firewall_rule:
+    name: Sunshine UDP (LAN)
+    localport: 47998-48002
+    protocol: udp
+    direction: in
+    action: allow
+    enabled: true
+    profiles: private
+    state: present

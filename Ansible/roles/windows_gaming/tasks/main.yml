@@ -145,12 +145,12 @@
   tags: [xbox_mode]
   when: inventory_hostname == "aurelien-gaming"
 
-- name: Configure Sunshine game streaming (Moonlight clients via LAN)
+- name: Configure Vibeshine game streaming (fork Sunshine — Moonlight clients via LAN)
   ansible.builtin.include_tasks:
-    file: sunshine_setup.yml
+    file: vibeshine_setup.yml
     apply:
-      tags: [sunshine]
-  tags: [sunshine]
+      tags: [sunshine, vibeshine]
+  tags: [sunshine, vibeshine]
   when:
     - inventory_hostname == "aurelien-gaming"
     - sunshine_enabled | bool
