@@ -9,7 +9,11 @@
     }{% for app in sunshine_apps %},
     {
       "name": {{ app.name | to_json }},
+{% if app.detached is defined %}
+      "detached": [{{ app.detached | to_json }}],
+{% else %}
       "cmd": {{ app.cmd | to_json }},
+{% endif %}
       "image-path": {{ (('C:\\ProgramData\\Sunshine\\assets\\' ~ (app.name | regex_replace('[^A-Za-z0-9]+', '_')) ~ '.png') if app.image_url is defined else (app.image_path | default(''))) | to_json }}
     }{% endfor %}
   ]
