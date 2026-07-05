@@ -253,6 +253,64 @@
       $Ansible.Changed = $changed
   when: firefox_set_default
 
+# ── Navigateur par défaut sur le profil EXISTANT (SetUserFTA) ──────────────
+# Le DefaultAssociations.xml (GPO ci-dessus) ne s'applique qu'au 1er login d'un
+# profil NEUF. Sur le profil déjà créé, les assocs http/https/.html restent sur
+# Edge. SetUserFTA (kolbi.cz) calcule le hash UserChoice anti-falsification et
+# force Firefox pour le profil courant. Tourne sous ansible_user (= Aurel), donc
+# écrit le bon HKCU. Binaire tiers non signé MS — désactivable via firefox_setuserfta.
+
+- name: Firefox — dossier outils
+  ansible.windows.win_file:
+    path: 'C:\ProgramData\ansible-tools'
+    state: directory
+  when: firefox_set_default and firefox_setuserfta
+
+- name: Firefox — télécharge SetUserFTA
+  ansible.windows.win_get_url:
+    url: "{{ setuserfta_url }}"
+    dest: 'C:\ProgramData\ansible-tools\SetUserFTA.zip'
+    force: false
+  when: firefox_set_default and firefox_setuserfta
+
+- name: Firefox — extrait SetUserFTA
+  community.windows.win_unzip:
+    src: 'C:\ProgramData\ansible-tools\SetUserFTA.zip'
+    dest: 'C:\ProgramData\ansible-tools\SetUserFTA'
+    creates: 'C:\ProgramData\ansible-tools\SetUserFTA\SetUserFTA.exe'
+  when: firefox_set_default and firefox_setuserfta
+
+- name: Firefox — force les associations du profil courant vers Firefox
+  ansible.windows.win_powershell:
+    parameters:
+      urlId: "{{ firefox_progids.result.url }}"
+      htmlId: "{{ firefox_progids.result.html }}"
+    script: |
+      param([string]$urlId, [string]$htmlId)
+      $exe = 'C:\ProgramData\ansible-tools\SetUserFTA\SetUserFTA.exe'
+      if (-not (Test-Path $exe)) { throw "SetUserFTA.exe introuvable : $exe" }
+      # associations voulues : protocoles -> FirefoxURL, extensions -> FirefoxHTML
+      $want = [ordered]@{
+        'http' = $urlId; 'https' = $urlId; 'ftp' = $urlId
+        '.html' = $htmlId; '.htm' = $htmlId; '.shtml' = $htmlId
+        '.xht' = $htmlId; '.xhtml' = $htmlId; '.pdf' = $htmlId
+      }
+      function Get-Cur([string]$id) {
+        if ($id.StartsWith('.')) { $p = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\$id\UserChoice" }
+        else { $p = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell\Associations\UrlAssociations\$id\UserChoice" }
+        return (Get-ItemProperty $p -Name ProgId -ErrorAction SilentlyContinue).ProgId
+      }
+      # Idempotent : ne réécrit que les associations qui diffèrent déjà.
+      $changed = $false
+      foreach ($id in $want.Keys) {
+        if ((Get-Cur $id) -ne $want[$id]) {
+          & $exe $id $want[$id] | Out-Null
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed
+  when: firefox_set_default and firefox_setuserfta
+
 # ── Taskbar pinning : NON automatisé (limitation Windows 11) ──────────────
 # Les verbes shell « Pin to taskbar / Unpin from taskbar » (Shell.Application
 # COM) ont été retirés par Microsoft depuis Win10 1809 : sur Win11 ils
