@@ -15,7 +15,8 @@
 #     exactement les mêmes chemins — nos templates restent valides.
 #   - L'installeur MSI détecte et migre/désinstalle un Sunshine, Apollo ou
 #     Vibepollo existant tout seul (remove_conflicting_products).
-#   - Service Windows : VibeshineService (SunshineService est supprimé).
+#   - Service Windows : SunshineService (nom interne conservé, DisplayName
+#     « Vibeshine Service »).
 #   - Install silencieux : options MSI standard (/qn).
 #
 # Ce task file :
@@ -97,7 +98,10 @@
       $entry = Get-ItemProperty $roots -ErrorAction SilentlyContinue |
         Where-Object { $_.DisplayName -match '^Vibeshine' } |
         Select-Object -First 1
-      $Ansible.Result = @{ installed_version = if ($entry) { $entry.DisplayVersion } else { '' } }
+      # ARP annonce "1.17.0.0" pour la release "1.17.0" : on normalise en
+      # tronquant les ".0" terminaux pour comparer avec vibeshine_version.
+      $v = if ($entry) { $entry.DisplayVersion -replace '(\.0)+$', '' } else { '' }
+      $Ansible.Result = @{ installed_version = $v }
       $Ansible.Changed = $false
   register: vibeshine_installed
   changed_when: false
@@ -116,9 +120,9 @@
 - name: Vibeshine — silent install/upgrade (migrates legacy Sunshine/Apollo itself)
   # /qn = MSI silencieux. INSTALL_VIRTUAL_DISPLAY_DRIVER=0 bascule sur SudoVDA
   # au lieu du driver Vibeshine (vibeshine_use_sudovda). L'installeur stoppe et
-  # retire SunshineService/legacy Sunshine tout seul ; le service devient
-  # VibeshineService. Peut couper une session de stream en cours — le run
-  # Ansible ne se lance pas pendant une partie de toute façon.
+  # retire le legacy Sunshine tout seul, puis réenregistre SunshineService
+  # (même nom interne, DisplayName « Vibeshine Service »). Peut couper une
+  # session de stream en cours — on ne lance pas le run pendant une partie.
   ansible.windows.win_powershell:
     parameters:
       version: "{{ vibeshine_version }}"
@@ -198,27 +202,17 @@
   no_log: true
   changed_when: false
 
-- name: Vibeshine — legacy SunshineService must be gone (installer removes it)
-  # Filet de sécurité : si l'installeur n'a pas retiré l'ancien service (cas
-  # d'un Sunshine winget très ancien), on le neutralise pour éviter deux
-  # serveurs en concurrence sur les ports 47989/47990.
-  ansible.windows.win_powershell:
-    script: |
-      $svc = Get-Service -Name 'SunshineService' -ErrorAction SilentlyContinue
-      if ($svc) {
-        Stop-Service $svc -Force -ErrorAction SilentlyContinue
-        Set-Service $svc -StartupType Disabled
-        $Ansible.Changed = $true
-      } else {
-        $Ansible.Changed = $false
-      }
-
 - name: Vibeshine — service delayed auto-start (restart if config changed)
+  # ⚠️ Le service de Vibeshine GARDE le nom interne `SunshineService`
+  # (DisplayName « Vibeshine Service ») — vérifié post-install le 2026-07-05.
+  # Ne PAS ajouter de tâche qui neutralise un « SunshineService résiduel » :
+  # ce serait le service Vibeshine lui-même (l'installeur MSI retire le
+  # legacy Sunshine tout seul, il n'y a jamais deux services).
   # Démarrage DIFFÉRÉ : laisse le driver AMD s'initialiser avant Vibeshine.
   # Évite la race d'init host <-> driver au boot (bug Sunshine #4065) qui peut
   # déclencher un TDR sur RX 9070 / Win11 24H2.
   ansible.windows.win_service:
-    name: VibeshineService
+    name: SunshineService
     start_mode: delayed
     state: "{{ 'restarted' if (sunshine_conf.changed or sunshine_apps_file.changed) else 'started' }}"
 

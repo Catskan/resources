@@ -118,7 +118,7 @@ rustdesk_enabled: true
 # client (fini le curseur fantôme et la capture de l'écran physique
 # 240 Hz), display automation, fork activement maintenu. S'installe
 # IN-PLACE dans Program Files\Sunshine (mêmes chemins conf/apps.json,
-# service renommé VibeshineService) et migre l'ancien Sunshine tout seul.
+# même nom de service SunshineService) et migre l'ancien Sunshine tout seul.
 # Après migration : ré-apparier chaque client Moonlight (cert serveur neuf).
 vibeshine_version: "1.17.0"
 vibeshine_installer_url: "https://github.com/Nonary/vibeshine/releases/download/v{{ vibeshine_version }}/VibeshineSetup-v{{ vibeshine_version }}.exe"
