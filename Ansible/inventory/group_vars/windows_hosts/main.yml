@@ -259,7 +259,11 @@ widgets_disabled: true
 onedrive_uninstall: true
 edge_neutralize: true
 notifications_globally_off: true
-background_apps_force_deny: true
+# false = LetAppsRunInBackground à 0 (« user in control », défaut Windows).
+# Force Deny (2) bloque l'app Xbox / Gaming Services / Token Broker en
+# arrière-plan → le token du compte Microsoft ne se rafraîchit plus et les
+# jeux Store (Forza…) redemandent une connexion à chaque reboot.
+background_apps_force_deny: false
 recommended_files_off: true
 startup_apps_disable:
   - MSEdgeUpdate
