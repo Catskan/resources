@@ -22,3 +22,23 @@
     line: PubkeyAuthentication yes
     insertbefore: "^Match"
   notify: Redémarrer sshd
+
+- name: Régler le port SSH (Windows — directive Port de sshd_config)
+  community.windows.win_lineinfile:
+    path: C:\ProgramData\ssh\sshd_config
+    regexp: '^#?\s*Port\s'
+    line: Port {{ sshd_port }}
+    insertbefore: "^Match"
+  when: sshd_port is defined
+  notify: Redémarrer sshd
+
+- name: Ouvrir le pare-feu pour le port SSH (Windows)
+  community.windows.win_firewall_rule:
+    name: OpenSSH SSH Server ({{ sshd_port }})
+    localport: "{{ sshd_port }}"
+    action: allow
+    direction: in
+    protocol: tcp
+    enabled: true
+    state: present
+  when: sshd_port is defined

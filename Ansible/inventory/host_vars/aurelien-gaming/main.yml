@@ -1,5 +1,8 @@
 user_name: "Aurel"
 
+# Port SSH (directive Port de sshd_config + règle pare-feu). Forward Freebox 2322.
+sshd_port: 2322
+
 # Root user directory on M:\ — consumed by the user_folders.yml task names.
 root_user_directory: 'M:\Aurel'
 

@@ -2,3 +2,6 @@
 # Comptes autorisés en SSH sur le M2 (AllowUsers). run-on s'y connecte en 'abusutil'.
 sshd_allowed_users:
   - abusutil
+
+# Port SSH du M2 (via /etc/services). Aligné sur le forward Freebox 2022.
+sshd_port: 2022

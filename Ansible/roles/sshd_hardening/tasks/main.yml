@@ -9,6 +9,23 @@
       ({{ ansible_user }}), sinon la connexion SSH gérée se verrouille.
   when: (ansible_connection | default('ssh')) != 'local'
 
+- name: Régler le port SSH via /etc/services (macOS — launchd bind sshd sur le service `ssh`)
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/services
+    regexp: "^ssh\\s+[0-9]+/{{ item }}\\b"
+    line: "ssh              {{ sshd_port }}/{{ item }}"
+    backup: true
+  loop:
+    - tcp
+    - udp
+  when:
+    - sshd_port is defined
+    - ansible_os_family == "Darwin"
+  # ⚠️ Le rebind du socket (handler ci-dessous) COUPE la session SSH en cours sur
+  #    un changement RÉEL de port. Idempotent (no-op) si /etc/services est déjà bon.
+  notify: Rebinder le socket ssh launchd
+
 - name: Déposer le drop-in de durcissement SSH
   become: true
   ansible.builtin.template:

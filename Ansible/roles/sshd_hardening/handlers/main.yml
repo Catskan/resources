@@ -4,3 +4,13 @@
   ansible.builtin.command: launchctl kickstart -k system/com.openssh.sshd
   changed_when: true
   when: ansible_os_family == "Darwin"
+
+# Rebind du socket launchd : SEUL moyen d'appliquer un changement de port
+# (/etc/services). unload puis load -w. ⚠️ Coupe la session SSH en cours.
+- name: Rebinder le socket ssh launchd
+  become: true
+  ansible.builtin.shell: |
+    launchctl unload /System/Library/LaunchDaemons/ssh.plist
+    launchctl load -w /System/Library/LaunchDaemons/ssh.plist
+  changed_when: true
+  when: ansible_os_family == "Darwin"

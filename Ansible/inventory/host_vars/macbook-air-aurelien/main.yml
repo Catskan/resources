@@ -10,3 +10,6 @@ dockerHub_username: catskan
 sshd_allowed_users:
   - aurelien
   - aurel
+
+# Port SSH du Air (via /etc/services). Aligné sur le forward Freebox 2122.
+sshd_port: 2122
