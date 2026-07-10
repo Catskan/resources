@@ -1,6 +1,10 @@
-# Le M2 est géré à distance depuis le contrôleur (le Air) via SSH.
+# Le M2 est géré depuis le contrôleur (le Air) via SSH, sur le LAN maison.
 # ⚠️ Le contrôleur doit avoir une clé autorisée sur le M2 en 'abusutil'
-#    (PasswordAuthentication no + AllowUsers abusutil déjà en place).
+#    (le M2 est en PasswordAuthentication no + AllowUsers abusutil).
+# ansible_port 22 EXPLICITE : le Air a remappé le service `ssh` -> 2122 dans
+# /etc/services, donc son ssh sortant vise 2122 par défaut ; or le M2 écoute
+# sur 22. On force 22 pour ne pas dépendre de /etc/services du contrôleur.
 ansible_connection: ssh
 ansible_host: mjl-mac-e3b3e8.local # mDNS (suit l'IP LAN) ; repli statique : 192.168.1.8
+ansible_port: 22
 ansible_user: abusutil
