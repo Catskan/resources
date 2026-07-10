@@ -1,0 +1,11 @@
+---
+# Provisioning DU CT claude-code, en direct via SSH (ProxyJump à travers le Wyse).
+# Connexion en root (clé du contrôleur injectée à la création) → pas de become.
+# Le déploiement du docker-compose vient APRÈS la migration des données
+# (rsync + checksums, cf. MIGRATION-WYSE.md).
+- name: Provisionner l'hôte du CT claude-code (Docker + prérequis)
+  hosts: claude_code_hosts
+  gather_facts: true
+
+  roles:
+    - role: claude_code_host

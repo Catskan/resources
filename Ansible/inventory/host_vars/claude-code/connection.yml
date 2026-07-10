@@ -1,0 +1,14 @@
+# LXC claude-code (VMID 101) sur le Wyse. Il est sur le LAN de la mère
+# (192.168.1.x), injoignable directement depuis le contrôleur → on l'atteint en
+# ProxyJump À TRAVERS l'hôte Proxmox (le Wyse), qui, lui, voit le CT sur son LAN.
+# ⚠️ ansible_host = IP DHCP actuelle du CT ; pose une réservation DHCP sur la
+#    Freebox de la mère pour la figer (sinon MAJ ici si le bail change).
+# ⚠️ ansible_port 22 EXPLICITE : le CT écoute en 22, mais le contrôleur (Air)
+#    remappe ssh->2122 dans /etc/services → on force 22 pour le saut final.
+ansible_connection: ssh
+ansible_host: 192.168.1.96
+ansible_port: 22
+ansible_user: root
+ansible_ssh_common_args: >-
+  -o StrictHostKeyChecking=accept-new
+  -o ProxyJump=aurel@88.172.204.162:34343

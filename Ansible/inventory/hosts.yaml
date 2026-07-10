@@ -19,3 +19,6 @@ all:
     proxmox_hosts:
       hosts:
         wyse-proxmox:
+    claude_code_hosts:
+      hosts:
+        claude-code:
