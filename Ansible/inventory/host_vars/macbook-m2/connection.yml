@@ -4,7 +4,10 @@
 # ansible_port 2022 EXPLICITE : chaque Mac a remappé le service `ssh` via
 # /etc/services (M2=2022, Air=2122). Le contrôleur (Air) sort par défaut en
 # 2122 ; on force 2022 = le port réel du sshd du M2.
+# accept-new : ajoute une clé d'hôte NOUVELLE automatiquement (évite l'échec
+# non-interactif) mais REFUSE une clé changée (protection MITM conservée).
 ansible_connection: ssh
 ansible_host: mjl-mac-e3b3e8.local # mDNS (suit l'IP LAN) ; repli statique : 192.168.1.8
 ansible_port: 2022
 ansible_user: abusutil
+ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
