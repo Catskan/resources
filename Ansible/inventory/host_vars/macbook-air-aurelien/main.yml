@@ -3,3 +3,10 @@ container_name_fonduededeco: fonduededeco
 image_name_fonduededeco: catskan/fonduededeco:v1
 user_name: aurelien
 dockerHub_username: catskan
+
+# Comptes autorisés en SSH (AllowUsers) pour le rôle sshd_hardening.
+# ⚠️ À CONFIRMER : run-on cible le Air en 'aurel' (hosts.json) mais Ansible en 'aurelien'.
+# Inclure TOUS les comptes réellement utilisés en SSH, sinon lockout de run-on.
+sshd_allowed_users:
+  - aurelien
+  - aurel

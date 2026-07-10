@@ -7,8 +7,11 @@ all:
           ansible_host: 192.168.2.114
           ansible_port: 3434
           ansible_user: a.busutil
-        macbook-air-aurelien:
         arch-linux-laptop:
+    macos_hosts:
+      hosts:
+        macbook-m2:
+        macbook-air-aurelien:
     windows_hosts:
       hosts:
         w11-vm-aurel:

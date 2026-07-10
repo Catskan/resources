@@ -1,0 +1,4 @@
+---
+# Comptes autorisés en SSH sur le M2 (AllowUsers). run-on s'y connecte en 'abusutil'.
+sshd_allowed_users:
+  - abusutil

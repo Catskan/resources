@@ -1,7 +1,7 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help windows windows-vm linux uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows lint
+.PHONY: help windows windows-vm linux macos check-macos windows-sshd check-windows-sshd uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows lint
 
 help:
 	@echo "Cibles disponibles :"
@@ -13,6 +13,10 @@ help:
 	@echo "  make windows-vm       — Run uniquement sur w11-vm-aurel (test sur UTM avant bare-metal)"
 	@echo "  make check-windows-vm — Dry-run sur w11-vm-aurel (--check --diff)"
 	@echo "  make linux            — Run sur arch-linux-laptop"
+	@echo "  make macos            — Durcissement SSH des Macs (M2 + Air)"
+	@echo "  make check-macos      — Dry-run durcissement SSH Macs (--check --diff)"
+	@echo "  make windows-sshd     — Durcissement SSH des hôtes Windows"
+	@echo "  make check-windows-sshd — Dry-run durcissement SSH Windows (--check --diff)"
 	@echo "  make uninstall-bloat  — Désinstalle les AppX bloatware sur aurelien-gaming"
 	@echo "  make ping-windows     — win_ping sur les hosts Windows"
 	@echo "  make check-windows    — Dry-run Windows (--check --diff)"
@@ -51,6 +55,18 @@ check-windows-vm:
 
 linux:
 	./scripts/run.sh ansible-playbook main_linux_playbook.yml $(ARGS)
+
+macos:
+	./scripts/run.sh ansible-playbook main_macos_playbook.yml $(ARGS)
+
+check-macos:
+	./scripts/run.sh ansible-playbook main_macos_playbook.yml --check --diff $(ARGS)
+
+windows-sshd:
+	./scripts/run.sh ansible-playbook main_windows_sshd_playbook.yml $(ARGS)
+
+check-windows-sshd:
+	./scripts/run.sh ansible-playbook main_windows_sshd_playbook.yml --check --diff $(ARGS)
 
 uninstall-bloat:
 	./scripts/run.sh ansible-playbook main_remove_softwares.yml $(ARGS)

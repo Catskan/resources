@@ -1,0 +1,9 @@
+# Géré par Ansible — rôle sshd_hardening. Ne pas éditer à la main.
+# Préfixe 010- : lu AVANT 100-macos.conf ; en sshd_config la 1re valeur gagne.
+PasswordAuthentication {{ sshd_password_authentication }}
+KbdInteractiveAuthentication {{ sshd_kbdinteractive_authentication }}
+PermitRootLogin {{ sshd_permit_root_login }}
+PubkeyAuthentication {{ sshd_pubkey_authentication }}
+{% if sshd_allowed_users | length > 0 %}
+AllowUsers {{ sshd_allowed_users | join(' ') }}
+{% endif %}

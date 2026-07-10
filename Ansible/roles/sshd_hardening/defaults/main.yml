@@ -1,0 +1,12 @@
+---
+# Durcissement SSH — clé uniquement. Valeurs surchargées par hôte si besoin.
+# Chaînes littérales (sshd attend "yes"/"no", pas des booléens YAML).
+sshd_password_authentication: "no"
+sshd_kbdinteractive_authentication: "no"
+sshd_permit_root_login: "no"
+sshd_pubkey_authentication: "yes"
+
+# Comptes autorisés en SSH (directive AllowUsers). DOIT contenir TOUS les comptes
+# qui se connectent à l'hôte (dont ceux utilisés par run-on), sinon lockout.
+# À définir par hôte dans inventory/host_vars/<host>/main.yml.
+sshd_allowed_users: []

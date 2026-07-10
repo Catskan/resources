@@ -1,0 +1,37 @@
+---
+- name: Vérifier qu'AllowUsers inclut l'utilisateur de connexion (anti-lockout)
+  ansible.builtin.assert:
+    that:
+      - sshd_allowed_users | length > 0
+      - ansible_user in sshd_allowed_users
+    fail_msg: >-
+      sshd_allowed_users ({{ sshd_allowed_users }}) doit inclure ansible_user
+      ({{ ansible_user }}), sinon la connexion SSH gérée se verrouille.
+  when: (ansible_connection | default('ssh')) != 'local'
+
+- name: Déposer le drop-in de durcissement SSH
+  become: true
+  ansible.builtin.template:
+    src: 010-runon-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/010-runon-hardening.conf
+    owner: root
+    group: "{{ 'wheel' if ansible_os_family == 'Darwin' else 'root' }}"
+    mode: "0644"
+    validate: /usr/sbin/sshd -G -f %s
+  notify: Recharger sshd
+
+- name: Parser la configuration sshd effective (chemin absolu = évite un sshd Homebrew)
+  become: true
+  ansible.builtin.command: /usr/sbin/sshd -G
+  changed_when: false
+  check_mode: false
+  register: sshd_effective
+
+- name: Contrôler les valeurs de durcissement effectives
+  ansible.builtin.assert:
+    that:
+      - "('passwordauthentication ' ~ sshd_password_authentication) in sshd_effective.stdout"
+      - "('permitrootlogin ' ~ sshd_permit_root_login) in sshd_effective.stdout"
+      - "('kbdinteractiveauthentication ' ~ sshd_kbdinteractive_authentication) in sshd_effective.stdout"
+    success_msg: Durcissement SSH effectif confirmé.
+  when: not ansible_check_mode

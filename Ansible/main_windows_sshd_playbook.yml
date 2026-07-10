@@ -1,0 +1,10 @@
+---
+# Playbook DÉDIÉ (séparé de main_windows_playbook.yml/gaming) : le durcissement
+# SSH ne doit PAS s'appliquer à chaque run gaming (risque de lockout).
+# ⚠️ Prérequis : clé SSH autorisée sur le PC (administrators_authorized_keys).
+- name: Durcissement SSH des hôtes Windows (clé uniquement)
+  hosts: windows_hosts
+  gather_facts: true
+
+  roles:
+    - role: win_sshd_hardening

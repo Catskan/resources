@@ -1,0 +1,24 @@
+---
+# Durcissement SSH des hôtes Windows (OpenSSH). On modifie 2 lignes de
+# C:\ProgramData\ssh\sshd_config sans écraser le reste (notamment le bloc
+# `Match Group administrators` -> administrators_authorized_keys).
+# insertbefore '^Match' : si la directive est absente, on l'insère AVANT le
+# premier bloc Match (portée globale), pas à la fin (qui serait sous Match).
+# ⚠️ La clé SSH (id_clients / run-on) doit être autorisée sur le PC AVANT
+#    d'appliquer, sinon coupure de l'accès SSH (port 2322).
+
+- name: Désactiver l'authentification par mot de passe SSH
+  community.windows.win_lineinfile:
+    path: C:\ProgramData\ssh\sshd_config
+    regexp: '^#?\s*PasswordAuthentication\s'
+    line: PasswordAuthentication no
+    insertbefore: "^Match"
+  notify: Redémarrer sshd
+
+- name: Activer l'authentification par clé publique SSH
+  community.windows.win_lineinfile:
+    path: C:\ProgramData\ssh\sshd_config
+    regexp: '^#?\s*PubkeyAuthentication\s'
+    line: PubkeyAuthentication yes
+    insertbefore: "^Match"
+  notify: Redémarrer sshd

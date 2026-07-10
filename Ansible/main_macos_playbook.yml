@@ -1,0 +1,9 @@
+---
+- name: Durcissement SSH des Macs (clé uniquement)
+  hosts: macos_hosts
+  gather_facts: true
+
+  # Vars chargées automatiquement depuis :
+  #   inventory/host_vars/<host>/{connection,main}.yml  (dont sshd_allowed_users)
+  roles:
+    - role: sshd_hardening

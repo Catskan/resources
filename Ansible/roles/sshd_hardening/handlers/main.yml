@@ -1,0 +1,6 @@
+---
+- name: Recharger sshd
+  become: true
+  ansible.builtin.command: launchctl kickstart -k system/com.openssh.sshd
+  changed_when: true
+  when: ansible_os_family == "Darwin"
