@@ -16,3 +16,6 @@ all:
       hosts:
         w11-vm-aurel:
         aurelien-gaming:
+    proxmox_hosts:
+      hosts:
+        wyse-proxmox:

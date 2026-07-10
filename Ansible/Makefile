@@ -1,7 +1,7 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help windows windows-vm linux macos check-macos windows-sshd check-windows-sshd uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows lint
+.PHONY: help windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows lint
 
 help:
 	@echo "Cibles disponibles :"
@@ -17,6 +17,8 @@ help:
 	@echo "  make check-macos      — Dry-run durcissement SSH Macs (--check --diff)"
 	@echo "  make windows-sshd     — Durcissement SSH Windows seul (main_windows --tags sshd)"
 	@echo "  make check-windows-sshd — Dry-run durcissement SSH Windows (--tags sshd --check)"
+	@echo "  make wyse             — Crée/démarre le LXC claude-code sur le Wyse (Proxmox)"
+	@echo "  make check-wyse       — Dry-run création LXC Wyse (--check --diff)"
 	@echo "  make uninstall-bloat  — Désinstalle les AppX bloatware sur aurelien-gaming"
 	@echo "  make ping-windows     — win_ping sur les hosts Windows"
 	@echo "  make check-windows    — Dry-run Windows (--check --diff)"
@@ -67,6 +69,12 @@ windows-sshd:
 
 check-windows-sshd:
 	./scripts/run.sh ansible-playbook main_windows_playbook.yml --tags sshd --check --diff $(ARGS)
+
+wyse:
+	./scripts/run.sh ansible-playbook main_wyse_playbook.yml $(ARGS)
+
+check-wyse:
+	./scripts/run.sh ansible-playbook main_wyse_playbook.yml --check --diff $(ARGS)
 
 uninstall-bloat:
 	./scripts/run.sh ansible-playbook main_remove_softwares.yml $(ARGS)

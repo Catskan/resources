@@ -1,0 +1,11 @@
+# Hôte Proxmox VE (Wyse 5070 chez la mère), joint depuis le contrôleur via l'IP
+# publique fixe + port forwardé (filtré sur l'IP publique de la maison).
+# ⚠️ ansible_port 34343 EXPLICITE : le contrôleur (Air) remappe `ssh`->2122 dans
+#    /etc/services ; on force le vrai port du forward Wyse.
+# ⚠️ Prérequis : la clé publique du contrôleur (Air) doit être autorisée sur le
+#    Wyse pour l'utilisateur `aurel` (comme l'est celle du M2).
+ansible_connection: ssh
+ansible_host: 88.172.204.162
+ansible_port: 34343
+ansible_user: aurel
+ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new

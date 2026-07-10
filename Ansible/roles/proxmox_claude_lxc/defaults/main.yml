@@ -1,0 +1,20 @@
+---
+# LXC claude-code sur le Wyse. Privilégié (FUSE/SSHFS + réseau natifs).
+ct_vmid: 101
+ct_hostname: claude-code
+ct_template_storage: local
+ct_template: debian-13-standard_13.1-2_amd64.tar.zst
+ct_unprivileged: 0
+ct_features: nesting=1,fuse=1
+ct_cores: 4
+ct_memory: 3072 # Mo — safe sur 8 Go tant que la barrette 16 Go n'est pas posée
+ct_swap: 2048
+# rootfs sur `local` (dir) et NON local-lvm : isole le CT du pool thin de HA (prod).
+ct_rootfs: local:12
+ct_bridge: vmbr0
+ct_nameserver: 1.1.1.1
+ct_onboot: 1
+# Clé publique du contrôleur (le Air), injectée dans le CT à la création via
+# --ssh-public-keys → accès SSH root du CT depuis Ansible (ProxyJump ensuite).
+# ⚠️ Adapter si la clé du contrôleur n'est pas id_ed25519.
+ct_controller_pubkey_path: "~/.ssh/id_ed25519.pub"

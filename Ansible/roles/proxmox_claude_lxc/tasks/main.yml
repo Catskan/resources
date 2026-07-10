@@ -1,0 +1,73 @@
+---
+# Création idempotente du CT via pct/pveam (sans token API), sur l'hôte Proxmox.
+# Objectif : CT créé, démarré, et JOIGNABLE EN SSH (clé du contrôleur injectée +
+# sshd) → il devient ensuite un hôte Ansible dédié (rôle claude_code_host).
+# pct exec n'est utilisé QUE pour le bootstrap SSH (amorçage), pas pour installer
+# les paquets applicatifs (ça se fait sur le CT en direct, via son propre rôle).
+
+- name: Lister les templates LXC présents
+  ansible.builtin.command: "pveam list {{ ct_template_storage }}"
+  register: pveam_list
+  changed_when: false
+  check_mode: false
+
+- name: Télécharger le template Debian si absent
+  ansible.builtin.command: "pveam download {{ ct_template_storage }} {{ ct_template }}"
+  when: ct_template not in pveam_list.stdout
+  changed_when: true
+
+- name: Vérifier l'existence du CT {{ ct_vmid }}
+  ansible.builtin.command: "pct status {{ ct_vmid }}"
+  register: pct_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Déposer la clé publique du contrôleur sur l'hôte Proxmox
+  ansible.builtin.copy:
+    content: "{{ lookup('file', ct_controller_pubkey_path) }}\n"
+    dest: /root/claude-code-controller.pub
+    owner: root
+    group: root
+    mode: "0600"
+  when: pct_status.rc != 0
+
+- name: Créer le CT {{ ct_vmid }} (claude-code)
+  ansible.builtin.command: >-
+    pct create {{ ct_vmid }}
+    {{ ct_template_storage }}:vztmpl/{{ ct_template }}
+    --hostname {{ ct_hostname }}
+    --unprivileged {{ ct_unprivileged }}
+    --features {{ ct_features }}
+    --cores {{ ct_cores }}
+    --memory {{ ct_memory }}
+    --swap {{ ct_swap }}
+    --rootfs {{ ct_rootfs }}
+    --net0 name=eth0,bridge={{ ct_bridge }},ip=dhcp
+    --nameserver {{ ct_nameserver }}
+    --onboot {{ ct_onboot }}
+    --ssh-public-keys /root/claude-code-controller.pub
+  when: pct_status.rc != 0
+  changed_when: true
+
+- name: Démarrer le CT {{ ct_vmid }}
+  ansible.builtin.command: "pct start {{ ct_vmid }}"
+  when: "'status: running' not in (pct_status.stdout | default(''))"
+  changed_when: true
+
+- name: Bootstrap SSH dans le CT (openssh-server + activation)
+  ansible.builtin.command: >-
+    pct exec {{ ct_vmid }} -- bash -lc
+    'apt-get update && apt-get install -y openssh-server && systemctl enable --now ssh'
+  register: ct_sshd
+  changed_when: "'Setting up openssh-server' in ct_sshd.stdout"
+
+- name: Récupérer l'IP du CT
+  ansible.builtin.command: "pct exec {{ ct_vmid }} -- ip -4 -o addr show eth0"
+  register: ct_ip
+  changed_when: false
+  check_mode: false
+
+- name: IP du CT — à reporter dans host_vars/claude-code/connection.yml (ProxyJump)
+  ansible.builtin.debug:
+    msg: "CT {{ ct_vmid }} ({{ ct_hostname }}) IP : {{ ct_ip.stdout }}"
