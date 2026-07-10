@@ -15,8 +15,8 @@ help:
 	@echo "  make linux            — Run sur arch-linux-laptop"
 	@echo "  make macos            — Durcissement SSH des Macs (M2 + Air)"
 	@echo "  make check-macos      — Dry-run durcissement SSH Macs (--check --diff)"
-	@echo "  make windows-sshd     — Durcissement SSH des hôtes Windows"
-	@echo "  make check-windows-sshd — Dry-run durcissement SSH Windows (--check --diff)"
+	@echo "  make windows-sshd     — Durcissement SSH Windows seul (main_windows --tags sshd)"
+	@echo "  make check-windows-sshd — Dry-run durcissement SSH Windows (--tags sshd --check)"
 	@echo "  make uninstall-bloat  — Désinstalle les AppX bloatware sur aurelien-gaming"
 	@echo "  make ping-windows     — win_ping sur les hosts Windows"
 	@echo "  make check-windows    — Dry-run Windows (--check --diff)"
@@ -63,10 +63,10 @@ check-macos:
 	./scripts/run.sh ansible-playbook main_macos_playbook.yml --check --diff $(ARGS)
 
 windows-sshd:
-	./scripts/run.sh ansible-playbook main_windows_sshd_playbook.yml $(ARGS)
+	./scripts/run.sh ansible-playbook main_windows_playbook.yml --tags sshd $(ARGS)
 
 check-windows-sshd:
-	./scripts/run.sh ansible-playbook main_windows_sshd_playbook.yml --check --diff $(ARGS)
+	./scripts/run.sh ansible-playbook main_windows_playbook.yml --tags sshd --check --diff $(ARGS)
 
 uninstall-bloat:
 	./scripts/run.sh ansible-playbook main_remove_softwares.yml $(ARGS)

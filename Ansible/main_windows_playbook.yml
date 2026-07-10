@@ -10,3 +10,8 @@
 
   roles:
     - role: windows_gaming
+    # Durcissement SSH intégré, taggé `sshd` : inclus dans un run complet
+    # (`make windows`) et ciblable seul via `make windows ARGS='--tags sshd'`
+    # ou exclu via `--skip-tags sshd`.
+    - role: win_sshd_hardening
+      tags: [sshd]
