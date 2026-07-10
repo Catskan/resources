@@ -1,7 +1,14 @@
 ---
-# Phase 1 de la migration Wyse : création + démarrage du LXC claude-code.
-# Le provisioning intérieur (Docker + déploiement compose) et la migration des
-# données (rsync + checksums) sont des étapes SÉPARÉES (cf. MIGRATION-WYSE.md).
+# Déploiement complet du stack claude-code sur le Wyse, en deux plays :
+#   1) sur l'hôte Proxmox        : créer/démarrer le CT (rôle proxmox_claude_lxc)
+#   2) sur le CT lui-même (SSH via ProxyJump) : Docker + prérequis (claude_code_host)
+# La migration des données (rsync + checksums) reste un runbook séparé
+# (MIGRATION-WYSE.md), tout comme le `docker compose up` final.
+#
+# make wyse                      → les deux plays (déploiement complet)
+# make wyse ARGS='--limit claude_code_hosts'  → provisioning du CT seul (= make claude-code)
+# make wyse ARGS='--limit proxmox_hosts'      → création du CT seule
+
 - name: Créer le LXC claude-code sur le Wyse (Proxmox)
   hosts: proxmox_hosts
   become: true
@@ -9,3 +16,10 @@
 
   roles:
     - role: proxmox_claude_lxc
+
+- name: Provisionner le CT claude-code (Docker + prérequis)
+  hosts: claude_code_hosts
+  gather_facts: true
+
+  roles:
+    - role: claude_code_host

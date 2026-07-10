@@ -17,10 +17,10 @@ help:
 	@echo "  make check-macos      — Dry-run durcissement SSH Macs (--check --diff)"
 	@echo "  make windows-sshd     — Durcissement SSH Windows seul (main_windows --tags sshd)"
 	@echo "  make check-windows-sshd — Dry-run durcissement SSH Windows (--tags sshd --check)"
-	@echo "  make wyse             — Crée/démarre le LXC claude-code sur le Wyse (Proxmox)"
-	@echo "  make check-wyse       — Dry-run création LXC Wyse (--check --diff)"
-	@echo "  make claude-code      — Provisionne le CT (Docker + prérequis) via ProxyJump"
-	@echo "  make check-claude-code — Dry-run provisioning CT (--check --diff)"
+	@echo "  make wyse             — Déploiement complet Wyse : crée le CT + provisionne (Docker)"
+	@echo "  make check-wyse       — Dry-run déploiement Wyse (--check --diff)"
+	@echo "  make claude-code      — Provisionne le CT seul (main_wyse --limit claude_code_hosts)"
+	@echo "  make check-claude-code — Dry-run provisioning CT seul (--check --diff)"
 	@echo "  make uninstall-bloat  — Désinstalle les AppX bloatware sur aurelien-gaming"
 	@echo "  make ping-windows     — win_ping sur les hosts Windows"
 	@echo "  make check-windows    — Dry-run Windows (--check --diff)"
@@ -79,10 +79,10 @@ check-wyse:
 	./scripts/run.sh ansible-playbook main_wyse_playbook.yml --check --diff $(ARGS)
 
 claude-code:
-	./scripts/run.sh ansible-playbook main_claude_code_playbook.yml $(ARGS)
+	./scripts/run.sh ansible-playbook main_wyse_playbook.yml --limit claude_code_hosts $(ARGS)
 
 check-claude-code:
-	./scripts/run.sh ansible-playbook main_claude_code_playbook.yml --check --diff $(ARGS)
+	./scripts/run.sh ansible-playbook main_wyse_playbook.yml --limit claude_code_hosts --check --diff $(ARGS)
 
 uninstall-bloat:
 	./scripts/run.sh ansible-playbook main_remove_softwares.yml $(ARGS)
