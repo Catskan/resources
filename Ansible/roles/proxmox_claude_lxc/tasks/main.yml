@@ -24,7 +24,9 @@
   check_mode: false
 
 - name: Lire le contenu autorisé du storage 'local'
-  ansible.builtin.shell: "set -o pipefail; pvesm config local | awk '/content/ {print $2}'"
+  ansible.builtin.shell: >-
+    set -o pipefail;
+    grep -A8 '^dir: local$' /etc/pve/storage.cfg | awk '/content/{print $2; exit}'
   register: local_content
   changed_when: false
   check_mode: false
