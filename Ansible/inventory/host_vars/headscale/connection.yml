@@ -6,7 +6,7 @@
 # ⚠️ ansible_port 22 EXPLICITE : le CT écoute en 22 ; le contrôleur remappe ssh->2122
 #    dans /etc/services → on force 22 pour le saut final.
 ansible_connection: ssh
-ansible_host: 192.168.1.CHANGEME # <-- IP du CT 102 (voir sortie du play proxmox_headscale_lxc)
+ansible_host: 192.168.1.168 # IP DHCP du CT 102 (poser une réservation DHCP sur la Freebox mère)
 ansible_port: 22
 ansible_user: root
 ansible_ssh_common_args: >-

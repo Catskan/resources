@@ -16,18 +16,22 @@
   failed_when: false
   check_mode: false
 
-- name: Télécharger le paquet headscale {{ headscale_version }}
-  ansible.builtin.get_url:
-    url: "{{ headscale_deb_url }}"
-    dest: "/tmp/headscale_{{ headscale_version }}.deb"
-    mode: "0644"
+- name: Installer Headscale {{ headscale_version }} (download + apt, atomique)
   when: headscale_version not in (hs_installed.stdout | default(''))
+  block:
+    - name: Télécharger le paquet .deb
+      ansible.builtin.get_url:
+        url: "{{ headscale_deb_url }}"
+        dest: "/tmp/headscale_{{ headscale_version }}.deb"
+        mode: "0644"
+      # Doit exister même en --check pour que l'install ci-dessous puisse s'évaluer
+      # (sinon apt échoue « Could not open file » en dry-run).
+      check_mode: false
 
-- name: Installer headscale (.deb)
-  ansible.builtin.apt:
-    deb: "/tmp/headscale_{{ headscale_version }}.deb"
-  when: headscale_version not in (hs_installed.stdout | default(''))
-  notify: Restart headscale
+    - name: Installer le .deb
+      ansible.builtin.apt:
+        deb: "/tmp/headscale_{{ headscale_version }}.deb"
+      notify: Restart headscale
 
 # --- TLS wildcard *.eonelia.fr (attachments KeePass, via host_vars/headscale/secrets.yml) ---
 # viczem.keepass écrit chaque attachment dans un fichier temp (contrôleur) et retourne son
