@@ -62,12 +62,29 @@
     - tailscale_authkey | length == 0
     - (ts_status.stdout | from_json).BackendState | default('NoState') != 'Running'
 
+- name: Déduire le hostname du login-server
+  ansible.builtin.set_fact:
+    tailscale_login_host: "{{ tailscale_login_server | regex_replace('^https?://', '') | regex_replace('/.*$', '') }}"
+
+# Le CT claude-code est sur le MÊME LAN que le CT headscale (chez la mère) : le joindre
+# via le WAN (mom.eonelia.fr → 88.172.204.162) imposerait un hairpin NAT que la Freebox
+# ne fait pas. On résout donc mom.eonelia.fr en LOCAL vers l'IP LAN du CT headscale
+# (le cert wildcard *.eonelia.fr couvre le nom → TLS OK). Les clients distants (Mac)
+# passent eux par le DNS public + forward 443.
+- name: Résolution locale du login-server vers le CT headscale (évite le hairpin NAT)
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ hostvars['headscale'].ansible_host }} {{ tailscale_login_host }}"
+    regexp: "\\s{{ tailscale_login_host | regex_escape }}$"
+    state: present
+
 - name: Rattacher le client au tailnet (tailscale up)
   ansible.builtin.command: >-
     tailscale up
     --login-server {{ tailscale_login_server }}
     --authkey {{ tailscale_authkey }}
     --hostname {{ tailscale_hostname }}
+    --timeout=60s
     {{ tailscale_up_args }}
   when: (ts_status.stdout | from_json).BackendState | default('NoState') != 'Running'
   register: ts_up
