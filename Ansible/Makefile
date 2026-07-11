@@ -1,7 +1,7 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows lint
+.PHONY: help windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale lint
 
 help:
 	@echo "Cibles disponibles :"
@@ -99,3 +99,9 @@ check-linux:
 lint:
 	yamllint .
 	ansible-lint main_*.yml
+
+headscale:
+	./scripts/run.sh ansible-playbook main_headscale_playbook.yml $(ARGS)
+
+check-headscale:
+	./scripts/run.sh ansible-playbook main_headscale_playbook.yml --check --diff $(ARGS)

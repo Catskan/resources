@@ -1,0 +1,54 @@
+---
+# Déploiement du service systemd cloudcli sur le CT hôte (claude_code_hosts).
+# Garde-fou : ne démarre le service QUE si cloudcli est présent dans l'image
+# (sinon crash-loop tant que le Dockerfile n'a pas été rebuild).
+
+- name: Déposer le helper /usr/local/bin/cloudcli-svc
+  ansible.builtin.template:
+    src: cloudcli-svc.sh.j2
+    dest: /usr/local/bin/cloudcli-svc
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart cloudcli
+
+- name: Déposer l'unité systemd
+  ansible.builtin.template:
+    src: claudwebui.service.j2
+    dest: "/etc/systemd/system/{{ cloudcli_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart cloudcli
+
+- name: Vérifier que cloudcli est présent dans le conteneur {{ cloudcli_container }}
+  ansible.builtin.command: "docker exec {{ cloudcli_container }} sh -lc 'command -v cloudcli'"
+  register: cloudcli_present
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Avertir si cloudcli absent de l'image
+  ansible.builtin.debug:
+    msg: >-
+      cloudcli absent du conteneur {{ cloudcli_container }} → ajoute
+      'RUN npm install -g @cloudcli-ai/cloudcli' au Dockerfile puis rebuild.
+      L'unité est déposée et activée mais NON démarrée pour éviter un crash-loop.
+  when: cloudcli_present.rc != 0
+
+- name: Activer + démarrer le service (cloudcli présent)
+  ansible.builtin.systemd:
+    name: "{{ cloudcli_service_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: cloudcli_present.rc == 0
+
+- name: Activer seulement (cloudcli pas encore dans l'image)
+  ansible.builtin.systemd:
+    name: "{{ cloudcli_service_name }}"
+    enabled: true
+    daemon_reload: true
+  when: cloudcli_present.rc != 0

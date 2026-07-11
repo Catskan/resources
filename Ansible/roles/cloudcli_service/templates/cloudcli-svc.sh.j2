@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Helper systemd pour cloudcli. cloudcli tourne DANS le conteneur "{{ cloudcli_container }}"
+# (le CT hôte n'a ni node ni cloudcli). Arrêt propre sans pkill (absent du conteneur) :
+# on enregistre le PID côté conteneur via `exec` (le shell DEVIENT le process node).
+set -euo pipefail
+CONTAINER={{ cloudcli_container }}
+PIDFILE={{ cloudcli_pidfile }}
+env_args=(-e SERVER_PORT={{ cloudcli_port }} -e HOST={{ cloudcli_host }})
+
+case "${1:-}" in
+  start)
+    /usr/bin/docker start "$CONTAINER" >/dev/null
+    exec /usr/bin/docker exec "${env_args[@]}" "$CONTAINER" \
+      sh -c 'echo $$ > '"$PIDFILE"' && exec cloudcli start' ;;
+  stop)
+    /usr/bin/docker exec "$CONTAINER" \
+      sh -c '[ -f '"$PIDFILE"' ] && kill "$(cat '"$PIDFILE"')" 2>/dev/null || true' ;;
+  *) echo "usage: $0 {start|stop}" >&2; exit 2 ;;
+esac

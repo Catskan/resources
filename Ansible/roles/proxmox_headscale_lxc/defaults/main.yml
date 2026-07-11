@@ -1,0 +1,21 @@
+---
+# LXC headscale sur le Wyse (chez la mère). Léger et NON privilégié : headscale
+# n'a besoin ni de FUSE ni de nesting (contrairement au CT claude-code).
+# Aligné sur le rôle proxmox_claude_lxc (création via `pct`, idempotente, sans token API).
+hs_ct_vmid: 102
+hs_ct_hostname: headscale
+hs_ct_template_storage: local
+hs_ct_template: debian-13-standard_13.1-2_amd64.tar.zst
+hs_ct_unprivileged: 1
+hs_ct_features: "" # rien de spécial requis
+hs_ct_cores: 1
+hs_ct_memory: 1024 # Mo — headscale + sqlite + ddclient : très frugal
+hs_ct_swap: 512
+# rootfs sur `local` (dir), comme le CT claude-code, pour rester hors du pool thin de HA.
+hs_ct_rootfs: local:4
+hs_ct_bridge: vmbr0
+hs_ct_nameserver: 1.1.1.1
+hs_ct_onboot: 1
+# Clé publique du contrôleur (le Air), injectée à la création → accès SSH root.
+# ⚠️ Adapter si la clé du contrôleur n'est pas id_ed25519.
+hs_ct_controller_pubkey_path: "~/.ssh/id_ed25519.pub"

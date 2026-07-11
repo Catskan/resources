@@ -1,0 +1,15 @@
+---
+# Service systemd (sur le CT hôte) pour cloudcli = Claude Code WebUI.
+# cloudcli s'exécute DANS le conteneur Docker "claude-code" via `docker exec`
+# (node + CLI claude + ~/.claude + ~/.claude.json y sont déjà configurés).
+cloudcli_container: claude-code
+cloudcli_service_name: claudwebui
+cloudcli_port: 3001
+cloudcli_host: "0.0.0.0" # joignable via VPN Freebox (pas d'expo Internet)
+cloudcli_pidfile: /run/cloudcli.pid
+
+# ── Persistance (À FAIRE HORS de ce rôle, dans le kit nas-claude-code) ──────────
+#  1. Dockerfile : `RUN npm install -g @cloudcli-ai/cloudcli` (fige le CLI dans l'image).
+#  2. docker-compose.yml (service claude-code) : volume
+#     `- ${CLAUDE_DATA:-/volume1/Aurelien/AI/Claude-data}/cloudcli:/root/.cloudcli`
+#     → la DB auth.db par défaut persiste (pas besoin de DATABASE_PATH).

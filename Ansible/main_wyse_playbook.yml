@@ -23,3 +23,4 @@
 
   roles:
     - role: claude_code_host
+    - role: cloudcli_service

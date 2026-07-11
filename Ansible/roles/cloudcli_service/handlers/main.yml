@@ -1,0 +1,11 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart cloudcli
+  ansible.builtin.systemd:
+    name: "{{ cloudcli_service_name }}"
+    state: restarted
+  # Ne pas tenter de (re)démarrer si cloudcli n'est pas encore dans l'image.
+  when: cloudcli_present.rc | default(1) == 0

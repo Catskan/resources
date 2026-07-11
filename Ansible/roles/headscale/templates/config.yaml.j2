@@ -1,0 +1,53 @@
+# {{ ansible_managed }}
+# Config Headscale — TLS natif via wildcard *.eonelia.fr (déposé par le rôle).
+server_url: {{ headscale_server_url }}
+listen_addr: {{ headscale_listen_addr }}
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+# DERP : relais publics Tailscale (fallback chiffré si le P2P direct échoue).
+# Pour du strict 100% self-hosted, activer un DERP local (server.enabled: true).
+derp:
+  server:
+    enabled: false
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  auto_update_enabled: true
+  update_frequency: 24h
+
+disable_check_updates: false
+ephemeral_node_inactivity_timeout: 30m
+
+database:
+  type: sqlite
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+
+tls_cert_path: {{ headscale_tls_cert_path }}
+tls_key_path: {{ headscale_tls_key_path }}
+
+log:
+  level: info
+  format: text
+
+dns:
+  magic_dns: true
+  base_domain: {{ headscale_base_domain }}
+  nameservers:
+    global:
+{% for ns in headscale_dns_nameservers %}
+      - {{ ns }}
+{% endfor %}
+
+policy:
+  mode: file
+  path: ""

@@ -1,0 +1,127 @@
+---
+# Install + configuration idempotente de Headscale dans le CT dédié, TLS natif via
+# wildcard *.eonelia.fr (KeePass), + updater DynDNS IONOS. Génère aussi une preauthkey
+# réutilisable exposée aux autres plays (hostvars) pour rattacher les clients.
+
+- name: Prérequis (curl, ca-certificates)
+  ansible.builtin.apt:
+    name: [curl, ca-certificates]
+    state: present
+    update_cache: true
+
+- name: Récupérer la version headscale installée (si présente)
+  ansible.builtin.command: "headscale version"
+  register: hs_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Télécharger le paquet headscale {{ headscale_version }}
+  ansible.builtin.get_url:
+    url: "{{ headscale_deb_url }}"
+    dest: "/tmp/headscale_{{ headscale_version }}.deb"
+    mode: "0644"
+  when: headscale_version not in (hs_installed.stdout | default(''))
+
+- name: Installer headscale (.deb)
+  ansible.builtin.apt:
+    deb: "/tmp/headscale_{{ headscale_version }}.deb"
+  when: headscale_version not in (hs_installed.stdout | default(''))
+  notify: Restart headscale
+
+# --- TLS wildcard *.eonelia.fr (attachments KeePass, via host_vars/headscale/secrets.yml) ---
+# viczem.keepass écrit chaque attachment dans un fichier temp (contrôleur) et retourne son
+# CHEMIN → on copie ces fichiers sur le CT, on normalise en PEM (.cer = PEM ou DER selon la CA),
+# et on assemble la fullchain feuille+int1+int2. Restart headscale seulement si le contenu change.
+- name: Créer les dossiers de certificats
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: headscale
+    group: headscale
+    mode: "0750"
+  loop:
+    - "{{ headscale_tls_cert_path | dirname }}"
+    - "{{ headscale_tls_cert_path | dirname }}/src"
+
+- name: Copier les 4 fichiers du wildcard vers le CT
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ headscale_tls_cert_path | dirname }}/src/{{ item.name }}"
+    owner: headscale
+    group: headscale
+    mode: "0640"
+  loop:
+    - { src: "{{ hs_att_leaf }}", name: leaf.cer }
+    - { src: "{{ hs_att_int1 }}", name: int1.cer }
+    - { src: "{{ hs_att_int2 }}", name: int2.cer }
+    - { src: "{{ hs_att_key }}", name: privkey.key }
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+
+- name: Normaliser en PEM + assembler la fullchain (feuille + int1 + int2)
+  ansible.builtin.shell: |
+    set -e
+    d="{{ headscale_tls_cert_path | dirname }}"; s="$d/src"
+    for f in leaf int1 int2; do
+      openssl x509 -in "$s/$f.cer" -out "$s/$f.pem" 2>/dev/null \
+        || openssl x509 -inform DER -in "$s/$f.cer" -out "$s/$f.pem"
+    done
+    cat "$s/leaf.pem" "$s/int1.pem" "$s/int2.pem" > "$s/fullchain.pem"
+    changed=no
+    if ! cmp -s "$s/fullchain.pem" "{{ headscale_tls_cert_path }}" 2>/dev/null; then
+      install -o headscale -g headscale -m 0644 "$s/fullchain.pem" "{{ headscale_tls_cert_path }}"; changed=yes
+    fi
+    if ! cmp -s "$s/privkey.key" "{{ headscale_tls_key_path }}" 2>/dev/null; then
+      install -o headscale -g headscale -m 0640 "$s/privkey.key" "{{ headscale_tls_key_path }}"; changed=yes
+    fi
+    rm -rf "$s"
+    echo "changed=$changed"
+  register: hs_tls_assemble
+  changed_when: "'changed=yes' in hs_tls_assemble.stdout"
+  no_log: true
+  notify: Restart headscale
+
+# --- Configuration --------------------------------------------------------------
+- name: Templater /etc/headscale/config.yaml
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/headscale/config.yaml
+    owner: headscale
+    group: headscale
+    mode: "0644"
+  notify: Restart headscale
+
+- name: Activer et démarrer headscale
+  ansible.builtin.systemd:
+    name: headscale
+    enabled: true
+    state: started
+
+- name: Appliquer les handlers en attente (restart) avant les commandes CLI
+  ansible.builtin.meta: flush_handlers
+
+# --- Utilisateur + preauthkey ---------------------------------------------------
+- name: Lister les utilisateurs headscale
+  ansible.builtin.command: "headscale users list --output json"
+  register: hs_users
+  changed_when: false
+  check_mode: false
+
+- name: Créer l'utilisateur {{ headscale_user }} si absent
+  ansible.builtin.command: "headscale users create {{ headscale_user }}"
+  when: (hs_users.stdout | from_json | selectattr('name', 'equalto', headscale_user) | list | length) == 0
+  changed_when: true
+
+- name: Générer une preauthkey réutilisable
+  ansible.builtin.command: >-
+    headscale preauthkeys create --user {{ headscale_user }}
+    --reusable --expiration {{ headscale_preauthkey_expiration }} --output json
+  register: hs_pak
+  changed_when: true
+
+- name: Exposer la preauthkey aux autres plays (hostvars['headscale'].hs_preauthkey)
+  ansible.builtin.set_fact:
+    hs_preauthkey: "{{ (hs_pak.stdout | from_json).key }}"
+  no_log: true

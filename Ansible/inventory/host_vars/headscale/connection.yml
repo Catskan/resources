@@ -1,0 +1,14 @@
+# LXC headscale (VMID 102) sur le Wyse, LAN de la mère (192.168.1.x), injoignable
+# directement depuis le contrôleur → ProxyJump À TRAVERS l'hôte Proxmox (le Wyse),
+# comme pour le CT claude-code.
+# ⚠️ ansible_host = IP DHCP actuelle du CT 102 (affichée en fin de play proxmox_headscale_lxc).
+#    Poser une réservation DHCP sur la Freebox de la mère pour la figer.
+# ⚠️ ansible_port 22 EXPLICITE : le CT écoute en 22 ; le contrôleur remappe ssh->2122
+#    dans /etc/services → on force 22 pour le saut final.
+ansible_connection: ssh
+ansible_host: 192.168.1.CHANGEME # <-- IP du CT 102 (voir sortie du play proxmox_headscale_lxc)
+ansible_port: 22
+ansible_user: root
+ansible_ssh_common_args: >-
+  -o StrictHostKeyChecking=accept-new
+  -o ProxyJump=aurel@88.172.204.162:34343

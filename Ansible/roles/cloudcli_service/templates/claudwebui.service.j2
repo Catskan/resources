@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Claude Code WebUI (cloudcli)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=2
+ExecStart=/usr/local/bin/cloudcli-svc start
+ExecStop=/usr/local/bin/cloudcli-svc stop
+
+[Install]
+WantedBy=multi-user.target

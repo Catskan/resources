@@ -22,3 +22,6 @@ all:
     claude_code_hosts:
       hosts:
         claude-code:
+    headscale_hosts:
+      hosts:
+        headscale:

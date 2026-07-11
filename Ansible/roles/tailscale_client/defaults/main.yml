@@ -1,0 +1,14 @@
+---
+# Client Tailscale rattaché à notre Headscale auto-hébergé.
+# Appliqué au CT claude-code : comme le conteneur Docker est en network_mode:host,
+# il hérite automatiquement de l'interface tailscale0 et des routes 100.x du CT.
+tailscale_login_server: "https://mom.eonelia.fr"
+tailscale_hostname: "{{ inventory_hostname }}"
+
+# Preauthkey : fournie par le play headscale via hostvars (run complet `make headscale`).
+# En run client-only, passer -e tailscale_authkey=<clé> ou renseigner un fallback KeePass.
+tailscale_authkey: "{{ hostvars['headscale'].hs_preauthkey | default(tailscale_authkey_fallback) }}"
+tailscale_authkey_fallback: ""
+
+# Options `tailscale up`. --accept-routes off par défaut (on veut juste joindre le Mac).
+tailscale_up_args: "--accept-dns=false"

@@ -1,0 +1,85 @@
+---
+# Install + rattachement idempotent du client tailscale à Headscale.
+# Mode kernel (interface tailscale0 réelle) → nécessite /dev/net/tun dans le CT
+# (activé côté Proxmox par le play "tun" de main_headscale_playbook.yml).
+
+- name: Prérequis (curl, gnupg)
+  ansible.builtin.apt:
+    name: [curl, gnupg, ca-certificates]
+    state: present
+    update_cache: true
+
+- name: Ajouter la clé du dépôt Tailscale
+  ansible.builtin.get_url:
+    url: "https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg"
+    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    mode: "0644"
+
+- name: Ajouter le dépôt Tailscale
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian {{ ansible_distribution_release }} main"
+    filename: tailscale
+    state: present
+
+- name: Installer tailscale
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+    update_cache: true
+
+- name: Activer tailscaled
+  ansible.builtin.systemd:
+    name: tailscaled
+    enabled: true
+    state: started
+
+- name: Vérifier la présence de /dev/net/tun (mode kernel)
+  ansible.builtin.stat:
+    path: /dev/net/tun
+  register: tun_dev
+
+- name: Échec explicite si tun absent
+  ansible.builtin.fail:
+    msg: >-
+      /dev/net/tun absent dans le CT → tailscale ne peut pas créer tailscale0.
+      Lancer d'abord le play "tun" (make headscale --limit proxmox_hosts) qui ajoute
+      les lignes lxc.* au CT et le redémarre.
+  when: not tun_dev.stat.exists
+
+- name: État courant du client tailscale
+  ansible.builtin.command: "tailscale status --json"
+  register: ts_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Garde-fou — preauthkey requise si le client n'est pas déjà rattaché
+  ansible.builtin.fail:
+    msg: >-
+      tailscale_authkey vide et client non rattaché. Lancer le playbook complet
+      (make headscale) pour générer la clé, ou passer -e tailscale_authkey=<clé>.
+  when:
+    - tailscale_authkey | length == 0
+    - (ts_status.stdout | from_json).BackendState | default('NoState') != 'Running'
+
+- name: Rattacher le client au tailnet (tailscale up)
+  ansible.builtin.command: >-
+    tailscale up
+    --login-server {{ tailscale_login_server }}
+    --authkey {{ tailscale_authkey }}
+    --hostname {{ tailscale_hostname }}
+    {{ tailscale_up_args }}
+  when: (ts_status.stdout | from_json).BackendState | default('NoState') != 'Running'
+  register: ts_up
+  changed_when: ts_up.rc == 0
+  no_log: true
+
+- name: Afficher l'IP tailnet du client
+  ansible.builtin.command: "tailscale ip -4"
+  register: ts_ip
+  changed_when: false
+  check_mode: false
+
+- name: IP tailnet
+  ansible.builtin.debug:
+    msg: "{{ inventory_hostname }} tailnet IP : {{ ts_ip.stdout }}"

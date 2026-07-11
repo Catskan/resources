@@ -1,0 +1,30 @@
+---
+# Serveur Headscale (control plane Tailscale auto-hébergé), dans le CT dédié.
+# ⚠️ Vérifier la dernière release stable avant run : https://github.com/juanfont/headscale/releases
+headscale_version: "0.26.1"
+headscale_arch: amd64
+headscale_deb_url: "https://github.com/juanfont/headscale/releases/download/v{{ headscale_version }}/headscale_{{ headscale_version }}_linux_{{ headscale_arch }}.deb"
+
+# Endpoint public (résolu en DynDNS vers le WAN de la mère, cf. rôle ci-dessous).
+headscale_server_url: "https://mom.eonelia.fr"
+headscale_listen_addr: "0.0.0.0:443"
+
+# TLS natif : le wildcard *.eonelia.fr est déposé depuis KeePass (voir host_vars/headscale/secrets.yml).
+headscale_tls_cert_path: "/etc/headscale/certs/eonelia.crt"
+headscale_tls_key_path: "/etc/headscale/certs/eonelia.key"
+
+# MagicDNS : suffixe interne du tailnet (DOIT différer du domaine de server_url).
+headscale_base_domain: "ts.eonelia.fr"
+headscale_dns_nameservers:
+  - "1.1.1.1"
+
+# Utilisateur (namespace) du tailnet auquel sont rattachés Mac + CT.
+headscale_user: "aurelien"
+
+# Preauthkey réutilisable générée à chaque run complet (consommée par tailscale_client
+# via hostvars). expiration longue pour survivre entre deux runs.
+headscale_preauthkey_expiration: "87600h" # ~10 ans
+
+
+# NB : pas de DynDNS — la Freebox de la mère a une IP publique FIXE.
+# → enregistrement A statique mom.eonelia.fr → 88.172.204.162 chez IONOS (manuel, une fois).

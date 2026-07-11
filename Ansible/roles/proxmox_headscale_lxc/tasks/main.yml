@@ -1,0 +1,85 @@
+---
+# Création idempotente du CT headscale via pct/pveam (sans token API), sur l'hôte
+# Proxmox. Même logique que proxmox_claude_lxc : CT créé, démarré, JOIGNABLE EN SSH
+# (clé du contrôleur injectée + sshd) → devient ensuite un hôte Ansible dédié
+# (rôle headscale). pct exec n'est utilisé QUE pour le bootstrap SSH.
+
+- name: Lister les templates LXC présents
+  ansible.builtin.command: "pveam list {{ hs_ct_template_storage }}"
+  register: hs_pveam_list
+  changed_when: false
+  check_mode: false
+
+- name: Télécharger le template Debian si absent
+  ansible.builtin.command: "pveam download {{ hs_ct_template_storage }} {{ hs_ct_template }}"
+  when: hs_ct_template not in hs_pveam_list.stdout
+  changed_when: true
+
+- name: Vérifier l'existence du CT {{ hs_ct_vmid }}
+  ansible.builtin.command: "pct status {{ hs_ct_vmid }}"
+  register: hs_pct_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Lire le contenu autorisé du storage 'local'
+  ansible.builtin.shell: >-
+    set -o pipefail;
+    grep -A8 '^dir: local$' /etc/pve/storage.cfg | awk '/content/{print $2; exit}'
+  register: hs_local_content
+  changed_when: false
+  check_mode: false
+
+- name: Autoriser les rootfs de conteneurs (rootdir) sur 'local'
+  ansible.builtin.command: "pvesm set local --content {{ hs_local_content.stdout }},rootdir"
+  when: "'rootdir' not in hs_local_content.stdout"
+  changed_when: true
+
+- name: Déposer la clé publique du contrôleur sur l'hôte Proxmox
+  ansible.builtin.copy:
+    content: "{{ lookup('file', hs_ct_controller_pubkey_path) }}\n"
+    dest: /root/headscale-controller.pub
+    owner: root
+    group: root
+    mode: "0600"
+  when: hs_pct_status.rc != 0
+
+- name: Créer le CT {{ hs_ct_vmid }} (headscale)
+  ansible.builtin.command: >-
+    pct create {{ hs_ct_vmid }}
+    {{ hs_ct_template_storage }}:vztmpl/{{ hs_ct_template }}
+    --hostname {{ hs_ct_hostname }}
+    --unprivileged {{ hs_ct_unprivileged }}
+    {% if hs_ct_features %}--features {{ hs_ct_features }}{% endif %}
+    --cores {{ hs_ct_cores }}
+    --memory {{ hs_ct_memory }}
+    --swap {{ hs_ct_swap }}
+    --rootfs {{ hs_ct_rootfs }}
+    --net0 name=eth0,bridge={{ hs_ct_bridge }},ip=dhcp
+    --nameserver {{ hs_ct_nameserver }}
+    --onboot {{ hs_ct_onboot }}
+    --ssh-public-keys /root/headscale-controller.pub
+  when: hs_pct_status.rc != 0
+  changed_when: true
+
+- name: Démarrer le CT {{ hs_ct_vmid }}
+  ansible.builtin.command: "pct start {{ hs_ct_vmid }}"
+  when: "'status: running' not in (hs_pct_status.stdout | default(''))"
+  changed_when: true
+
+- name: Bootstrap SSH dans le CT (openssh-server + activation)
+  ansible.builtin.command: >-
+    pct exec {{ hs_ct_vmid }} -- bash -lc
+    'apt-get update && apt-get install -y openssh-server && systemctl enable --now ssh'
+  register: hs_ct_sshd
+  changed_when: "'Setting up openssh-server' in hs_ct_sshd.stdout"
+
+- name: Récupérer l'IP du CT
+  ansible.builtin.command: "pct exec {{ hs_ct_vmid }} -- ip -4 -o addr show eth0"
+  register: hs_ct_ip
+  changed_when: false
+  check_mode: false
+
+- name: IP du CT — à reporter dans host_vars/headscale/connection.yml (ProxyJump)
+  ansible.builtin.debug:
+    msg: "CT {{ hs_ct_vmid }} ({{ hs_ct_hostname }}) IP : {{ hs_ct_ip.stdout }}"

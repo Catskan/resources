@@ -1,0 +1,59 @@
+---
+# Déploiement du control plane Headscale (Tailscale auto-hébergé) + rattachement
+# des clients au tailnet. Trois plays :
+#   1) hôte Proxmox (Wyse)        : créer/démarrer le CT headscale (proxmox_headscale_lxc)
+#   2) CT headscale (ProxyJump)   : install + config Headscale + TLS wildcard + DynDNS IONOS
+#   3) CT claude-code (ProxyJump) : client tailscale rattaché à headscale (le conteneur
+#                                   Docker en network_mode:host en hérite)
+#
+# make headscale                                   → les trois plays (déploiement complet)
+# make headscale ARGS='--limit proxmox_hosts'      → création du CT headscale seule
+# make headscale ARGS='--limit headscale_hosts'    → (re)config du serveur headscale
+# make headscale ARGS='--limit claude_code_hosts'  → (re)join du client tailscale seul
+
+- name: Créer le LXC headscale sur le Wyse (Proxmox)
+  hosts: proxmox_hosts
+  become: true
+  gather_facts: true
+  roles:
+    - role: proxmox_headscale_lxc
+
+- name: Installer et configurer Headscale (serveur)
+  hosts: headscale_hosts
+  gather_facts: true
+  roles:
+    - role: headscale
+
+- name: Activer /dev/net/tun sur le CT claude-code (prérequis tailscale kernel-mode)
+  hosts: proxmox_hosts
+  become: true
+  gather_facts: false
+  vars:
+    claude_ct_vmid: 101
+  tasks:
+    - name: Ajouter le device tun au CT claude-code (idempotent)
+      ansible.builtin.blockinfile:
+        path: "/etc/pve/lxc/{{ claude_ct_vmid }}.conf"
+        marker: "# {mark} ANSIBLE tailscale tun"
+        block: |
+          lxc.cgroup2.devices.allow: c 10:200 rwm
+          lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+      register: hs_tun_conf
+
+    - name: Redémarrer le CT claude-code si la conf tun a changé
+      ansible.builtin.command: "pct reboot {{ claude_ct_vmid }}"
+      when: hs_tun_conf.changed
+      changed_when: true
+
+    - name: Laisser le CT redémarrer (SSH revient)
+      ansible.builtin.wait_for_connection:
+        delay: 8
+        timeout: 120
+      delegate_to: claude-code
+      when: hs_tun_conf.changed
+
+- name: Rattacher le CT claude-code au tailnet (client tailscale)
+  hosts: claude_code_hosts
+  gather_facts: true
+  roles:
+    - role: tailscale_client
