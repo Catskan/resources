@@ -123,9 +123,19 @@
       when: (hs_users.stdout | from_json | selectattr('name', 'equalto', headscale_user) | list | length) == 0
       changed_when: true
 
+    - name: Re-lister les utilisateurs (récupérer l'ID, y compris le nouveau)
+      ansible.builtin.command: "headscale users list --output json"
+      register: hs_users2
+      changed_when: false
+
+    - name: Déterminer l'ID numérique de {{ headscale_user }}
+      ansible.builtin.set_fact:
+        hs_user_id: "{{ hs_users2.stdout | from_json | selectattr('name', 'equalto', headscale_user) | map(attribute='id') | first }}"
+
     - name: Générer une preauthkey réutilisable
+      # headscale 0.29 : --user attend l'ID numérique, plus le nom.
       ansible.builtin.command: >-
-        headscale preauthkeys create --user {{ headscale_user }}
+        headscale preauthkeys create --user {{ hs_user_id }}
         --reusable --expiration {{ headscale_preauthkey_expiration }} --output json
       register: hs_pak
       changed_when: true
