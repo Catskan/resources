@@ -25,7 +25,8 @@ derp:
   update_frequency: 24h
 
 disable_check_updates: false
-ephemeral_node_inactivity_timeout: 30m
+# (ephemeral_node_inactivity_timeout retiré : déprécié/supprimé en 0.29,
+#  remplacé par node.ephemeral.inactivity_timeout — on garde le défaut headscale.)
 
 database:
   type: sqlite
