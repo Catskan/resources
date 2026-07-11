@@ -3,6 +3,7 @@
   ansible.builtin.systemd:
     name: headscale
     state: restarted
+  when: not ansible_check_mode
 
 - name: Reload systemd
   ansible.builtin.systemd:

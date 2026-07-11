@@ -97,35 +97,40 @@
     mode: "0644"
   notify: Restart headscale
 
-- name: Activer et démarrer headscale
-  ansible.builtin.systemd:
-    name: headscale
-    enabled: true
-    state: started
+# --- Post-install : service + utilisateur + preauthkey --------------------------
+# Ces étapes opèrent sur le paquet headscale RÉELLEMENT installé (service systemd,
+# CLI `headscale`) → sautées en --check : en dry-run le .deb n'est pas posé, donc
+# ni le service ni la CLI n'existent (sinon « Could not find service headscale »).
+- name: Service + utilisateur + preauthkey (hors --check)
+  when: not ansible_check_mode
+  block:
+    - name: Activer et démarrer headscale
+      ansible.builtin.systemd:
+        name: headscale
+        enabled: true
+        state: started
 
-- name: Appliquer les handlers en attente (restart) avant les commandes CLI
-  ansible.builtin.meta: flush_handlers
+    - name: Appliquer les handlers en attente (restart) avant les commandes CLI
+      ansible.builtin.meta: flush_handlers
 
-# --- Utilisateur + preauthkey ---------------------------------------------------
-- name: Lister les utilisateurs headscale
-  ansible.builtin.command: "headscale users list --output json"
-  register: hs_users
-  changed_when: false
-  check_mode: false
+    - name: Lister les utilisateurs headscale
+      ansible.builtin.command: "headscale users list --output json"
+      register: hs_users
+      changed_when: false
 
-- name: Créer l'utilisateur {{ headscale_user }} si absent
-  ansible.builtin.command: "headscale users create {{ headscale_user }}"
-  when: (hs_users.stdout | from_json | selectattr('name', 'equalto', headscale_user) | list | length) == 0
-  changed_when: true
+    - name: Créer l'utilisateur {{ headscale_user }} si absent
+      ansible.builtin.command: "headscale users create {{ headscale_user }}"
+      when: (hs_users.stdout | from_json | selectattr('name', 'equalto', headscale_user) | list | length) == 0
+      changed_when: true
 
-- name: Générer une preauthkey réutilisable
-  ansible.builtin.command: >-
-    headscale preauthkeys create --user {{ headscale_user }}
-    --reusable --expiration {{ headscale_preauthkey_expiration }} --output json
-  register: hs_pak
-  changed_when: true
+    - name: Générer une preauthkey réutilisable
+      ansible.builtin.command: >-
+        headscale preauthkeys create --user {{ headscale_user }}
+        --reusable --expiration {{ headscale_preauthkey_expiration }} --output json
+      register: hs_pak
+      changed_when: true
 
-- name: Exposer la preauthkey aux autres plays (hostvars['headscale'].hs_preauthkey)
-  ansible.builtin.set_fact:
-    hs_preauthkey: "{{ (hs_pak.stdout | from_json).key }}"
-  no_log: true
+    - name: Exposer la preauthkey aux autres plays (hostvars['headscale'].hs_preauthkey)
+      ansible.builtin.set_fact:
+        hs_preauthkey: "{{ (hs_pak.stdout | from_json).key }}"
+      no_log: true
