@@ -52,9 +52,9 @@ Références dans `inventory/host_vars/headscale/secrets.yml` (lookups `viczem.k
 ## 4. Étapes manuelles (hors Ansible)
 
 1. **IONOS** : enregistrement **A statique** `mom.eonelia.fr → 88.172.204.162` (IP publique fixe de la Freebox de la mère). Pas de DynDNS (IP fixe).
-2. **Freebox de la mère** (`88.172.204.162`) : redirection **`TCP 443 → <IP CT 102>:443`**.
+2. **Freebox de la mère** (`88.172.204.162`) : redirection **`TCP 34443 → 192.168.1.168:34443`** (la Freebox interdit les redirections sur port < 32768, 443 réservé → headscale écoute sur 34443).
 3. **Mac** (à la maison) : installer Tailscale, puis
-   `tailscale up --login-server=https://mom.eonelia.fr` (approuver via `headscale nodes list` / preauthkey).
+   `tailscale up --login-server=https://mom.eonelia.fr:34443 --authkey <preauthkey>`.
    Récupérer son IP : `tailscale ip -4` → **la mettre dans `hosts.json` `.public` = `abusutil@100.x.y.z:2022`**.
 
 ## 5. Ordre de déploiement

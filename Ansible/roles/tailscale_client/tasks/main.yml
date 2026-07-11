@@ -53,6 +53,13 @@
   failed_when: false
   check_mode: false
 
+- name: Prefs courantes (pour détecter un changement de login-server)
+  ansible.builtin.command: "tailscale debug prefs"
+  register: ts_prefs
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
 - name: Garde-fou — preauthkey requise si le client n'est pas déjà rattaché
   ansible.builtin.fail:
     msg: >-
@@ -62,9 +69,9 @@
     - tailscale_authkey | length == 0
     - (ts_status.stdout | from_json).BackendState | default('NoState') != 'Running'
 
-- name: Déduire le hostname du login-server
+- name: Déduire le hostname du login-server (sans schéma ni port)
   ansible.builtin.set_fact:
-    tailscale_login_host: "{{ tailscale_login_server | regex_replace('^https?://', '') | regex_replace('/.*$', '') }}"
+    tailscale_login_host: "{{ tailscale_login_server | regex_replace('^https?://', '') | regex_replace('/.*$', '') | regex_replace(':[0-9]+$', '') }}"
 
 # Le CT claude-code est sur le MÊME LAN que le CT headscale (chez la mère) : le joindre
 # via le WAN (mom.eonelia.fr → 88.172.204.162) imposerait un hairpin NAT que la Freebox
@@ -86,7 +93,10 @@
     --hostname {{ tailscale_hostname }}
     --timeout=60s
     {{ tailscale_up_args }}
-  when: (ts_status.stdout | from_json).BackendState | default('NoState') != 'Running'
+  # (re)login si pas encore rattaché OU si le login-server a changé (ex. changement de port)
+  when: >-
+    ((ts_status.stdout | from_json).BackendState | default('NoState') != 'Running')
+    or (tailscale_login_server not in (ts_prefs.stdout | default('')))
   register: ts_up
   changed_when: ts_up.rc == 0
   no_log: true

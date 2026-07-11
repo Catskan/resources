@@ -6,8 +6,10 @@ headscale_arch: amd64
 headscale_deb_url: "https://github.com/juanfont/headscale/releases/download/v{{ headscale_version }}/headscale_{{ headscale_version }}_linux_{{ headscale_arch }}.deb"
 
 # Endpoint public (résolu en DynDNS vers le WAN de la mère, cf. rôle ci-dessous).
-headscale_server_url: "https://mom.eonelia.fr"
-headscale_listen_addr: "0.0.0.0:443"
+# Port haut (> 32768) : la Freebox mère interdit les redirections sur port < 32768
+# (443 réservé à Freebox OS). headscale écoute donc sur ce port, local ET public.
+headscale_server_url: "https://mom.eonelia.fr:34443"
+headscale_listen_addr: "0.0.0.0:34443"
 
 # TLS natif : le wildcard *.eonelia.fr est déposé depuis KeePass (voir host_vars/headscale/secrets.yml).
 headscale_tls_cert_path: "/etc/headscale/certs/eonelia.crt"

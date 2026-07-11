@@ -2,7 +2,7 @@
 # Client Tailscale rattaché à notre Headscale auto-hébergé.
 # Appliqué au CT claude-code : comme le conteneur Docker est en network_mode:host,
 # il hérite automatiquement de l'interface tailscale0 et des routes 100.x du CT.
-tailscale_login_server: "https://mom.eonelia.fr"
+tailscale_login_server: "https://mom.eonelia.fr:34443"
 tailscale_hostname: "{{ inventory_hostname }}"
 
 # Preauthkey : fournie par le play headscale via hostvars (run complet `make headscale`).
