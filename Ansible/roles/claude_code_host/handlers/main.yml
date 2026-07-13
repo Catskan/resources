@@ -1,0 +1,10 @@
+---
+- name: Redémarrer docker
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+
+- name: Redémarrer systemd-journald
+  ansible.builtin.service:
+    name: systemd-journald
+    state: restarted

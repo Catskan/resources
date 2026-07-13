@@ -18,3 +18,6 @@ ct_onboot: 1
 # --ssh-public-keys → accès SSH root du CT depuis Ansible (ProxyJump ensuite).
 # ⚠️ Adapter si la clé du contrôleur n'est pas id_ed25519.
 ct_controller_pubkey_path: "~/.ssh/id_ed25519.pub"
+
+# Maintenance disque de l'hôte (tasks/maintenance.yml) : plafond journaux systemd.
+pve_journal_max_use: 200M

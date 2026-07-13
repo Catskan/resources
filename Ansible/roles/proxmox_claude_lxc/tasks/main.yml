@@ -84,3 +84,7 @@
 - name: IP du CT — à reporter dans host_vars/claude-code/connection.yml (ProxyJump)
   ansible.builtin.debug:
     msg: "CT {{ ct_vmid }} ({{ ct_hostname }}) IP : {{ ct_ip.stdout }}"
+
+- name: Maintenance disque de l'hôte Proxmox (fstrim/journald/alerte)
+  ansible.builtin.import_tasks: maintenance.yml
+  tags: maintenance

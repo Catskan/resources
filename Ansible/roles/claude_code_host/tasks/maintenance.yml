@@ -1,0 +1,85 @@
+---
+# Maintenance disque DANS le CT claude-code (là où tourne le démon Docker).
+# Cause racine de la saturation du 2026-07-13 : build cache Docker (3,6 Go) sans
+# limite. On plafonne à la source + garde-fous logs/apt.
+#   - daemon.json : cap du build cache (builder.gc) + rotation des logs conteneurs
+#   - prune hebdo : images/couches inutilisées
+#   - journald plafonné + apt autoclean
+# Tag : maintenance
+
+- name: "[maint] Répertoire /etc/docker"
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "[maint] Lire le daemon.json existant (s'il existe)"
+  ansible.builtin.slurp:
+    src: /etc/docker/daemon.json
+  register: docker_daemon_raw
+  failed_when: false
+  check_mode: false
+
+- name: "[maint] Calculer le daemon.json fusionné (préserve les réglages existants)"
+  ansible.builtin.set_fact:
+    docker_daemon_merged: >-
+      {{
+        (docker_daemon_raw.content | default('') | b64decode | from_json
+          if (docker_daemon_raw.content | default('') | length > 0)
+          else {})
+        | combine(docker_daemon_disk_settings, recursive=true)
+      }}
+
+- name: "[maint] Écrire daemon.json (build cache plafonné + rotation des logs)"
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: "{{ docker_daemon_merged | to_nice_json }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Redémarrer docker
+
+- name: "[maint] Purge hebdo des images/build-cache Docker inutilisés"
+  ansible.builtin.copy:
+    dest: /etc/cron.d/docker-prune
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Géré par Ansible — rôle claude_code_host.
+      SHELL=/bin/sh
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      0 4 * * 0 root docker image prune -f >/dev/null 2>&1
+      30 4 * * 0 root docker builder prune -af --filter until=168h >/dev/null 2>&1
+
+- name: "[maint] Répertoire drop-in journald"
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "[maint] Plafonner les journaux systemd du CT ({{ ct_journal_max_use }})"
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/00-maxuse.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Géré par Ansible — rôle claude_code_host.
+      [Journal]
+      SystemMaxUse={{ ct_journal_max_use }}
+  notify: Redémarrer systemd-journald
+
+- name: "[maint] Nettoyage apt périodique (autoclean hebdo)"
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99autoclean
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      // Géré par Ansible — rôle claude_code_host.
+      APT::Periodic::AutocleanInterval "7";

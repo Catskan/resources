@@ -69,3 +69,7 @@
 - name: Version de Docker installée
   ansible.builtin.debug:
     msg: "Docker Server {{ docker_version.stdout }} opérationnel dans le CT."
+
+- name: Maintenance disque du CT (Docker/journald/apt)
+  ansible.builtin.import_tasks: maintenance.yml
+  tags: maintenance

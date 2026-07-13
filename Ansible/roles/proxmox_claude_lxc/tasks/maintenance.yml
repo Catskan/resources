@@ -1,0 +1,44 @@
+---
+# Maintenance disque de l'HÔTE Proxmox (Wyse). Évite le retour de la saturation
+# qui a mis pve-root à 100 % le 2026-07-13 (build cache Docker dans le CT +
+# blocs .raw jamais rendus à l'hôte).
+#   - pct fstrim hebdo : rend à pve-root l'espace libéré dans les CT
+#   - journald plafonné : borne les journaux systemd de l'hôte
+#   - alerte disque : prévient (journald) avant saturation
+# Tag : maintenance
+
+- name: "[maint] fstrim hebdomadaire de tous les CT (rend l'espace à pve-root)"
+  ansible.builtin.copy:
+    src: pct-fstrim
+    dest: /etc/cron.weekly/pct-fstrim
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "[maint] Alerte disque horaire (seuil 85 %)"
+  ansible.builtin.copy:
+    src: disk-alert
+    dest: /etc/cron.hourly/disk-alert
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "[maint] Répertoire drop-in journald"
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "[maint] Plafonner les journaux systemd de l'hôte ({{ pve_journal_max_use }})"
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/00-maxuse.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Géré par Ansible — rôle proxmox_claude_lxc.
+      [Journal]
+      SystemMaxUse={{ pve_journal_max_use }}
+  notify: Redémarrer systemd-journald
