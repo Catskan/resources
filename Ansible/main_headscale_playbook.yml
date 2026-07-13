@@ -68,5 +68,23 @@
   hosts: proxmox_hosts
   become: true
   gather_facts: true
+  pre_tasks:
+    # Le dépôt pve-enterprise (abonnement payant) renvoie 401 → tout `apt update`
+    # échoue, et le rôle tailscale_client plante dès l'install. On le désactive
+    # (format deb822 de PVE 9). L'hôte utilise déjà pve-no-subscription.
+    - name: Repérer les dépôts entreprise Proxmox (deb822)
+      ansible.builtin.shell: "grep -rl 'enterprise.proxmox.com' /etc/apt/sources.list.d/*.sources"
+      register: pve_enterprise_sources
+      changed_when: false
+      failed_when: false
+      check_mode: false
+    - name: "Désactiver les dépôts entreprise (Enabled false) — évite le 401 apt"
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        regexp: "^Enabled:"
+        line: "Enabled: false"
+        state: present
+      loop: "{{ pve_enterprise_sources.stdout_lines }}"
+      when: pve_enterprise_sources.stdout_lines | length > 0
   roles:
     - role: tailscale_client
