@@ -2,6 +2,28 @@
 
 > **Audience**: a fresh Claude Code session picking up this repo on another machine. Read this top-to-bottom before answering. Trust `git log` and the current state of files over anything in this doc if there's a conflict — this is a 2026-05-18 snapshot.
 
+## Update 2026-07-13 — Wyse Proxmox (`domotique-box`) disk saturation → guardrails + tailnet access
+
+> **New infra not otherwise covered in this doc.** The repo now also provisions a **Proxmox VE host on a Dell Wyse 5070** (`wyse-proxmox`, hostname `domotique-box`, at the user's mother's place, reached via `88.172.204.162:34343`) running three guests: VM 100 `home-assistant` (on `local-lvm`, separate from `pve-root`), LXC 101 `claude-code` (Docker host for the `claude-code-nas` image — the "brain" container), LXC 102 `headscale` (self-hosted Tailscale control plane at `mom.eonelia.fr:34443`). Entry points: `main_wyse_playbook.yml` (`make wyse`) and `main_headscale_playbook.yml` (`make headscale`). Roles involved: `proxmox_claude_lxc`, `claude_code_host`, `cloudcli_service`, `proxmox_headscale_lxc`, `headscale`, `tailscale_client`.
+
+**Incident**: `pve-root` (25 GB) hit **100 %**. The `claude-code` container's Docker **build cache had grown to 3.6 GB**, and blocks freed inside the LXC never returned to the host (sparse `.raw` on `dir` storage `/var/lib/vz/images` isn't auto-trimmed). Full disk → the CT's ext4 remounted **read-only** → all in-container Claude sessions died with `EROFS`.
+
+**Immediate fix** (manual, on the host): `apt clean` + `journalctl --vacuum-size=50M`; `pct fstrim 101 102` (~12 GB back); inside CT 101 `docker builder prune -af` (3.6 GB) then `pct fstrim 101` again. Ended at **74 %**. No data lost — sessions persist on the NAS volume `dotclaude`; the resume picker was merely filtered to the current project (Ctrl+A shows all).
+
+**Guardrails codified** (commits `a72d08f` on resources, `09b4f28` on nas-claude-code) — all tagged `maintenance`:
+
+- `claude_code_host` (runs inside the CT) — merges `/etc/docker/daemon.json` non-destructively (`combine`): `builder.gc.defaultKeepStorage: 2GB` + `log-opts` rotation. Plus weekly `docker prune` cron, journald cap 200M, apt autoclean.
+- `proxmox_claude_lxc` (runs on the host) — weekly `/etc/cron.weekly/pct-fstrim` over **all** CTs (returns freed blocks to `pve-root`), journald cap, hourly `/etc/cron.hourly/disk-alert` (>85% → `logger -t disk-alert`).
+- `nas-claude-code` kit (`/Volumes/Aurelien/AI/Claude/nas-claude-code`, separate repo `Catskan/nas-claude-code`) — `docker-compose.yml` `logging:` max 10m×3 on the `claude-code` service.
+
+**Collateral: broke the PVE web UI.** A prior attempt to move Proxmox 8006 → 443 via `sed 's/8006/443/g'` across `/usr/share/perl5/PVE/` (interrupted mid-write by the full disk) left the UI unreachable. **Reverted** by reinstalling the 8 owning packages — `apt-get install --reinstall $(dpkg -V | awk .../PVE... | xargs dpkg -S | cut -d: -f1 | sort -u)` — which restores package files to identical, then `systemctl restart pveproxy pvedaemon`. Confirmed healthy (`ss` shows `LISTEN *:8006`; a `HEAD` on `https://127.0.0.1:8006` returns `501 method 'HEAD' not available`, the normal pveproxy response). **Lesson**: never `sed` PVE source to change the port — it breaks on the next package update anyway.
+
+**Remote access** — the Wyse sits behind a Freebox that refuses public port-forwards **< 32768** (so neither 8006 nor 443 is directly forwardable; that constraint was the real blocker, not the port itself). Three routes, cleanest first:
+
+1. **Tailnet** (chosen, permanent) — commit `0bb4292` added a 4th play to `main_headscale_playbook.yml` running `tailscale_client` on `proxmox_hosts` (the host has `/dev/net/tun` natively → no tun prereq, unlike the CT). `make headscale` (full run, regenerates the preauthkey) joins the host and prints its tailnet IP → `https://<wyse-tailnet-ip>:8006`.
+2. **Freebox LAN VPN** — if it routes `192.168.1.0/24`, reach `https://192.168.1.12:8006` directly. Note the host may drop ICMP (ping fails while TCP works) — test with `nc -vz 192.168.1.12 8006`, not ping.
+3. **SSH tunnel** (fallback, confirmed working) — `ssh -L 8006:127.0.0.1:8006 aurel@88.172.204.162 -p 34343` → `https://localhost:8006`.
+
 ## Update 2026-07-03 — storage fix from the NAS (page file relocation + robust hibernation)
 
 > Done from the NAS "brain" container over `run-on` (SSHFS-mounted repo), **not** from the MacBook. Syntax-checked with `ansible-playbook --syntax-check` on the MacBook; **not yet applied** to the physical machine (needs `make windows ARGS='--tags gaming_optim'` + a reboot).
