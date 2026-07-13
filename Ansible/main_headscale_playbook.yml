@@ -5,8 +5,10 @@
 #   2) CT headscale (ProxyJump)   : install + config Headscale + TLS wildcard + DynDNS IONOS
 #   3) CT claude-code (ProxyJump) : client tailscale rattaché à headscale (le conteneur
 #                                   Docker en network_mode:host en hérite)
+#   4) hôte Proxmox (Wyse)        : client tailscale → accès WebUI 8006 en VPN, sans
+#                                   forward Freebox (contrainte port public < 32768)
 #
-# make headscale                                   → les trois plays (déploiement complet)
+# make headscale                                   → les quatre plays (déploiement complet)
 # make headscale ARGS='--limit proxmox_hosts'      → création du CT headscale seule
 # make headscale ARGS='--limit headscale_hosts'    → (re)config du serveur headscale
 # make headscale ARGS='--limit claude_code_hosts'  → (re)join du client tailscale seul
@@ -54,6 +56,17 @@
 
 - name: Rattacher le CT claude-code au tailnet (client tailscale)
   hosts: claude_code_hosts
+  gather_facts: true
+  roles:
+    - role: tailscale_client
+
+# L'hôte Proxmox n'est pas joignable en 8006 depuis l'extérieur (Freebox refuse un
+# forward de port public < 32768). On le met sur le tailnet → la WebUI est atteinte
+# via https://<IP-tailnet-du-Wyse>:8006 depuis n'importe quel nœud (Mac). L'hôte a
+# /dev/net/tun nativement (hyperviseur) → pas de prérequis tun comme pour le CT.
+- name: Rattacher l'hôte Proxmox (Wyse) au tailnet (client tailscale)
+  hosts: proxmox_hosts
+  become: true
   gather_facts: true
   roles:
     - role: tailscale_client
