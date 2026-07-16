@@ -73,3 +73,7 @@
 - name: Maintenance disque du CT (Docker/journald/apt)
   ansible.builtin.import_tasks: maintenance.yml
   tags: maintenance
+
+- name: Sauvegarde du backend Claude vers le NAS
+  ansible.builtin.import_tasks: backup.yml
+  tags: backup

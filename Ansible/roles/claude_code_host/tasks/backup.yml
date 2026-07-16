@@ -1,0 +1,36 @@
+---
+# Sauvegarde incrémentale du backend Claude (loopback local du CT) vers le NAS Synology.
+# Approche : rsync LOCAL sur un montage SSHFS du NAS (contourne le wrapper rsync de Synology
+# qui bloque le rsync-over-SSH). Planifié par cron.d (même pattern que la purge Docker).
+# Le backend runtime reste LOCAL ; le NAS reçoit une copie miroir. Garde-fous dans le script :
+# source non vide + destination bien montée avant tout --delete.
+# Tag : backup (posé sur chaque tâche pour que `--tags backup` les sélectionne).
+
+- name: "[backup] Prérequis paquet sshfs (montage du NAS en SSHFS)"
+  ansible.builtin.apt:
+    name: sshfs
+    state: present
+    update_cache: true
+  tags: [backup]
+
+- name: "[backup] Déposer le script de sauvegarde /usr/local/bin/claude-backup"
+  ansible.builtin.template:
+    src: claude-backup.sh.j2
+    dest: /usr/local/bin/claude-backup
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [backup]
+
+- name: "[backup] Planifier la sauvegarde ({{ claude_backup_cron }}) via cron.d"
+  ansible.builtin.copy:
+    dest: /etc/cron.d/claude-backup
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Géré par Ansible — rôle claude_code_host (tasks/backup.yml).
+      SHELL=/bin/sh
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      {{ claude_backup_cron }} root /usr/local/bin/claude-backup
+  tags: [backup]

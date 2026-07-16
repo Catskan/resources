@@ -12,3 +12,23 @@ docker_daemon_disk_settings:
     max-file: "3"
 # Plafond des journaux systemd du CT.
 ct_journal_max_use: 200M
+
+# -- Sauvegarde incrementale du backend Claude vers le NAS (tasks/backup.yml) --
+# Le backend reste LOCAL ; rsync LOCAL vers un montage SSHFS du NAS (contourne le wrapper
+# rsync de Synology). Garde-fous (script) : source non vide + dest bien montee avant --delete.
+claude_backup_src: /srv/claude/data
+claude_backup_sentinel: dotclaude
+claude_backup_mnt: /mnt/nas-aurelien
+claude_backup_nas_ssh: a.busutil@100.64.0.6
+claude_backup_nas_sshfs_port: 7258
+claude_backup_nas_subdir: AI/Claude-data
+claude_backup_ssh_key: /srv/claude/data/ssh/id_clients
+claude_backup_excludes:
+  - "@eaDir"
+  - "workspaces/"
+  - "uv-cache/"
+  - "**/.cache/"
+claude_backup_rsync_opts: "-rlt --no-perms --no-owner --no-group --omit-link-times --delete"
+claude_backup_log: /var/log/claude-backup.log
+claude_backup_lock: /run/claude-backup.lock
+claude_backup_cron: "*/15 * * * *"

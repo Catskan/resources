@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Sauvegarde du backend Claude (loopback local du CT) -> NAS Synology, via rsync LOCAL sur un
+# montage SSHFS. Cette approche contourne le wrapper rsync de Synology, qui refuse le
+# rsync-over-SSH ("rsync service is not running") -> on ne lance jamais de rsync --server distant.
+set -uo pipefail
+
+SRC="{{ claude_backup_src }}"
+SENTINEL="{{ claude_backup_sentinel }}"
+MNT="{{ claude_backup_mnt }}"
+NAS_SSH="{{ claude_backup_nas_ssh }}"
+NAS_PORT="{{ claude_backup_nas_sshfs_port }}"
+NAS_SUBDIR="{{ claude_backup_nas_subdir }}"
+SSH_KEY="{{ claude_backup_ssh_key }}"
+LOG="{{ claude_backup_log }}"
+LOCK="{{ claude_backup_lock }}"
+
+log() { echo "$(date '+%F %T') $*" >> "$LOG"; }
+
+# Garde-fou 1 : la source doit etre montee ET non vide (sinon un --delete effacerait le backup).
+if [ ! -d "$SRC/$SENTINEL" ] || [ -z "$(ls -A "$SRC/$SENTINEL" 2>/dev/null)" ]; then
+  log "ABORT: source $SRC/$SENTINEL vide ou absente (loopback non monte ?)."
+  exit 1
+fi
+
+# Verrou anti-recouvrement.
+exec 9>"$LOCK"
+if ! flock -n 9; then
+  log "SKIP: une sauvegarde est deja en cours."
+  exit 0
+fi
+
+# Monte le NAS en SSHFS si necessaire (idempotent). Port SFTP 7258 (racine = /volume1/Aurelien).
+mkdir -p "$MNT"
+if ! mountpoint -q "$MNT"; then
+  sshfs "${NAS_SSH}:/" "$MNT" -p "$NAS_PORT" \
+    -o "IdentityFile=$SSH_KEY,IdentitiesOnly=yes,reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,StrictHostKeyChecking=accept-new,uid=0,gid=0" \
+    || { log "ERREUR: montage SSHFS de $MNT echoue."; exit 2; }
+fi
+
+# Garde-fou 2 : la destination DOIT etre un point de montage, sinon rsync ecrirait sur le
+# disque local du CT (faux backup + saturation). On refuse dans ce cas.
+if ! mountpoint -q "$MNT"; then
+  log "ABORT: $MNT non monte apres tentative -> rsync annule (protection disque local)."
+  exit 3
+fi
+mkdir -p "$MNT/$NAS_SUBDIR"
+
+RSYNC_OPTS=( {{ claude_backup_rsync_opts }} )
+EXCLUDES=(
+{% for ex in claude_backup_excludes %}
+  --exclude={{ ex | quote }}
+{% endfor %}
+)
+
+log "START rsync $SRC/ -> NAS:$NAS_SUBDIR/"
+rsync "${RSYNC_OPTS[@]}" "${EXCLUDES[@]}" "$SRC/" "$MNT/$NAS_SUBDIR/" >> "$LOG" 2>&1
+rc=$?
+
+# Demontage propre (evite les stale mounts entre deux passages).
+fusermount -uz "$MNT" 2>/dev/null || true
+
+# rsync 23 (attrs/fichiers partiels: sockets, @eaDir...) et 24 (fichiers disparus pendant la
+# copie: donnees vivantes) sont BENINS pour un backup -> succes avec warning.
+case "$rc" in
+  0)  log "OK rsync termine." ;;
+  23) log "OK (warnings rc=23: certains fichiers/attrs ignores, ex. sockets/@eaDir)."; rc=0 ;;
+  24) log "OK (warnings rc=24: des fichiers ont disparu pendant la copie)."; rc=0 ;;
+  *)  log "ERREUR rsync rc=$rc." ;;
+esac
+exit "$rc"
