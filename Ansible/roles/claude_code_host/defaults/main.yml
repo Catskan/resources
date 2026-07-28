@@ -31,4 +31,11 @@ claude_backup_excludes:
 claude_backup_rsync_opts: "-rlt --no-perms --no-owner --no-group --omit-link-times --delete"
 claude_backup_log: /var/log/claude-backup.log
 claude_backup_lock: /run/claude-backup.lock
+# Sonde d acces au montage sshfs : un sshfs mort reste un mountpoint valide, seul un
+# acces reel le revele. Court, c est juste un ls.
+claude_backup_probe_timeout: 15
+# Borne la duree du rsync. Sans cela, un NAS qui cesse de repondre laisse rsync bloque
+# sans fin en retenant le verrou flock (incident du 2026-07-27, ~13 h). 900 s = la
+# periode du cron : au pire un run occupe son intervalle, le flock fait skipper le suivant.
+claude_backup_rsync_timeout: 900
 claude_backup_cron: "*/15 * * * *"
