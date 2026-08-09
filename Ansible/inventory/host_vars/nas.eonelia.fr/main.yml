@@ -1,0 +1,18 @@
+---
+# NAS Synology (DSM 7.3.2, x86_64). La connexion SSH est définie inline dans
+# inventory/hosts.yaml (ansible_host 100.64.0.6 = IP tailnet, port 3434).
+
+# ⚠ PAS d'ansible_python_interpreter ici — et c'est volontaire.
+# DSM ne fournit que Python 3.7 et 3.8 (paquets `python3` et `python38`), alors
+# qu'ansible-core ≥ 2.19 exige 3.9+ sur la cible. Aucun interpréteur utilisable
+# n'existe donc sur ce host : le rôle immich_proxy n'emploie que `raw` côté NAS et
+# délègue au contrôleur tout ce qui demande Python.
+#
+# Corollaire : tout play visant ce host doit rester en `gather_facts: false`
+# (le module setup exigerait Python) et n'utiliser que des modules `raw`.
+
+ansible_become_method: sudo
+
+# Le NAS n'expose pas de subsystem SFTP → le transfert de fichiers passe par
+# `scp -O` (mode legacy), lancé explicitement par le rôle.
+ansible_scp_if_ssh: true

@@ -1,10 +1,11 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale lint
+.PHONY: help deps windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale immich check-immich lint
 
 help:
 	@echo "Cibles disponibles :"
+	@echo "  make deps             — (Ré)installe pykeepass dans le venv d'Ansible (après un brew upgrade)"
 	@echo "  make test-keepass     — Vérifie la résolution KeePass de chaque secret (offline)"
 	@echo "  make verify-windows   — Vérifie l'état post-run des optimisations gaming (offline)"
 	@echo "  make inspect-keepass  — Diagnostic offline : vérifie les paths + dumpe l'arbo de la DB"
@@ -25,6 +26,8 @@ help:
 	@echo "  make ping-windows     — win_ping sur les hosts Windows"
 	@echo "  make check-windows    — Dry-run Windows (--check --diff)"
 	@echo "  make check-linux      — Dry-run Linux"
+	@echo "  make immich           — Reverse proxy TLS (Caddy) devant Immich sur le NAS"
+	@echo "  make check-immich     — Dry-run reverse proxy Immich (--check --diff)"
 	@echo "  make lint             — yamllint + ansible-lint"
 	@echo ""
 	@echo "Override KEEPASS_LOCATION pour pointer une autre DB :"
@@ -35,6 +38,18 @@ help:
 	@echo "  make windows ARGS='--skip-tags softwares_winget'"
 
 ARGS ?=
+
+# pykeepass vit dans le venv d'Ansible, PAS dans le Python système : Homebrew crée ce
+# venv avec --without-pip --system-site-packages, et un `brew upgrade ansible` le
+# recrée à neuf — emportant pykeepass. Symptôme : tout lookup KeePass échoue avec
+# « The lookup plugin 'viczem.keepass.keepass' failed to load: No module named
+# 'pykeepass' ». Cette cible le réinstalle dans le venv réellement utilisé.
+deps:
+	@PY="$$(ansible --version | sed -nE 's/.*\((\/[^)]*)\)[[:space:]]*$$/\1/p' | head -1)"; \
+	if [ -z "$$PY" ]; then echo "✗ Python d'Ansible introuvable — ansible est-il installé ?"; exit 1; fi; \
+	echo "Python d'Ansible : $$PY"; \
+	"$$PY" -m pip install --quiet --upgrade pykeepass || exit 1; \
+	"$$PY" -c "import pykeepass; print('✓ pykeepass', pykeepass.__version__)"
 
 test-keepass:
 	./scripts/run.sh ansible-playbook playbooks/test_keepass.yml $(ARGS)
@@ -105,3 +120,9 @@ headscale:
 
 check-headscale:
 	./scripts/run.sh ansible-playbook main_headscale_playbook.yml --check --diff $(ARGS)
+
+immich:
+	./scripts/run.sh ansible-playbook main_immich_playbook.yml $(ARGS)
+
+check-immich:
+	./scripts/run.sh ansible-playbook main_immich_playbook.yml --check --diff $(ARGS)
