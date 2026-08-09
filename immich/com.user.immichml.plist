@@ -10,22 +10,22 @@
         <string>/Users/aurel/git/resources/immich/start-immich-ml-agent.sh</string>
     </array>
 
-    <!-- Service permanent : démarre à l'ouverture de session et reste en vie.
-         KeepAlive relance le processus s'il s'arrête, quelle qu'en soit la raison
+    <!-- Service permanent : demarre a l'ouverture de session et reste en vie.
+         KeepAlive relance le processus s'il s'arrete, quelle qu'en soit la raison
          (crash, OOM, sortie de veille). Sans lui, Immich basculerait silencieusement
-         sur le conteneur ML du NAS, qu'on cherche justement à décharger. -->
+         sur le conteneur ML du NAS, qu'on cherche justement a decharger. -->
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
 
-    <!-- Garde-fou anti-boucle : si le démarrage échoue en boucle (uv sync cassé,
-         dépôt absent), launchd attend 60 s entre deux tentatives au lieu de saturer
+    <!-- Garde-fou anti-boucle : si le demarrage echoue en boucle (uv sync casse,
+         depot absent), launchd attend 60 s entre deux tentatives au lieu de saturer
          la machine. -->
     <key>ThrottleInterval</key>
     <integer>60</integer>
 
-    <!-- ~/Library/Logs plutôt que /tmp, que macOS purge au redémarrage. -->
+    <!-- ~/Library/Logs plutot que /tmp, que macOS purge au redemarrage. -->
     <key>StandardOutPath</key>
     <string>/Users/aurel/Library/Logs/immichml.log</string>
     <key>StandardErrorPath</key>
