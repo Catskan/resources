@@ -10,6 +10,14 @@
 # pas besoin d'une tâche de mise à jour séparée.
 set -u
 
+# launchd n'herite PAS du PATH du shell : il fournit /usr/bin:/bin:/usr/sbin:/sbin.
+# `git` passe (il est dans /usr/bin) mais `uv` vit dans /opt/homebrew/bin et reste
+# introuvable -> le service sortait en erreur 1 a chaque demarrage
+# (« command not found: uv » dans ~/Library/Logs/immichml.err).
+# Un script zsh non interactif ne lit pas non plus ~/.zshrc : le PATH doit etre
+# pose ici explicitement.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 REPO="/Users/aurel/git/immich/machine-learning"
 
 cd "$REPO" || { echo "repo introuvable : $REPO" >&2; exit 1; }
