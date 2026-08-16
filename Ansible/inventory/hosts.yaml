@@ -21,6 +21,9 @@ all:
         proxmox_wyse:
           hosts:
             wyse-proxmox:
+        proxmox_optiplex:
+          hosts:
+            optiplex-proxmox:
     claude_code_hosts:
       hosts:
         claude-code:
