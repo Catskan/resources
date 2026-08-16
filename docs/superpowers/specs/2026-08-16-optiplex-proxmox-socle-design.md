@@ -37,6 +37,8 @@ tout ce qui relève de l'hygiène d'un hyperviseur Proxmox.
   plafond des journaux systemd
 - Réglage du plafond ARC de ZFS, conditionné à la présence effective de ZFS
 - Rattachement au tailnet Headscale
+- Durcissement SSH de l'hôte, ce qui impose d'étendre à Linux le rôle
+  `sshd_hardening` aujourd'hui utilisable sur macOS uniquement
 - Cibles Makefile, documentation, procédure de vérification
 
 **Exclu — décidé explicitement**
@@ -48,8 +50,10 @@ tout ce qui relève de l'hygiène d'un hyperviseur Proxmox.
 - **Tout conteneur applicatif** (Immich, vinted-bot, pokemon-monitor) et toute
   migration de données depuis le NAS. Chacun fera l'objet de son propre cycle
   design → plan → implémentation.
-- **Durcissement SSH** de l'hôte (rôle `sshd_hardening` existant) : hors du socle
-  retenu.
+- **Gestion du port SSH (2125) par Ansible.** Le rôle `sshd_hardening` ne sait
+  régler le port que sur macOS (`/etc/services` + rebind launchd) et son template
+  n'émet aucune directive `Port`. Le port reste donc configuré à la main sur
+  l'Optiplex — voir §4.
 
 ## Décision structurante
 
@@ -65,7 +69,7 @@ Trois options ont été pesées :
 `pct-fstrim` diverger : c'est la dette qui se paie le jour où un seul des deux
 hyperviseurs reçoit un correctif. A impose en contrepartie de modifier des
 playbooks qui fonctionnent aujourd'hui sur un hôte distant et peu accessible — le
-risque est contenu par la procédure de vérification (§6), qui compare les dry-runs
+risque est contenu par la procédure de vérification (§7), qui compare les dry-runs
 du Wyse avant et après modification.
 
 Effet de bord recherché : le rôle `roles/proxmox_repos/`, présent sur le working
@@ -126,13 +130,29 @@ Nouveau fichier `inventory/host_vars/optiplex-proxmox/main.yml` :
 # aux conteneurs applicatifs. Valeur propre à CETTE machine — voir §3.
 pve_zfs_arc_max_bytes: 4294967296
 pve_zfs_arc_min_bytes: 1073741824
+
+# Durcissement SSH (rôle sshd_hardening) — voir §4.
+# root par clé uniquement : c'est le modèle de connexion retenu ci-dessus, sudo
+# n'étant pas garanti présent sur une installation PVE nue. La liste AllowUsers
+# est le point d'extension prévu si un compte de service apparaît un jour.
+sshd_allowed_users:
+  - root
+sshd_permit_root_login: "prohibit-password"
 ```
+
+`sshd_password_authentication` et `sshd_kbdinteractive_authentication` restent aux
+défauts du rôle (`"no"`), qui sont déjà les bonnes valeurs.
+
+`sshd_port` n'est **volontairement pas défini** pour cet hôte : la tâche qui le
+consomme est gardée sur macOS, la déclarer ici laisserait croire qu'Ansible gère le
+2125 alors qu'il n'en est rien.
 
 ## §2 — Rôles
 
-Deux rôles à but unique, **composés dans le playbook** plutôt qu'imbriqués par
+Trois rôles à but unique, **composés dans le playbook** plutôt qu'imbriqués par
 `meta/dependencies` : la composition reste visible et chaque brique reste taggable
-indépendamment.
+indépendamment. Deux sont nouveaux ou nouvellement commités, le troisième
+(`sshd_hardening`) est étendu — voir §4.
 
 ### `roles/proxmox_repos/` — commité tel quel
 
@@ -222,7 +242,68 @@ un `changed=0`. L'idempotence est vérifiable à partir du deuxième run.
 L'application à chaud ne vide pas l'ARC déjà rempli : il redescend sous pression
 mémoire. Seul le plafond est immédiat.
 
-## §4 — Playbooks
+## §4 — Durcissement SSH
+
+### Constat : le rôle existant ne fonctionne que sur macOS
+
+`roles/sshd_hardening/` est écrit pour les Macs. Trois blocages, vérifiés par
+lecture du rôle, interdisent de l'appliquer tel quel à un hôte Debian/Proxmox.
+
+1. **Les deux handlers sont gardés sur Darwin.** `handlers/main.yml` porte
+   `when: ansible_os_family == "Darwin"` sur `Recharger sshd` comme sur
+   `Rebinder le socket ssh launchd`. Sur Linux, le drop-in serait écrit, le
+   `notify` déclenché, et le handler _skippé_ : sshd ne rechargerait jamais. Le
+   durcissement resterait inerte jusqu'au prochain redémarrage, en affichant un
+   run vert. C'est le blocage le plus insidieux des trois.
+2. **Le port n'est pas gérable.** La tâche de réglage du port passe par
+   `/etc/services` et un rebind launchd, gardée sur Darwin ; le template
+   `010-runon-hardening.conf.j2` n'émet aucune directive `Port`.
+3. **Le défaut du rôle verrouillerait l'hôte.** `sshd_permit_root_login` vaut
+   `"no"` par défaut et l'Optiplex se connecte en root. L'`assert` anti-lockout en
+   tête de rôle ne contrôle que `AllowUsers` contre `ansible_user` — il ne regarde
+   pas `PermitRootLogin` et n'aurait donc rien empêché.
+
+### Décision : étendre le rôle, ne pas en créer un second
+
+Les gardes Darwin existantes sont conservées **à l'identique** ; on n'ajoute que des
+branches `when: ansible_os_family != "Darwin"`. Le chemin d'exécution des Macs est
+donc inchangé par construction — ce qui compte, puisque c'est par SSH sur ces mêmes
+Macs que passe `run-on`. La non-régression est tout de même vérifiée (§7).
+
+L'alternative — un rôle `sshd_hardening_linux` distinct — dupliquerait le template
+et les asserts pour la même raison que B/C ont été écartées dans la décision
+structurante.
+
+### Tâches et handlers ajoutés
+
+- **Vérifier que le drop-in est lu.** `assert` sur la présence de
+  `Include /etc/ssh/sshd_config.d/*.conf` dans `/etc/ssh/sshd_config`. Debian le
+  pose en tête de fichier (donc nos valeurs gagnent, sshd retenant la première
+  occurrence d'une directive), mais si Proxmox l'a retirée de sa propre config, le
+  fichier déposé serait purement décoratif et le run vert mensonger.
+- **Détecter l'activation par socket.** Debian 13 — dont dérive PVE 9 — active
+  `ssh.socket` par défaut. `systemctl is-enabled ssh.socket` décide de la cible du
+  handler : `ssh.socket` si actif, `ssh.service` sinon.
+- **Handler `Recharger sshd (Linux)`**, gardé `when: ansible_os_family != "Darwin"`,
+  qui recharge l'unité déterminée ci-dessus.
+
+Le contrôle final déjà présent dans le rôle — parsing de `sshd -G` puis `assert` sur
+`passwordauthentication`, `permitrootlogin` et `kbdinteractiveauthentication` —
+fonctionne tel quel sur Linux et devient la preuve que le durcissement est
+réellement effectif, et pas seulement écrit sur disque.
+
+### Ce que le durcissement change concrètement
+
+`PasswordAuthentication no`, `KbdInteractiveAuthentication no`,
+`PubkeyAuthentication yes`, `PermitRootLogin prohibit-password`, `AllowUsers root`.
+Autrement dit : root reste joignable, mais **par clé uniquement**, et aucun autre
+compte ne peut ouvrir de session SSH.
+
+Le port reste 2125, géré à la main (voir Périmètre). Ansible ne le touche pas, donc
+aucun risque de rebind qui couperait la session en cours — contrairement au cas
+macOS, où le handler de rebind coupe explicitement la connexion.
+
+## §5 — Playbooks
 
 ### Nouveau : `main_optiplex_playbook.yml`
 
@@ -232,8 +313,8 @@ mémoire. Seul le plafond est immédiat.
 # runtime de la maison (Immich, vinted-bot, pokemon-monitor à venir), le NAS
 # Synology restant le stockage de masse.
 #
-# Deux rôles : dépôts APT sains, puis hygiène de l'hôte (fstrim, alerte disque,
-# journald, plafond ARC ZFS).
+# Trois rôles : dépôts APT sains, hygiène de l'hôte (fstrim, alerte disque,
+# journald, plafond ARC ZFS), puis durcissement SSH.
 #
 # Le rattachement au tailnet vit dans main_headscale_playbook.yml : il a besoin
 # de la preauthkey produite par le play headscale.
@@ -241,6 +322,7 @@ mémoire. Seul le plafond est immédiat.
 # make optiplex                        → socle complet
 # make check-optiplex                  → dry-run (--check --diff)
 # make optiplex ARGS='--tags zfs'      → réglage ARC seul
+# make optiplex ARGS='--tags sshd'     → durcissement SSH seul
 
 - name: Socle de l'hôte Proxmox Optiplex
   hosts: proxmox_optiplex
@@ -250,7 +332,13 @@ mémoire. Seul le plafond est immédiat.
       tags: [repos]
     - role: proxmox_host_maintenance
       tags: [maintenance]
+    - role: sshd_hardening
+      tags: [sshd]
 ```
+
+`sshd_hardening` est placé **en dernier** : si le durcissement se révélait
+verrouillant, les briques utiles du socle sont déjà appliquées, et l'on ne perd pas
+un run entier.
 
 Pas de `become:` — la connexion est déjà root.
 
@@ -292,7 +380,7 @@ pour ne rattacher que l'Optiplex est :
 make headscale ARGS='--limit headscale,optiplex-proxmox'
 ```
 
-## §5 — Makefile et documentation
+## §6 — Makefile et documentation
 
 `Makefile` — deux cibles calquées sur `wyse` / `check-wyse` :
 
@@ -310,37 +398,53 @@ cible `help`.
 `README.md` — entrée dans la section « Arborescence » (nouveau playbook, deux
 nouveaux rôles) et dans « Lancer un run ».
 
-## §6 — Vérification
+## §7 — Vérification
 
-Dans cet ordre : la non-régression du Wyse **d'abord**, avant toute exécution
-réelle.
+Dans cet ordre : la non-régression des hôtes existants **d'abord**, avant toute
+exécution réelle.
 
 1. `make check-wyse` et `make check-headscale`, **avant puis après** modification.
    Les sorties doivent être équivalentes : cela prouve que le recâblage des groupes
    ne change pas ce qui est planifié sur le Wyse.
-2. `make lint` — le glob `main_*.yml` d'`ansible-lint` couvre le nouveau playbook.
-3. `./scripts/run.sh ansible proxmox_optiplex -m ping` — valide IP, port 2125 et clé.
-4. `make check-optiplex` en dry-run.
-5. `make optiplex`, puis **relance immédiate** : le second run doit afficher
-   `changed=0`, à l'exception documentée en §3 sur le premier passage.
-6. `make headscale ARGS='--limit headscale,optiplex-proxmox'`, puis
+2. `make check-macos`, **avant puis après** l'extension de `sshd_hardening`. Les
+   branches ajoutées sont gardées sur non-Darwin, donc les sorties doivent être
+   strictement identiques. C'est la vérification qui protège l'accès `run-on` aux
+   Macs.
+3. `make lint` — le glob `main_*.yml` d'`ansible-lint` couvre le nouveau playbook.
+4. `./scripts/run.sh ansible proxmox_optiplex -m ping` — valide IP, port 2125 et clé.
+5. `make check-optiplex` en dry-run.
+6. `make optiplex ARGS='--skip-tags sshd'` — tout le socle sauf le durcissement,
+   puis **relance immédiate** : le second run doit afficher `changed=0`, à
+   l'exception documentée en §3 sur le premier passage.
+7. `make optiplex ARGS='--tags sshd'` — le durcissement, **en gardant la session SSH
+   courante ouverte**. Puis, depuis un second terminal, ouvrir une nouvelle
+   connexion `ssh -p 2125 root@192.168.1.100` et la confirmer **avant** de fermer la
+   première. C'est la seule protection réelle contre un verrouillage : une session
+   déjà établie survit à un rechargement de sshd, une nouvelle non.
+8. `make headscale ARGS='--limit headscale,optiplex-proxmox'`, puis
    `tailscale status` sur l'Optiplex pour confirmer le rattachement.
 
 **Limite de la vérification en `--check`.** Les tâches `ansible.builtin.shell` de
 `proxmox_repos` sont _skippées_ en mode check, pas simulées. Le dry-run prouve le
 ciblage, le parsing et la résolution des variables — pas le comportement complet
-des tâches shell.
+des tâches shell. De même, l'`assert` final de `sshd_hardening` est explicitement
+désactivé en check mode (`when: not ansible_check_mode`) : un `make check-optiplex`
+vert ne prouve rien sur l'effectivité du durcissement.
 
-## §7 — Risques
+## §8 — Risques
 
-| Risque                                                    | Portée                       | Atténuation                                                                                               |
-| --------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Le recâblage de groupes casse un play du Wyse             | Hôte distant, peu accessible | Dry-runs comparés avant/après (§6.1) ; aucune modification de la logique des rôles, uniquement du ciblage |
-| `99-zfs.conf` réécrit au premier run → initramfs régénéré | Optiplex                     | Sans conséquence fonctionnelle ; idempotence vérifiée au second run                                       |
-| Clé SSH du contrôleur absente de l'Optiplex               | Bloque tout                  | Prérequis d'amorçage explicite (§1) ; détecté par `ansible -m ping` (§6.3)                                |
-| `--limit proxmox_optiplex` seul sur le playbook headscale | Échec sur variable indéfinie | Invocation correcte documentée dans l'en-tête du playbook (§4)                                            |
+| Risque                                                         | Portée                                      | Atténuation                                                                                                                                                                        |
+| -------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Le recâblage de groupes casse un play du Wyse                  | Hôte distant, peu accessible                | Dry-runs comparés avant/après (§7.1) ; aucune modification de la logique des rôles, uniquement du ciblage                                                                          |
+| `99-zfs.conf` réécrit au premier run → initramfs régénéré      | Optiplex                                    | Sans conséquence fonctionnelle ; idempotence vérifiée au second run                                                                                                                |
+| Clé SSH du contrôleur absente de l'Optiplex                    | Bloque tout                                 | Prérequis d'amorçage explicite (§1) ; détecté par `ansible -m ping` (§7.4)                                                                                                         |
+| `--limit proxmox_optiplex` seul sur le playbook headscale      | Échec sur variable indéfinie                | Invocation correcte documentée dans l'en-tête du playbook (§5)                                                                                                                     |
+| **Verrouillage SSH de l'Optiplex**                             | Perte totale d'accès, intervention physique | `PermitRootLogin prohibit-password` + `AllowUsers root` explicites (§1) ; session courante gardée ouverte pendant le test d'une nouvelle connexion (§7.7) ; `assert` sur `sshd -G` |
+| Durcissement écrit mais jamais appliqué (handler Darwin-only)  | Faux positif : run vert, hôte non durci     | Handler Linux ajouté (§4) ; `assert` sur la config effective, actif hors check mode                                                                                                |
+| Drop-in `sshd_config.d` ignoré si Proxmox a retiré l'`Include` | Faux positif identique                      | `assert` sur la présence de la ligne `Include` avant tout dépôt (§4)                                                                                                               |
+| L'extension de `sshd_hardening` casse l'accès SSH aux Macs     | `run-on` et donc tout le poste de travail   | Branches ajoutées gardées `!= "Darwin"`, gardes existantes intactes ; `make check-macos` comparé avant/après (§7.2)                                                                |
 
-## §8 — Suites hors périmètre
+## §9 — Suites hors périmètre
 
 À traiter chacune par son propre cycle design → plan → implémentation :
 
@@ -351,4 +455,5 @@ des tâches shell.
 - Conteneurs vinted-bot et pokemon-monitor.
 - Automatisation de la partition de swap, si elle devient un besoin réel lors d'une
   réinstallation.
-- Durcissement SSH de l'hôte via le rôle `sshd_hardening`.
+- Gestion du port SSH par Ansible sur Linux (directive `Port` dans le drop-in, ou
+  unité `ssh.socket`), si le besoin de le changer se présente.
