@@ -186,9 +186,10 @@ Vérifié par --list-hosts identique avant/après sur les deux playbooks."
 cd Ansible/
 ./scripts/run.sh ansible-playbook main_wyse_playbook.yml --list-tasks > /tmp/wyse-tasks-avant.txt
 grep -c "maint" /tmp/wyse-tasks-avant.txt
+grep -c "proxmox_claude_lxc : \[maint\]" /tmp/wyse-tasks-avant.txt
 ```
 
-Attendu : `4` — les quatre tâches préfixées `[maint]`.
+Attendu : **12** au total, dont **4** pour `proxmox_claude_lxc`. Le rôle `claude_code_host` (play 2) a lui aussi huit tâches préfixées `[maint]` — elles ne sont pas concernées par cette extraction et doivent rester intactes.
 
 - [ ] **Step 2: Déplacer les fichiers avec `git mv`**
 
@@ -262,9 +263,13 @@ Créer `Ansible/roles/proxmox_host_maintenance/meta/main.yml` :
 ---
 galaxy_info:
   role_name: proxmox_host_maintenance
+  author: Aurélien
   description: Hygiène d'un hôte Proxmox (fstrim des CT, alerte disque, journald, plafond ARC ZFS)
+  license: private
   min_ansible_version: "2.14"
 ```
+
+`author` et `license` ne sont pas décoratifs : sans eux, `ansible-lint` lève deux `schema[meta]`. Le `meta/main.yml` de `proxmox_repos` porte le même manque — le corriger à l'identique en tâche 3.
 
 - [ ] **Step 7: Retirer l'import et la variable de `proxmox_claude_lxc`**
 
@@ -348,7 +353,9 @@ git status --short roles/proxmox_repos/
 cat roles/proxmox_repos/tasks/main.yml
 ```
 
-Attendu : `?? roles/proxmox_repos/`, et le fichier contient trois tâches (désactivation enterprise, ajout de `pve-no-subscription`, `apt update`). **Ne rien modifier dans ce rôle** — il est correct tel quel.
+Attendu : `?? roles/proxmox_repos/`, et le fichier contient trois tâches (désactivation enterprise, ajout de `pve-no-subscription`, `apt update`). **Ne rien modifier dans `tasks/main.yml`** — il est correct tel quel.
+
+Seule exception, constatée en tâche 2 : son `meta/main.yml` doit gagner `author: Aurélien` et `license: private`, faute de quoi `ansible-lint` lève deux `schema[meta]` dès que le rôle entre dans le périmètre de lint.
 
 Si le répertoire est absent, il a été perdu : le recréer à l'identique depuis la spec §2 avant de continuer.
 
