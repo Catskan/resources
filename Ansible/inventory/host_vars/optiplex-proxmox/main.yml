@@ -1,0 +1,19 @@
+---
+# Plafond ARC de ZFS. 4 GiB max / 1 GiB min sur 16 Go de RAM : laisse la mémoire
+# aux conteneurs applicatifs. Valeur propre à CETTE machine — le rôle
+# proxmox_host_maintenance n'a volontairement pas de défaut, pour éviter qu'un
+# autre hôte ZFS hérite d'un plafond calibré ailleurs.
+pve_zfs_arc_max_bytes: 4294967296
+pve_zfs_arc_min_bytes: 1073741824
+
+# Durcissement SSH (rôle sshd_hardening).
+# root par clé uniquement : c'est le modèle de connexion ci-dessus. Le défaut du
+# rôle (PermitRootLogin "no") verrouillerait l'hôte, et l'assert anti-lockout du
+# rôle ne contrôle que AllowUsers — il ne l'aurait pas vu.
+# AllowUsers est le point d'extension prévu si un compte de service apparaît.
+sshd_allowed_users:
+  - root
+sshd_permit_root_login: "prohibit-password"
+
+# ⚠️ NE PAS définir sshd_port ici : la tâche qui le consomme est gardée sur macOS.
+#    Le port 2125 reste réglé à la main dans /etc/ssh/sshd_config sur l'hôte.

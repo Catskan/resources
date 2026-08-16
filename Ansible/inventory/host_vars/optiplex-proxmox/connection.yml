@@ -1,0 +1,18 @@
+# Hôte Proxmox VE (Dell OptiPlex 7090 Micro) — LAN de la maison, accès direct.
+# Nœud de runtime : Immich, vinted-bot, pokemon-monitor à venir. Le NAS Synology
+# reste le stockage de masse.
+# Root en direct : c'est le mode natif d'un hyperviseur Proxmox, et ça évite de
+# stocker un mot de passe sudo.
+# ⚠️ `sudo` est ABSENT de cet hôte (vérifié 2026-08-16). Les `become: true` codés
+#    en dur dans certains rôles (sshd_hardening) passent quand même, parce
+#    qu'Ansible saute l'escalade quand l'utilisateur de connexion EST déjà la
+#    cible (become_allow_same_user = False par défaut). Corollaire : changer
+#    ansible_user pour autre chose que root casserait ces rôles d'un coup —
+#    il faudrait alors installer sudo sur l'hôte.
+# ⚠️ ansible_port EXPLICITE : sshd écoute sur 2125, et le contrôleur (l'Air)
+#    remappe par ailleurs `ssh`->2122 dans /etc/services — aucun défaut n'est bon.
+ansible_connection: ssh
+ansible_host: 192.168.1.100
+ansible_port: 2125
+ansible_user: root
+ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
