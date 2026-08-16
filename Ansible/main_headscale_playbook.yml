@@ -8,13 +8,13 @@
 #   4) hôte Proxmox (Wyse)        : client tailscale → accès WebUI 8006 en VPN, sans
 #                                   forward Freebox (contrainte port public < 32768)
 #
-# make headscale                                   → les quatre plays (déploiement complet)
-# make headscale ARGS='--limit proxmox_hosts'      → création du CT headscale seule
+# make headscale                                   → tous les plays (déploiement complet)
+# make headscale ARGS='--limit proxmox_wyse'       → création du CT headscale seule
 # make headscale ARGS='--limit headscale_hosts'    → (re)config du serveur headscale
 # make headscale ARGS='--limit claude_code_hosts'  → (re)join du client tailscale seul
 
 - name: Créer le LXC headscale sur le Wyse (Proxmox)
-  hosts: proxmox_hosts
+  hosts: proxmox_wyse
   become: true
   gather_facts: true
   roles:
@@ -27,7 +27,7 @@
     - role: headscale
 
 - name: Activer /dev/net/tun sur le CT claude-code (prérequis tailscale kernel-mode)
-  hosts: proxmox_hosts
+  hosts: proxmox_wyse
   become: true
   gather_facts: false
   vars:
@@ -65,7 +65,7 @@
 # via https://<IP-tailnet-du-Wyse>:8006 depuis n'importe quel nœud (Mac). L'hôte a
 # /dev/net/tun nativement (hyperviseur) → pas de prérequis tun comme pour le CT.
 - name: Rattacher l'hôte Proxmox (Wyse) au tailnet (client tailscale)
-  hosts: proxmox_hosts
+  hosts: proxmox_wyse
   become: true
   gather_facts: true
   pre_tasks:
