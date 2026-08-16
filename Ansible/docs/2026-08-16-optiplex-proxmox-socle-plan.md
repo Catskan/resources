@@ -8,7 +8,7 @@
 
 **Tech Stack:** Ansible (`ansible.builtin` : `stat`, `copy`, `assert`, `systemd_service`, `import_tasks`), Proxmox VE 9 (base Debian 13), ZFS on Linux, OpenSSH, Headscale/Tailscale.
 
-**Spec:** `docs/superpowers/specs/2026-08-16-optiplex-proxmox-socle-design.md`
+**Spec:** `Ansible/docs/2026-08-16-optiplex-proxmox-socle-design.md`
 
 ## Global Constraints
 
