@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: proxmox_repos
+  author: Aurélien
+  description: Configure APT repositories on a Proxmox host (no-subscription, disable enterprise)
+  license: private
+  min_ansible_version: "2.14"
