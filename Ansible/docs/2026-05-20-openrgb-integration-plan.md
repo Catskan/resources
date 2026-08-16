@@ -8,7 +8,7 @@
 
 **Tech Stack:** Ansible (win_powershell, win_shortcut, community.windows), winget (`CalcProgrammer1.OpenRGB`)
 
-**Spec:** `docs/superpowers/specs/2026-05-20-openrgb-integration-design.md`
+**Spec:** `Ansible/docs/2026-05-20-openrgb-integration-design.md`
 
 ---
 
