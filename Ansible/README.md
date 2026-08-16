@@ -41,6 +41,7 @@ Ansible/
 ├── main_windows_playbook.yml            # → role windows_gaming
 ├── main_linux_playbook.yml              # → role linux_laptop + common
 ├── main_remove_softwares.yml            # → include_role tasks_from appx_bloatware.yml
+├── main_optiplex_playbook.yml           # → proxmox_repos + proxmox_host_maintenance + sshd_hardening
 ├── playbooks/
 │   ├── blog_maman_deploy.yml            # container Docker "fonduededeco" sur le Mac
 │   └── blog_maman_remove.yml
@@ -53,6 +54,7 @@ Ansible/
 │       ├── aurelien-gaming/             # PC gaming AM5
 │       ├── w11-vm-aurel/                # VM W11 sur Mac
 │       ├── arch-linux-laptop/
+│       ├── optiplex-proxmox/            # hyperviseur runtime (Immich, vinted-bot…)
 │       └── macbook-air-aurelien/        # cible local (le contrôleur lui-même)
 └── roles/
     ├── windows_gaming/
@@ -64,7 +66,9 @@ Ansible/
     │   ├── files/bootstrap_winrm.ps1    # script à lancer manuellement après réinstall
     │   └── templates/synology_config_win.json.j2
     ├── common/                          # Firefox policies cross-platform
-    └── linux_laptop/
+    ├── linux_laptop/
+    ├── proxmox_repos/                    # dépôts APT d'un hôte Proxmox (no-subscription)
+    └── proxmox_host_maintenance/         # hygiène hôte : fstrim CT, alerte disque, journald, ARC ZFS
 ```
 
 ## Secrets via KeePass
