@@ -14,3 +14,15 @@
     launchctl load -w /System/Library/LaunchDaemons/ssh.plist
   changed_when: true
   when: ansible_os_family == "Darwin"
+
+# Pendant Linux du handler « Recharger sshd » ci-dessus. `ssh.socket` n'accepte
+# pas `reloaded` → restart ; `ssh.service` accepte reload, moins brutal.
+# Un restart de sshd ne coupe PAS les sessions déjà établies (chacune vit dans
+# son propre processus), mais il faut malgré tout valider une NOUVELLE connexion
+# avant de fermer la session courante.
+- name: Recharger sshd (Linux)
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ sshd_hardening_reload_unit }}"
+    state: "{{ 'restarted' if sshd_hardening_reload_unit == 'ssh.socket' else 'reloaded' }}"
+  when: ansible_os_family != "Darwin"
