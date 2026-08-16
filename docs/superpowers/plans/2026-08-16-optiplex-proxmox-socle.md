@@ -708,6 +708,8 @@ tail -5 /tmp/macos-avant.txt
 
 Attendu : un récapitulatif `PLAY RECAP` avec les Macs. Ce fichier est la preuve de non-régression : c'est par SSH sur ces machines que passe `run-on`.
 
+⚠️ **Ce step exige un humain.** Les Macs se connectent avec `become` et un mot de passe sudo résolu depuis KeePass (`host_vars/macbook-air-aurelien/secrets.yml`). Sans le prompt de `scripts/run.sh`, le play meurt sur `'keepass_dbx' is not set` avant même la première tâche. Un agent sans accès au vault peut vérifier le rôle autrement — diff de `--list-tasks` et audit des gardes `when` — mais pas exécuter ce dry-run.
+
 - [ ] **Step 2: Ajouter les tâches Linux avant le dépôt du drop-in**
 
 Dans `Ansible/roles/sshd_hardening/tasks/main.yml`, insérer ces trois tâches **juste avant** la tâche `Déposer le drop-in de durcissement SSH` :
