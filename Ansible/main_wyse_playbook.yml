@@ -7,10 +7,10 @@
 #
 # make wyse                      → les deux plays (déploiement complet)
 # make wyse ARGS='--limit claude_code_hosts'  → provisioning du CT seul (= make claude-code)
-# make wyse ARGS='--limit proxmox_hosts'      → création du CT seule
+# make wyse ARGS='--limit proxmox_wyse'       → création du CT seule
 
 - name: Créer le LXC claude-code sur le Wyse (Proxmox)
-  hosts: proxmox_hosts
+  hosts: proxmox_wyse
   become: true
   gather_facts: true
 
