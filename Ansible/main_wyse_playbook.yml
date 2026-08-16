@@ -16,6 +16,8 @@
 
   roles:
     - role: proxmox_claude_lxc
+    - role: proxmox_host_maintenance
+      tags: [maintenance]
 
 - name: Provisionner le CT claude-code (Docker + prérequis)
   hosts: claude_code_hosts
