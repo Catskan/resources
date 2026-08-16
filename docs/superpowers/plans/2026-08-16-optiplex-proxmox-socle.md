@@ -120,11 +120,24 @@ Mettre également à jour le bloc de commentaires en tête de fichier :
 ```bash
 ./scripts/run.sh ansible-playbook main_wyse_playbook.yml --list-hosts > /tmp/wyse-hosts-apres.txt
 ./scripts/run.sh ansible-playbook main_headscale_playbook.yml --list-hosts > /tmp/hs-hosts-apres.txt
-diff /tmp/wyse-hosts-avant.txt /tmp/wyse-hosts-apres.txt && echo "WYSE OK"
-diff /tmp/hs-hosts-avant.txt /tmp/hs-hosts-apres.txt && echo "HEADSCALE OK"
+diff /tmp/wyse-hosts-avant.txt /tmp/wyse-hosts-apres.txt
+diff /tmp/hs-hosts-avant.txt /tmp/hs-hosts-apres.txt
 ```
 
-Attendu : les deux `diff` sont vides, `WYSE OK` et `HEADSCALE OK` s'affichent. Si un diff n'est pas vide, un `hosts:` a été oublié ou mal orthographié — corriger avant de continuer.
+Le diff **ne sera pas vide** : `--list-hosts` imprime le nom du pattern (`play #1 (proxmox_hosts)` et `pattern: ['proxmox_hosts']`), qui change forcément. C'est l'objet même de la tâche.
+
+L'invariant à vérifier est la **liste d'hôtes résolue**, jamais le libellé du pattern :
+
+```bash
+for f in wyse hs; do
+  grep -A1 "hosts (" /tmp/$f-hosts-avant.txt > /tmp/$f-resolved-avant.txt
+  grep -A1 "hosts (" /tmp/$f-hosts-apres.txt > /tmp/$f-resolved-apres.txt
+done
+diff /tmp/wyse-resolved-avant.txt /tmp/wyse-resolved-apres.txt && echo "WYSE OK"
+diff /tmp/hs-resolved-avant.txt  /tmp/hs-resolved-apres.txt  && echo "HEADSCALE OK"
+```
+
+Attendu : `WYSE OK` et `HEADSCALE OK`. Et dans le premier diff, **aucune** ligne modifiée en dehors de `play #N (…)` et `pattern: […]` — si un nom d'hôte bouge, un `hosts:` a été oublié ou mal orthographié.
 
 - [ ] **Step 7: Lint**
 
