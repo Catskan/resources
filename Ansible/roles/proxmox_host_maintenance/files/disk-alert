@@ -1,7 +1,7 @@
 #!/bin/sh
 # Alerte (journald) quand / dépasse le seuil, pour anticiper une saturation.
 # Consulter : journalctl -t disk-alert
-# Déposé par Ansible — rôle proxmox_claude_lxc (ne pas éditer à la main).
+# Déposé par Ansible — rôle proxmox_host_maintenance (ne pas éditer à la main).
 THRESHOLD=85
 USE=$(df --output=pcent / | tail -1 | tr -dc '0-9')
 if [ "${USE:-0}" -ge "$THRESHOLD" ]; then
