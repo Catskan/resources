@@ -14,7 +14,7 @@
 - yamllint + ansible-lint for local validation (`make lint`)
 - WinRM transport (already configured)
 
-**Reference spec:** `docs/superpowers/specs/2026-05-13-windows-gaming-optimization-design.md` (commit `5518363` on branch `feature/windows-gaming-optim-spec`)
+**Reference spec:** `Ansible/docs/2026-05-13-windows-gaming-optimization-design.md` (commit `5518363` on branch `feature/windows-gaming-optim-spec`)
 
 **Branch strategy:** Implement on `feature/windows-gaming-optim-spec` (where the spec lives) — commits stack on top of the spec commit, the branch becomes the deliverable.
 
@@ -71,7 +71,7 @@ Append at the end of `Ansible/inventory/host_vars/aurelien-gaming/main.yml`:
 
 ```yaml
 # ============================================================================
-# Gaming optimization vars — see docs/superpowers/specs/2026-05-13-windows-gaming-optimization-design.md
+# Gaming optimization vars — see Ansible/docs/2026-05-13-windows-gaming-optimization-design.md
 # ============================================================================
 
 # --- Defender (defender.yml) ---
