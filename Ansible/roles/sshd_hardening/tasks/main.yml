@@ -91,10 +91,17 @@
   register: sshd_effective
 
 - name: Contrôler les valeurs de durcissement effectives
+  vars:
+    # `sshd -G` NORMALISE prohibit-password en son synonyme historique
+    # without-password. Comparer littéralement ferait échouer l'assert sur un
+    # durcissement pourtant correct et effectif — constaté sur optiplex-proxmox
+    # le 2026-08-16. Le cas ne se voyait pas sur les Macs, qui posent "no".
+    sshd_permit_root_login_effective: >-
+      {{ 'without-password' if sshd_permit_root_login == 'prohibit-password' else sshd_permit_root_login }}
   ansible.builtin.assert:
     that:
       - "('passwordauthentication ' ~ sshd_password_authentication) in sshd_effective.stdout"
-      - "('permitrootlogin ' ~ sshd_permit_root_login) in sshd_effective.stdout"
+      - "('permitrootlogin ' ~ sshd_permit_root_login_effective) in sshd_effective.stdout"
       - "('kbdinteractiveauthentication ' ~ sshd_kbdinteractive_authentication) in sshd_effective.stdout"
     success_msg: Durcissement SSH effectif confirmé.
   when: not ansible_check_mode
