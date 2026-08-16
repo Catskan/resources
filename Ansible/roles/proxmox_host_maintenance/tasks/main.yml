@@ -39,7 +39,11 @@
     group: root
     mode: "0644"
     content: |
-      # Géré par Ansible — rôle proxmox_claude_lxc.
+      # Géré par Ansible — rôle proxmox_host_maintenance.
       [Journal]
       SystemMaxUse={{ pve_journal_max_use }}
   notify: Redémarrer systemd-journald
+
+- name: Plafond ARC de ZFS (conditionné à la présence du module)
+  ansible.builtin.import_tasks: zfs_arc.yml
+  tags: zfs
