@@ -42,6 +42,9 @@ Ansible/
 ├── main_linux_playbook.yml              # → role linux_laptop + common
 ├── main_remove_softwares.yml            # → include_role tasks_from appx_bloatware.yml
 ├── main_optiplex_playbook.yml           # → proxmox_repos + proxmox_host_maintenance + sshd_hardening
+├── docs/                                # conception et plans d'implémentation
+│   ├── 2026-08-16-optiplex-proxmox-socle-design.md   # socle de l'hôte Proxmox Optiplex
+│   └── 2026-08-16-optiplex-proxmox-socle-plan.md     # son plan d'exécution en 9 tâches
 ├── playbooks/
 │   ├── blog_maman_deploy.yml            # container Docker "fonduededeco" sur le Mac
 │   └── blog_maman_remove.yml
