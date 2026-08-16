@@ -1,7 +1,7 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale lint
+.PHONY: help windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code optiplex check-optiplex uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale lint
 
 help:
 	@echo "Cibles disponibles :"
@@ -21,6 +21,8 @@ help:
 	@echo "  make check-wyse       — Dry-run déploiement Wyse (--check --diff)"
 	@echo "  make claude-code      — Provisionne le CT seul (main_wyse --limit claude_code_hosts)"
 	@echo "  make check-claude-code — Dry-run provisioning CT seul (--check --diff)"
+	@echo "  make optiplex         — Socle de l'hôte Proxmox Optiplex (dépôts, hygiène, ZFS, SSH)"
+	@echo "  make check-optiplex   — Dry-run socle Optiplex (--check --diff)"
 	@echo "  make uninstall-bloat  — Désinstalle les AppX bloatware sur aurelien-gaming"
 	@echo "  make ping-windows     — win_ping sur les hosts Windows"
 	@echo "  make check-windows    — Dry-run Windows (--check --diff)"
@@ -83,6 +85,12 @@ claude-code:
 
 check-claude-code:
 	./scripts/run.sh ansible-playbook main_wyse_playbook.yml --limit claude_code_hosts --check --diff $(ARGS)
+
+optiplex:
+	./scripts/run.sh ansible-playbook main_optiplex_playbook.yml $(ARGS)
+
+check-optiplex:
+	./scripts/run.sh ansible-playbook main_optiplex_playbook.yml --check --diff $(ARGS)
 
 uninstall-bloat:
 	./scripts/run.sh ansible-playbook main_remove_softwares.yml $(ARGS)

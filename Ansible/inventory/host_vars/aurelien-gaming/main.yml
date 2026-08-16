@@ -46,7 +46,7 @@ nas_url: "192.168.1.7"
 # ============================================================================
 # Hardware-specific vars for aurelien-gaming
 # Generic Win11 gaming optim vars are in group_vars/windows_hosts/main.yml
-# (Phase 0 refactor — see docs/superpowers/specs/2026-05-14-windows-gaming-role-cleanup-design.md)
+# (Phase 0 refactor — see Ansible/docs/2026-05-14-windows-gaming-role-cleanup-design.md)
 # ============================================================================
 
 # --- Storage & power (gaming_optim.yml) — sized for 32 GB RAM bare metal ---

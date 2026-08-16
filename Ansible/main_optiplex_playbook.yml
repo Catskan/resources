@@ -1,0 +1,33 @@
+---
+# Socle de l'hôte Proxmox « Optiplex » (Dell OptiPlex 7090 Micro) — nœud de
+# runtime de la maison (Immich, vinted-bot, pokemon-monitor à venir), le NAS
+# Synology restant le stockage de masse.
+#
+# Trois rôles : dépôts APT sains, hygiène de l'hôte (fstrim des CT, alerte
+# disque, journald, plafond ARC ZFS), puis durcissement SSH.
+#
+# sshd_hardening est VOLONTAIREMENT en dernier : si le durcissement se révélait
+# verrouillant, les briques utiles du socle sont déjà appliquées.
+#
+# Le rattachement au tailnet vit dans main_headscale_playbook.yml : il a besoin
+# de la preauthkey produite par le play headscale.
+#
+# make optiplex                            → socle complet
+# make check-optiplex                      → dry-run (--check --diff)
+# make optiplex ARGS='--skip-tags sshd'    → tout sauf le durcissement SSH
+# make optiplex ARGS='--tags zfs'          → plafond ARC seul
+# make optiplex ARGS='--tags sshd'         → durcissement SSH seul
+#
+# ⚠️ Le durcissement SSH se lance en gardant une session SSH de secours ouverte,
+#    et en validant une NOUVELLE connexion avant de la fermer.
+
+- name: Socle de l'hôte Proxmox Optiplex
+  hosts: proxmox_optiplex
+  gather_facts: true
+  roles:
+    - role: proxmox_repos
+      tags: [repos]
+    - role: proxmox_host_maintenance
+      tags: [maintenance]
+    - role: sshd_hardening
+      tags: [sshd]

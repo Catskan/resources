@@ -26,6 +26,48 @@
   #    un changement RÉEL de port. Idempotent (no-op) si /etc/services est déjà bon.
   notify: Rebinder le socket ssh launchd
 
+# --- Branche Linux (Debian/Proxmox) -------------------------------------------
+# Ce rôle a d'abord été écrit pour macOS : ses handlers étaient TOUS gardés sur
+# Darwin, donc sur Linux le drop-in était déposé, le notify déclenché, et le
+# handler skippé — sshd n'était jamais rechargé et le run restait vert sur un
+# hôte non durci. Les trois tâches ci-dessous ferment ce trou.
+
+- name: Vérifier que sshd lit le répertoire drop-in (Linux)
+  become: true
+  ansible.builtin.command: grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/\*\.conf' /etc/ssh/sshd_config
+  register: sshd_hardening_include_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: ansible_os_family != "Darwin"
+
+- name: Échouer si l'Include du drop-in est absent (le durcissement serait décoratif)
+  ansible.builtin.assert:
+    that:
+      - sshd_hardening_include_check.rc == 0
+    fail_msg: >-
+      /etc/ssh/sshd_config ne contient pas « Include /etc/ssh/sshd_config.d/*.conf ».
+      Le fichier déposé par ce rôle ne serait jamais lu, et le run serait vert pour
+      rien. Ajouter la ligne en TÊTE du fichier (sshd retient la PREMIÈRE occurrence
+      de chaque directive), puis relancer.
+    success_msg: Le drop-in sshd_config.d est bien inclus.
+  when: ansible_os_family != "Darwin"
+
+- name: Déterminer l'unité systemd à recharger (Debian 13/PVE 9 active ssh.socket)
+  become: true
+  ansible.builtin.command: systemctl is-enabled ssh.socket
+  register: sshd_hardening_socket_state
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: ansible_os_family != "Darwin"
+
+- name: Retenir l'unité à recharger
+  ansible.builtin.set_fact:
+    sshd_hardening_reload_unit: >-
+      {{ 'ssh.socket' if sshd_hardening_socket_state.stdout | trim == 'enabled' else 'ssh.service' }}
+  when: ansible_os_family != "Darwin"
+
 - name: Déposer le drop-in de durcissement SSH
   become: true
   ansible.builtin.template:
@@ -35,7 +77,11 @@
     group: "{{ 'wheel' if ansible_os_family == 'Darwin' else 'root' }}"
     mode: "0644"
     validate: /usr/sbin/sshd -G -f %s
-  notify: Recharger sshd
+  # Les deux handlers portent des gardes d'OS mutuellement exclusives : un seul
+  # s'exécutera, selon la plateforme.
+  notify:
+    - Recharger sshd
+    - Recharger sshd (Linux)
 
 - name: Parser la configuration sshd effective (chemin absolu = évite un sshd Homebrew)
   become: true
@@ -45,10 +91,17 @@
   register: sshd_effective
 
 - name: Contrôler les valeurs de durcissement effectives
+  vars:
+    # `sshd -G` NORMALISE prohibit-password en son synonyme historique
+    # without-password. Comparer littéralement ferait échouer l'assert sur un
+    # durcissement pourtant correct et effectif — constaté sur optiplex-proxmox
+    # le 2026-08-16. Le cas ne se voyait pas sur les Macs, qui posent "no".
+    sshd_permit_root_login_effective: >-
+      {{ 'without-password' if sshd_permit_root_login == 'prohibit-password' else sshd_permit_root_login }}
   ansible.builtin.assert:
     that:
       - "('passwordauthentication ' ~ sshd_password_authentication) in sshd_effective.stdout"
-      - "('permitrootlogin ' ~ sshd_permit_root_login) in sshd_effective.stdout"
+      - "('permitrootlogin ' ~ sshd_permit_root_login_effective) in sshd_effective.stdout"
       - "('kbdinteractiveauthentication ' ~ sshd_kbdinteractive_authentication) in sshd_effective.stdout"
     success_msg: Durcissement SSH effectif confirmé.
   when: not ansible_check_mode

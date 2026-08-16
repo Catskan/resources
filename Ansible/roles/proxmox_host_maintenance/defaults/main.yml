@@ -1,0 +1,9 @@
+---
+# Plafond des journaux systemd de l'hôte.
+pve_journal_max_use: 200M
+
+# Plafond ARC de ZFS — VOLONTAIREMENT VIDE. À définir par hôte dans
+# inventory/host_vars/<host>/main.yml : le bon plafond dépend de la RAM de la
+# machine. Sans valeur, tout le bloc de tasks/zfs_arc.yml est sauté.
+pve_zfs_arc_max_bytes: ""
+pve_zfs_arc_min_bytes: ""
