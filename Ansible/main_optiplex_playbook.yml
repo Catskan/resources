@@ -4,7 +4,8 @@
 # Synology restant le stockage de masse.
 #
 # Trois rôles : dépôts APT sains, hygiène de l'hôte (fstrim des CT, alerte
-# disque, journald, plafond ARC ZFS), puis durcissement SSH.
+# disque, journald, plafond ARC ZFS, contournement du bug réseau e1000e), puis
+# durcissement SSH.
 #
 # sshd_hardening est VOLONTAIREMENT en dernier : si le durcissement se révélait
 # verrouillant, les briques utiles du socle sont déjà appliquées.
@@ -16,6 +17,7 @@
 # make check-optiplex                      → dry-run (--check --diff)
 # make optiplex ARGS='--skip-tags sshd'    → tout sauf le durcissement SSH
 # make optiplex ARGS='--tags zfs'          → plafond ARC seul
+# make optiplex ARGS='--tags nic'          → offloads + watchdog de lien seuls
 # make optiplex ARGS='--tags sshd'         → durcissement SSH seul
 #
 # ⚠️ Le durcissement SSH se lance en gardant une session SSH de secours ouverte,

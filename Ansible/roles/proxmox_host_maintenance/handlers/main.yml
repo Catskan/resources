@@ -15,3 +15,16 @@
   ansible.builtin.command: proxmox-boot-tool refresh
   changed_when: true
   when: proxmox_host_maintenance_boot_uuids.stat.exists
+
+# Volontairement en dernier : aucun lien avec la séquence initramfs → boot-tool
+# ci-dessus, et l'y insérer changerait l'ordre d'exécution de celle-ci.
+# Applique les offloads sans attendre un redémarrage de l'hôte.
+# La garde ansible_check_mode est indispensable ici aussi : en dry-run la tâche
+# qui notifie est « changed », donc ce handler s'exécuterait sur un service que
+# systemd ne connaît pas encore, et ferait échouer le dry-run.
+- name: Appliquer les offloads NIC
+  ansible.builtin.systemd_service:
+    name: nic-offload.service
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
