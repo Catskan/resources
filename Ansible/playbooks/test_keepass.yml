@@ -66,6 +66,15 @@
         path: "Dev/Docker Hub - catskan"
         field: "password"
 
+    # --- Attachments du wildcard *.eonelia.fr (rôles headscale + immich_proxy) ---
+    # Lookup à 3 arguments → testé par une tâche dédiée, pas par la boucle ci-dessus.
+    keepass_cert_entry: "Certificate *.eonelia.fr"
+    keepass_cert_attachments:
+      - "eonelia.fr_ssl_certificate.cer"
+      - "intermediate1.cer"
+      - "intermediate2.cer"
+      - "*.eonelia.fr_private_key.key"
+
   tasks:
     - name: Check KeePass entry
       ansible.builtin.debug:
@@ -75,3 +84,24 @@
       loop: "{{ keepass_entries }}"
       loop_control:
         label: "{{ item.label }}"
+
+    # Le lookup 'attachments' retourne un CHEMIN de fichier temp sur le contrôleur :
+    # on vérifie que ce fichier existe et n'est pas vide, pas sa longueur en chars.
+    - name: Check certificate attachment
+      ansible.builtin.stat:
+        path: "{{ lookup('viczem.keepass.keepass', keepass_cert_entry, 'attachments', item) }}"
+      loop: "{{ keepass_cert_attachments }}"
+      register: keepass_cert_stat
+
+    - name: Assert certificate attachments are present and non-empty
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.size > 0
+        fail_msg: >-
+          Attachment manquant ou vide dans « {{ keepass_cert_entry }} » :
+          {{ item.item }}
+        success_msg: "OK — {{ item.item }} : {{ item.stat.size }} octets"
+      loop: "{{ keepass_cert_stat.results }}"
+      loop_control:
+        label: "{{ item.item }}"

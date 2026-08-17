@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.immichml.daily</string>
+
+    <!-- Ce job ne lance PAS le service : il le redémarre, ce qui déclenche le
+         git pull + uv sync faits au démarrage par start-immich-ml-agent.sh.
+         Un même job launchd ne peut pas être à la fois service permanent
+         (KeepAlive) et tâche planifiée (StartCalendarInterval) : launchd ignore
+         le calendrier tant que le job tourne. D'où la séparation en deux jobs. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/aurel/git/resources/immich/restart-immich-ml-agent.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/aurel/Library/Logs/immichml-daily.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/aurel/Library/Logs/immichml-daily.err</string>
+</dict>
+</plist>

@@ -1,0 +1,30 @@
+{#
+  Géré par Ansible — roles/immich_proxy. Ne pas éditer à la main sur le NAS.
+#}
+# Reverse proxy TLS du NAS — généré par Ansible (roles/immich_proxy).
+#
+# network_mode: host — volontaire. Caddy joint Immich (2283) et DSM (5001) en
+# loopback, donc ce stack ne dépend NI du réseau Docker du compose Immich, NI de
+# son nom de projet. Le compose Immich reste intouché et peut être mis à jour
+# indépendamment.
+services:
+  caddy:
+    image: {{ immich_proxy_caddy_image }}
+    container_name: {{ immich_proxy_container_name }}
+    restart: always
+    network_mode: host
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:{{ immich_proxy_health_port }}/healthz"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,56 @@
+---
+# Reverse proxy TLS (Caddy) devant Immich sur le NAS Synology.
+#
+# Contexte port 443 : nginx/DSM occupe déjà 80 et 443 sur le NAS. Caddy ne peut donc
+# pas les prendre. Il écoute sur un port haut et c'est la Freebox qui traduit
+# WAN:443 → NAS:{{ immich_proxy_listen_port }}. Les clients tapent une URL sans port.
+
+# --- Noms publics -------------------------------------------------------------
+# Enregistrements A statiques chez IONOS → IP publique fixe de la Freebox maison.
+immich_proxy_domain: "photos.eonelia.fr"
+immich_dsm_domain: "nas.eonelia.fr"
+
+# --- Écoute -------------------------------------------------------------------
+immich_proxy_listen_port: 8443
+
+# Endpoint de santé en clair, bindé sur le loopback uniquement (jamais exposé).
+# Nécessaire parce qu'une sonde sans SNI sur le port TLS ne correspond à aucun
+# site déclaré et échouerait systématiquement.
+immich_proxy_health_port: 9180
+
+# --- Backends -----------------------------------------------------------------
+# Caddy tourne en network_mode:host → il joint ses backends sans dépendre du réseau
+# Docker du stack Immich (qu'on ne modifie pas), et peut viser aussi bien le
+# loopback qu'une autre machine du LAN.
+#
+# ⚠ Ce défaut n'est PAS ce qui est déployé : `host_vars/nas.eonelia.fr/main.yml`
+# le surcharge vers la VM Immich de l'Optiplex depuis le 2026-08-17. Le loopback
+# reste le défaut du rôle, et sert de valeur de rollback vers l'ancienne instance.
+immich_proxy_backend: "127.0.0.1:2283"
+
+# DSM : viser 443, PAS 5001. Une fois le nom de domaine déclaré dans DSM (Portail de
+# connexion → DSM), nginx crée deux vhosts pour ce nom :
+#   - `listen 443` avec `set $fqdn nas.eonelia.fr` → sert DSM et redirige vers le FQDN
+#   - `listen 5001` avec `location / { return 404; }` → ne sert PAS ce nom
+# Le vhost 5001 construit ses redirections depuis l'adresse de connexion : proxifier
+# vers 5001 renvoie donc le client sur `https://127.0.0.1:5001`, ce qui lui fait perdre
+# le cookie de session → « Your login is invalid. Please sign-in again ».
+immich_dsm_backend: "127.0.0.1:443"
+
+# --- Stack proxy sur le NAS ---------------------------------------------------
+# Volontairement distinct du dossier du compose Immich : ce rôle n'y touche jamais.
+immich_proxy_dir: "/volume1/docker/immich-proxy"
+immich_proxy_caddy_image: "caddy:2-alpine"
+immich_proxy_container_name: "immich_caddy"
+
+# Zone de dépôt scp, purgée à la fin du run. Séparée de la cible finale pour que
+# l'installation reste idempotente (comparaison de contenu avant écrasement).
+immich_proxy_staging: "/tmp/.immich-proxy-build"
+
+# --- Divers -------------------------------------------------------------------
+# HSTS : 1 an. Mettre 0 pour désactiver l'en-tête (utile pendant les tests, car un
+# navigateur ayant mémorisé HSTS refusera tout repli en HTTP sur ce domaine).
+immich_proxy_hsts_max_age: 31536000
+
+# Sur DSM, docker vit dans /usr/local/bin — absent du PATH d'un SSH non interactif.
+immich_proxy_path: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"

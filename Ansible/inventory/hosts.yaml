@@ -4,7 +4,7 @@ all:
       hosts:
         nas.eonelia.fr:
           ansible_connection: ssh
-          ansible_host: 192.168.2.114
+          ansible_host: 100.64.0.6
           ansible_port: 3434
           ansible_user: a.busutil
         arch-linux-laptop:

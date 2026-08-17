@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.immichml</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/aurel/git/resources/immich/start-immich-ml-agent.sh</string>
+    </array>
+
+    <!-- Service permanent : demarre a l'ouverture de session et reste en vie.
+         KeepAlive relance le processus s'il s'arrete, quelle qu'en soit la raison
+         (crash, OOM, sortie de veille). Sans lui, Immich basculerait silencieusement
+         sur le conteneur ML du NAS, qu'on cherche justement a decharger. -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Garde-fou anti-boucle : si le demarrage echoue en boucle (uv sync casse,
+         depot absent), launchd attend 60 s entre deux tentatives au lieu de saturer
+         la machine. -->
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+
+    <!-- ~/Library/Logs plutot que /tmp, que macOS purge au redemarrage. -->
+    <key>StandardOutPath</key>
+    <string>/Users/aurel/Library/Logs/immichml.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/aurel/Library/Logs/immichml.err</string>
+</dict>
+</plist>

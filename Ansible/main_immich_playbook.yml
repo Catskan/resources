@@ -1,0 +1,19 @@
+---
+# Reverse proxy TLS (Caddy) devant Immich sur le NAS Synology.
+#
+# nginx/DSM occupe 80 et 443 sur le NAS → Caddy écoute sur 8443 et la Freebox
+# traduit WAN:443 → NAS:8443. Caddy route ensuite par nom d'hôte :
+#   photos.eonelia.fr → Immich (127.0.0.1:2283)
+#   nas.eonelia.fr    → DSM    (127.0.0.1:5001)
+#
+# Le docker-compose Immich existant n'est pas modifié.
+#
+# make immich        → déploiement / mise à jour
+# make check-immich  → dry-run (--check --diff)
+
+- name: Déployer le reverse proxy TLS devant Immich (NAS Synology)
+  hosts: nas.eonelia.fr
+  become: true
+  gather_facts: false
+  roles:
+    - role: immich_proxy

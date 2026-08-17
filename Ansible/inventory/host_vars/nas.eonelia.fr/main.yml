@@ -1,0 +1,38 @@
+---
+# NAS Synology (DSM 7.3.2, x86_64). La connexion SSH est définie inline dans
+# inventory/hosts.yaml (ansible_host 100.64.0.6 = IP tailnet, port 3434).
+
+# ⚠ PAS d'ansible_python_interpreter ici — et c'est volontaire.
+# DSM ne fournit que Python 3.7 et 3.8 (paquets `python3` et `python38`), alors
+# qu'ansible-core ≥ 2.19 exige 3.9+ sur la cible. Aucun interpréteur utilisable
+# n'existe donc sur ce host : le rôle immich_proxy n'emploie que `raw` côté NAS et
+# délègue au contrôleur tout ce qui demande Python.
+#
+# Corollaire : tout play visant ce host doit rester en `gather_facts: false`
+# (le module setup exigerait Python) et n'utiliser que des modules `raw`.
+
+ansible_become_method: sudo
+
+# Le NAS n'expose pas de subsystem SFTP → le transfert de fichiers passe par
+# `scp -O` (mode legacy), lancé explicitement par le rôle.
+ansible_scp_if_ssh: true
+
+# --- Bascule du backend Immich vers l'Optiplex (2026-08-17) -------------------
+# L'instance servie sous photos.eonelia.fr n'est plus celle du NAS mais la VM 101
+# de l'Optiplex (`srv-run-proxmox`). Caddy tournant en `network_mode: host`, il
+# joint cette IP du LAN directement, sans dépendre d'aucun réseau Docker.
+#
+# Tout le reste est inchangé : port d'écoute 8443, certificat wildcard, règle
+# Freebox WAN:443 → NAS:8443. C'est le seul paramètre qui bouge.
+#
+# Pourquoi ici et pas dans les defaults du rôle : c'est une donnée propre à cette
+# installation — l'adresse d'une autre machine — et non le comportement par défaut
+# du rôle, qui reste le loopback.
+#
+# But réel de la bascule : libérer l'ancienne instance Immich du NAS pour pouvoir
+# l'éteindre. C'est elle qui sature le Celeron N3160 (transcodage ffmpeg mesuré à
+# 242 % de CPU, load 21 sur 4 cœurs). Caddy n'y est pour rien.
+#
+# Rollback : commenter la ligne ci-dessous et relancer `make immich` → retour au
+# loopback, donc à l'ancienne instance, qui reste installée et intacte.
+immich_proxy_backend: "192.168.1.112:2283"
