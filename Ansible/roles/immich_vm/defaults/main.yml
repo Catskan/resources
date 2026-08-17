@@ -6,7 +6,9 @@
 # manquaient et qu'un `docker compose up -d` ne peut pas garantir — l'ordre de
 # démarrage entre le montage NFS des originaux et les conteneurs.
 
-# Dépôt immich-custom sur la VM : il fournit le docker-compose et l'unité systemd.
+# Dépôt immich-custom sur la VM : il fournit le docker-compose que l'unité systemd
+# lance. C'est le WorkingDirectory de cette unité, rien de plus — le rôle n'y lit
+# aucun fichier, il rend l'unité depuis son propre template.
 immich_vm_repo_dir: /home/aurel/immich-custom
 
 # Montage NFS des originaux (UPLOAD_LOCATION du .env côté Immich).

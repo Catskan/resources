@@ -18,8 +18,8 @@
 # `immich_vm_vmid` dans host_vars de l'hôte — pas de défaut, un `qm set` sur le
 # mauvais identifiant toucherait une autre machine.
 #
-# Le dépôt immich-custom doit être à jour sur la VM avant de lancer : le rôle y lit
-# `immich.service` plutôt que d'en dupliquer une copie ici.
+# Le rôle est autonome : l'unité systemd est rendue depuis son propre template, avec
+# les chemins tirés des variables. Rien à préparer sur la VM avant de lancer.
 #
 # Ne pas confondre avec `main_immich_playbook.yml`, qui déploie le reverse-proxy TLS
 # devant Immich : celui-ci configure la machine qui l'héberge.
