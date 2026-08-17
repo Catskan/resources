@@ -16,3 +16,23 @@ ansible_become_method: sudo
 # Le NAS n'expose pas de subsystem SFTP → le transfert de fichiers passe par
 # `scp -O` (mode legacy), lancé explicitement par le rôle.
 ansible_scp_if_ssh: true
+
+# --- Bascule du backend Immich vers l'Optiplex (2026-08-17) -------------------
+# L'instance servie sous photos.eonelia.fr n'est plus celle du NAS mais la VM 101
+# de l'Optiplex (`srv-run-proxmox`). Caddy tournant en `network_mode: host`, il
+# joint cette IP du LAN directement, sans dépendre d'aucun réseau Docker.
+#
+# Tout le reste est inchangé : port d'écoute 8443, certificat wildcard, règle
+# Freebox WAN:443 → NAS:8443. C'est le seul paramètre qui bouge.
+#
+# Pourquoi ici et pas dans les defaults du rôle : c'est une donnée propre à cette
+# installation — l'adresse d'une autre machine — et non le comportement par défaut
+# du rôle, qui reste le loopback.
+#
+# But réel de la bascule : libérer l'ancienne instance Immich du NAS pour pouvoir
+# l'éteindre. C'est elle qui sature le Celeron N3160 (transcodage ffmpeg mesuré à
+# 242 % de CPU, load 21 sur 4 cœurs). Caddy n'y est pour rien.
+#
+# Rollback : commenter la ligne ci-dessous et relancer `make immich` → retour au
+# loopback, donc à l'ancienne instance, qui reste installée et intacte.
+immich_proxy_backend: "192.168.1.112:2283"

@@ -19,8 +19,13 @@ immich_proxy_listen_port: 8443
 immich_proxy_health_port: 9180
 
 # --- Backends -----------------------------------------------------------------
-# Caddy tourne en network_mode:host → il joint tout en loopback, sans dépendre du
-# réseau Docker du stack Immich (qu'on ne modifie pas).
+# Caddy tourne en network_mode:host → il joint ses backends sans dépendre du réseau
+# Docker du stack Immich (qu'on ne modifie pas), et peut viser aussi bien le
+# loopback qu'une autre machine du LAN.
+#
+# ⚠ Ce défaut n'est PAS ce qui est déployé : `host_vars/nas.eonelia.fr/main.yml`
+# le surcharge vers la VM Immich de l'Optiplex depuis le 2026-08-17. Le loopback
+# reste le défaut du rôle, et sert de valeur de rollback vers l'ancienne instance.
 immich_proxy_backend: "127.0.0.1:2283"
 
 # DSM : viser 443, PAS 5001. Une fois le nom de domaine déclaré dans DSM (Portail de
