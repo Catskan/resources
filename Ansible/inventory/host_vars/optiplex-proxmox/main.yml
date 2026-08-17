@@ -17,3 +17,23 @@ sshd_permit_root_login: "prohibit-password"
 
 # ⚠️ NE PAS définir sshd_port ici : la tâche qui le consomme est gardée sur macOS.
 #    Le port 2125 reste réglé à la main dans /etc/ssh/sshd_config sur l'hôte.
+
+# --- Carte réseau : bug e1000e « Detected Hardware Unit Hang » -----------------
+# Le 2026-08-17, cet hôte est devenu totalement injoignable pendant 30 minutes —
+# lui ET ses deux VM — sans que rien ne redémarre : 447 occurrences de
+# « Detected Hardware Unit Hang » du driver e1000e sur son Intel i219, la file de
+# transmission figée alors que le lien restait DÉCLARÉ up (carrier 0, errors 0).
+# Résolu en débranchant/rebranchant le câble, soit un reset du lien.
+#
+# « nic0 » est le nommage stable d'interface de PVE 9 (altname enxc025a599d934) —
+# pas un nom inventé, et il ne ressemble volontairement pas aux enpXsY habituels.
+#
+# Valeurs propres à CETTE machine : le Wyse n'a ni ce contrôleur ni ce problème,
+# d'où les defaults vides côté rôle.
+pve_nic_offload_iface: nic0
+pve_nic_watchdog_iface: nic0
+
+# Cible du watchdog laissée vide → la passerelle (192.168.1.254) est détectée à
+# l'exécution. La coder en dur ici ferait échouer le watchdog après un changement
+# de plan d'adressage, exactement quand on a besoin de lui.
+pve_nic_watchdog_target: ""

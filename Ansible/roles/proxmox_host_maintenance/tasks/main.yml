@@ -6,7 +6,9 @@
 #   - journald plafonné : borne les journaux systemd de l'hôte
 #   - alerte disque : prévient (journald) avant saturation
 #   - plafond ARC ZFS (zfs_arc.yml) : conditionné à la présence du module
-# Tags : maintenance, zfs
+#   - carte réseau (nic_watchdog.yml) : contournement du bug e1000e, conditionné
+#     à une interface définie pour l'hôte
+# Tags : maintenance, zfs, nic
 
 - name: "[maint] fstrim hebdomadaire de tous les CT (rend l'espace à pve-root)"
   ansible.builtin.copy:
@@ -47,3 +49,7 @@
 - name: Plafond ARC de ZFS (conditionné à la présence du module)
   ansible.builtin.import_tasks: zfs_arc.yml
   tags: zfs
+
+- name: Contournement du bug e1000e (conditionné à une interface définie)
+  ansible.builtin.import_tasks: nic_watchdog.yml
+  tags: nic

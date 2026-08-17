@@ -7,3 +7,27 @@ pve_journal_max_use: 200M
 # machine. Sans valeur, tout le bloc de tasks/zfs_arc.yml est sauté.
 pve_zfs_arc_max_bytes: ""
 pve_zfs_arc_min_bytes: ""
+
+# --- Carte réseau : contournement du bug e1000e --------------------------------
+# Interfaces VOLONTAIREMENT VIDES, même logique que l'ARC ci-dessus : le nom
+# d'interface est propre à la machine et le problème ne concerne que l'Optiplex
+# (Intel i219). Sans valeur, tout tasks/nic_watchdog.yml est sauté.
+
+# Offloads désactivés au démarrage. TSO/GSO sont le déclencheur identifié du bug
+# « Detected Hardware Unit Hang » dans la majorité des rapports.
+pve_nic_offload_iface: ""
+pve_nic_offload_flags: "tso off gso off"
+
+# Watchdog de lien : réinitialise le lien si la cible devient injoignable alors que
+# le lien est toujours déclaré up.
+pve_nic_watchdog_iface: ""
+# Cible du test. Vide = passerelle par défaut détectée à l'exécution, ce qui garde
+# le test au niveau du voisinage L2 et insensible à une panne du FAI.
+pve_nic_watchdog_target: ""
+# Nombre d'échecs consécutifs avant reset. Court-circuité dès que la signature
+# e1000e apparaît dans dmesg : dans ce cas attendre ne prolonge que la coupure.
+pve_nic_watchdog_fail_threshold: 3
+# Délai minimum entre deux resets, pour ne pas boucler si la cause est ailleurs.
+pve_nic_watchdog_cooldown: 600
+# Période du timer, en secondes.
+pve_nic_watchdog_interval: 60
