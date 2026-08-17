@@ -1,0 +1,8 @@
+---
+# `reload` et non `restart` : Caddy recharge sa configuration sans fermer les
+# connexions en cours, ce qui évite de couper un envoi vidéo en plein transfert.
+- name: Recharger Caddy
+  ansible.builtin.systemd_service:
+    name: caddy
+    state: reloaded
+  when: not ansible_check_mode
