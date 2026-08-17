@@ -1,0 +1,30 @@
+---
+# VM Debian qui héberge Immich sur l'hôte Proxmox « Optiplex ».
+#
+# Ce rôle ne déploie PAS Immich : le stack docker-compose vit dans le dépôt
+# `immich-custom`, cloné sur la VM. Il ne pose que les réglages système qui
+# manquaient et qu'un `docker compose up -d` ne peut pas garantir — l'ordre de
+# démarrage entre le montage NFS des originaux et les conteneurs.
+
+# Dépôt immich-custom sur la VM : il fournit le docker-compose et l'unité systemd.
+immich_vm_repo_dir: /home/aurel/immich-custom
+
+# Montage NFS des originaux (UPLOAD_LOCATION du .env côté Immich).
+immich_vm_nfs_source: "192.168.1.7:/volume2/Photos/Immich"
+immich_vm_nfs_path: /mnt/nas/immich
+
+# `nofail` pour ne pas bloquer un boot si le NAS est absent, `retry=5` pour que
+# mount.nfs réessaie pendant 5 minutes au lieu d'abandonner au premier échec.
+# C'est le second filet : le premier est `ifupdown-wait-online`, ci-dessous.
+immich_vm_nfs_options: "hard,noatime,nfsvers=4,_netdev,nofail,retry=5"
+
+# Répertoire qui doit être visible sous le point de montage pour prouver que le NFS
+# est bien monté — sert de sentinelle à l'unité systemd comme à ce rôle.
+immich_vm_nfs_sentinel: library
+
+# Compte de service de la VM. Les groupes lui donnent accès au journal : sans eux,
+# `journalctl -u mnt-nas-immich.mount` répond « No entries » au lieu de l'erreur.
+immich_vm_user: aurel
+immich_vm_journal_groups:
+  - adm
+  - systemd-journal

@@ -1,0 +1,10 @@
+---
+# VM Debian « debian-immich » sur l'hôte Proxmox Optiplex. Elle sert Immich sur
+# 192.168.1.112:2283 et monte ses originaux depuis le NAS en NFSv4.
+ansible_host: 192.168.1.112
+ansible_user: aurel
+
+# ⚠️ Port explicite indispensable. Le ~/.ssh/config du MacBook contrôleur impose un
+# port non standard à tous les hôtes ; OpenSSH — donc Ansible — en hérite et la
+# connexion échoue sur un « Connection refused » trompeur.
+ansible_port: 22

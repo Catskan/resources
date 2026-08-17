@@ -6,6 +6,11 @@
 pve_zfs_arc_max_bytes: 4294967296
 pve_zfs_arc_min_bytes: 1073741824
 
+# VMID de la VM Immich, consommé par roles/immich_vm/tasks/onboot.yml pour lui poser
+# `onboot: 1`. Sans défaut côté rôle, délibérément : un `qm set` sur le mauvais
+# identifiant reconfigurerait une autre machine.
+immich_vm_vmid: 101
+
 # Durcissement SSH (rôle sshd_hardening).
 # root par clé uniquement : c'est le modèle de connexion ci-dessus. Le défaut du
 # rôle (PermitRootLogin "no") verrouillerait l'hôte, et l'assert anti-lockout du

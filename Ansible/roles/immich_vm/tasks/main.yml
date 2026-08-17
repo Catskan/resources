@@ -1,0 +1,101 @@
+---
+# Réglages système de la VM Immich. Origine : incident du 17 août 2026.
+#
+# Le montage NFS des originaux a échoué 4 secondes après le boot (boot 20:29:08,
+# échec 20:29:12) alors que le NAS était allumé et joignable. Le réseau de la VM est
+# géré par `ifupdown` et `ifupdown-wait-online.service` était désactivé : sans lui
+# `network-online.target` est atteinte immédiatement et ne garantit rien. Le `_netdev`
+# du fstab s'appuyant sur cette cible, mount.nfs part avant que l'interface soit
+# utilisable, échoue, et sans `retry` n'essaie jamais plus. `remote-fs.target` reste
+# inactif, `immich_postgres` démarre (SSD local) et `immich_server` non.
+#
+# Le danger n'est pas l'absence de service mais son contraire : Immich démarrant sur
+# un `/data` vide considérerait les 149 Go d'originaux disparus. D'où l'unité
+# `immich.service`, qui refuse de lancer les conteneurs sans le montage.
+
+- name: Rendre network-online.target significative
+  # Cause racine. Le paquet fournit l'unité mais Debian ne l'active pas : la cible
+  # est alors « active » sans que le réseau le soit, et tout ce qui en dépend part
+  # trop tôt — le montage NFS en premier.
+  ansible.builtin.systemd_service:
+    name: ifupdown-wait-online.service
+    enabled: true
+  become: true
+
+- name: Rendre le montage NFS des originaux résilient
+  # La ligne existe déjà : on n'en corrige que les options. `regexp` cible le point
+  # de montage, seul champ stable si la source change un jour.
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: "^\\S+\\s+{{ immich_vm_nfs_path | regex_escape }}\\s"
+    line: "{{ immich_vm_nfs_source }} {{ immich_vm_nfs_path }} nfs {{ immich_vm_nfs_options }} 0 0"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Recharger les unités systemd
+
+- name: Donner accès au journal au compte de service
+  # Sans ces groupes, tout diagnostic se fait à l'aveugle : journalctl masque les
+  # messages des autres utilisateurs et du système.
+  ansible.builtin.user:
+    name: "{{ immich_vm_user }}"
+    groups: "{{ immich_vm_journal_groups }}"
+    append: true
+  become: true
+
+- name: Vérifier que l'unité immich.service est présente dans le dépôt
+  ansible.builtin.stat:
+    path: "{{ immich_vm_repo_dir }}/immich.service"
+  register: immich_vm_unit_src
+
+- name: Exiger un dépôt immich-custom à jour
+  # L'unité est versionnée dans immich-custom, pas dupliquée ici : une seule source
+  # de vérité. En contrepartie, le dépôt doit être présent et à jour sur la VM.
+  ansible.builtin.assert:
+    that: immich_vm_unit_src.stat.exists
+    fail_msg: >-
+      {{ immich_vm_repo_dir }}/immich.service est absent.
+      Faire `git pull` dans {{ immich_vm_repo_dir }} sur la VM, puis relancer.
+
+- name: Installer l'unité systemd d'Immich
+  ansible.builtin.copy:
+    src: "{{ immich_vm_repo_dir }}/immich.service"
+    dest: /etc/systemd/system/immich.service
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Recharger les unités systemd
+
+- name: Appliquer les rechargements avant de démarrer quoi que ce soit
+  ansible.builtin.meta: flush_handlers
+
+- name: Monter les originaux
+  # Le nom de l'unité découle du chemin : /mnt/nas/immich -> mnt-nas-immich.mount
+  ansible.builtin.systemd_service:
+    name: "{{ immich_vm_nfs_path | regex_replace('^/', '') | regex_replace('/', '-') }}.mount"
+    state: started
+  become: true
+
+- name: Vérifier que les originaux sont réellement visibles
+  # Un point de montage vide est indiscernable d'un montage réussi pour systemd :
+  # on contrôle la sentinelle avant de laisser Immich démarrer.
+  ansible.builtin.stat:
+    path: "{{ immich_vm_nfs_path }}/{{ immich_vm_nfs_sentinel }}"
+  register: immich_vm_sentinel
+
+- name: Refuser de démarrer Immich sans ses originaux
+  ansible.builtin.assert:
+    that: immich_vm_sentinel.stat.isdir | default(false)
+    fail_msg: >-
+      {{ immich_vm_nfs_path }} est monté mais {{ immich_vm_nfs_sentinel }}/ est
+      introuvable. Immich démarrerait sur un /data vide — ne pas continuer.
+
+- name: Activer et démarrer Immich au boot
+  ansible.builtin.systemd_service:
+    name: immich.service
+    enabled: true
+    state: started
+  become: true

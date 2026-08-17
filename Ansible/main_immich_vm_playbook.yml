@@ -1,0 +1,43 @@
+---
+# VM Debian qui héberge Immich sur l'hôte Proxmox « Optiplex ».
+#
+# Ce playbook ne déploie PAS Immich : le stack docker-compose et l'unité systemd
+# vivent dans le dépôt `immich-custom`, cloné sur la VM dans /home/aurel. Il pose les
+# réglages système qu'un `docker compose up -d` ne peut pas garantir, tous découverts
+# lors de l'incident du 17 août 2026 :
+#
+#   - `ifupdown-wait-online` activé, pour que network-online.target veuille dire
+#     quelque chose — sans lui le montage NFS part 4 s après le boot et échoue ;
+#   - options `nofail,retry=5` sur le montage des originaux ;
+#   - `immich.service` installé, qui refuse de lancer les conteneurs sans le
+#     montage — Immich sur un /data vide croirait les 149 Go d'originaux disparus ;
+#   - `aurel` dans adm/systemd-journal, sans quoi journalctl reste muet ;
+#   - `onboot: 1` côté hôte, sinon la VM ne remonte pas au retour du courant.
+#
+# Le second play cible l'HÔTE Proxmox et non la VM : `qm` n'existe que là. Il attend
+# `immich_vm_vmid` dans host_vars de l'hôte — pas de défaut, un `qm set` sur le
+# mauvais identifiant toucherait une autre machine.
+#
+# Le dépôt immich-custom doit être à jour sur la VM avant de lancer : le rôle y lit
+# `immich.service` plutôt que d'en dupliquer une copie ici.
+#
+# Ne pas confondre avec `main_immich_playbook.yml`, qui déploie le reverse-proxy TLS
+# devant Immich : celui-ci configure la machine qui l'héberge.
+#
+# make immich-vm        → réglages VM + démarrage automatique
+# make check-immich-vm  → dry-run (--check --diff)
+
+- name: Réglages système de la VM Immich
+  hosts: immich_hosts
+  gather_facts: true
+  roles:
+    - role: immich_vm
+
+- name: Démarrage automatique de la VM Immich au boot de l'hôte
+  hosts: proxmox_optiplex
+  gather_facts: false
+  tasks:
+    - name: Activer onboot sur la VM Immich
+      ansible.builtin.include_role:
+        name: immich_vm
+        tasks_from: onboot.yml
