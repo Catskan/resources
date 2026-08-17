@@ -24,6 +24,9 @@ all:
         proxmox_optiplex:
           hosts:
             optiplex-proxmox:
+    immich_hosts:
+      hosts:
+        immich:
     claude_code_hosts:
       hosts:
         claude-code:
