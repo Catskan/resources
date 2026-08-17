@@ -1,7 +1,7 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help deps windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code optiplex check-optiplex uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale immich check-immich lint
+.PHONY: help deps windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code optiplex check-optiplex uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale immich check-immich caddy check-caddy lint
 
 help:
 	@echo "Cibles disponibles :"
@@ -24,6 +24,8 @@ help:
 	@echo "  make check-claude-code — Dry-run provisioning CT seul (--check --diff)"
 	@echo "  make optiplex         — Socle de l'hôte Proxmox Optiplex (dépôts, hygiène, ZFS, SSH)"
 	@echo "  make check-optiplex   — Dry-run socle Optiplex (--check --diff)"
+	@echo "  make caddy            — CT Caddy sur l'Optiplex (reverse-proxy public)"
+	@echo "  make check-caddy      — Dry-run CT Caddy (--check --diff)"
 	@echo "  make uninstall-bloat  — Désinstalle les AppX bloatware sur aurelien-gaming"
 	@echo "  make ping-windows     — win_ping sur les hosts Windows"
 	@echo "  make check-windows    — Dry-run Windows (--check --diff)"
@@ -128,6 +130,12 @@ headscale:
 
 check-headscale:
 	./scripts/run.sh ansible-playbook main_headscale_playbook.yml --check --diff $(ARGS)
+
+caddy:
+	./scripts/run.sh ansible-playbook main_caddy_playbook.yml $(ARGS)
+
+check-caddy:
+	./scripts/run.sh ansible-playbook main_caddy_playbook.yml --check --diff $(ARGS)
 
 immich:
 	./scripts/run.sh ansible-playbook main_immich_playbook.yml $(ARGS)

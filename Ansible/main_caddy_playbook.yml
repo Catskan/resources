@@ -1,0 +1,18 @@
+---
+# Reverse-proxy public de la maison, dans un CT dédié de l'Optiplex.
+#
+# Un seul play pour l'instant : il crée le CT depuis l'hôte Proxmox. Le second play,
+# qui configurera le CT comme hôte Ansible à part entière via le rôle caddy_proxy,
+# sera ajouté par la tâche suivante — ce rôle n'existe pas encore, et Ansible résout
+# les rôles au parsing du playbook : le déclarer déjà ferait échouer même
+# `--tags ct` sur « the role 'caddy_proxy' was not found ».
+#
+# make caddy         → CT (ce play)
+# make check-caddy   → dry-run (--check --diff)
+
+- name: Création du CT Caddy sur l'hôte Proxmox
+  hosts: proxmox_optiplex
+  gather_facts: true
+  roles:
+    - role: proxmox_caddy_lxc
+      tags: [ct]
