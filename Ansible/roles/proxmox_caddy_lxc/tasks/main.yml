@@ -78,6 +78,5 @@
   ansible.builtin.command: "pct exec {{ caddy_ct_vmid }} -- ip -4 -o addr show eth0"
   register: caddy_ct_addr
   changed_when: false
-  check_mode: false
   failed_when: caddy_ct_ip not in caddy_ct_addr.stdout
   when: not ansible_check_mode
