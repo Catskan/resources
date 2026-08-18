@@ -1,7 +1,7 @@
 # Raccourcis pour lancer Ansible depuis le MacBook contrôleur.
 # Toutes les cibles prompt le master password KeePass via scripts/run.sh.
 
-.PHONY: help deps windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code optiplex check-optiplex uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale immich check-immich caddy check-caddy lint
+.PHONY: help deps windows windows-vm linux macos check-macos windows-sshd check-windows-sshd wyse check-wyse claude-code check-claude-code optiplex check-optiplex uninstall-bloat ping-windows check-windows check-windows-vm check-linux test-keepass inspect-keepass keepass-autotype verify-windows headscale check-headscale immich check-immich immich-vm check-immich-vm lint
 
 help:
 	@echo "Cibles disponibles :"
@@ -32,6 +32,8 @@ help:
 	@echo "  make check-linux      — Dry-run Linux"
 	@echo "  make immich           — Reverse proxy TLS (Caddy) devant Immich sur le NAS"
 	@echo "  make check-immich     — Dry-run reverse proxy Immich (--check --diff)"
+	@echo "  make immich-vm        — Réglages système de la VM Immich + onboot côté hôte"
+	@echo "  make check-immich-vm  — Dry-run VM Immich (--check --diff)"
 	@echo "  make lint             — yamllint + ansible-lint"
 	@echo ""
 	@echo "Override KEEPASS_LOCATION pour pointer une autre DB :"
@@ -142,3 +144,9 @@ immich:
 
 check-immich:
 	./scripts/run.sh ansible-playbook main_immich_playbook.yml --check --diff $(ARGS)
+
+immich-vm:
+	./scripts/run.sh ansible-playbook main_immich_vm_playbook.yml $(ARGS)
+
+check-immich-vm:
+	./scripts/run.sh ansible-playbook main_immich_vm_playbook.yml --check --diff $(ARGS)
