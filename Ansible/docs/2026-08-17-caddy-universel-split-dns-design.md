@@ -25,6 +25,14 @@ Cinq faits mesurés le 2026-08-17 fixent le contenu et l'ordre de ce chantier.
 manipulation toutes les six semaines : télécharger le certificat, le remettre dans
 KeePass, relancer deux rôles. Son oubli casse l'accès sans recours, HSTS oblige.
 
+**Correction du 2026-08-18 : ce cycle de 45 jours n'existe pas.** La mesure ci-dessus est
+exacte pour ce seul certificat (11 juillet → 25 août), mais en déduire un cycle de
+renouvellement de 45 jours était une extrapolation à tort depuis un unique échantillon. Le
+renouvellement effectué le 2026-08-18 a produit un certificat valable jusqu'au 22 février
+2027, soit environ 189 jours — voir la correction dans D1 et l'annexe des faits mesurés.
+Le reste du constat (renouvellement manuel, cassure sans recours sous HSTS en cas d'oubli)
+reste vrai ; seule la fréquence était fausse.
+
 **L'API DNS d'IONOS est fermée à ce contrat.** Le portail développeur affiche « API
 Programme is not yet active », et le lien d'inscription répond « This article is not
 available for your contract ». Le challenge DNS-01 est donc hors d'atteinte.
@@ -111,6 +119,23 @@ Le coût de A se compare désormais à une corvée toutes les six semaines assor
 risque de panne, et non à un confort : un CT (~80 Mo réels, un LXC ne préalloue rien),
 un rôle, une bascule de la porte d'entrée sous HSTS. L'arbitrage change de sens.
 
+**Correction du 2026-08-18 : l'urgence des « 45 jours » ne tenait pas.** Le renouvellement
+effectué ce jour-là a produit un certificat valable du 17 août 2026 au 22 février 2027,
+soit environ 189 jours — pas six semaines. L'échantillon du 11 juillet au 25 août 2026
+était vraisemblablement un remplacement qui héritait de la fin du cycle précédent ; une
+durée nominale avait été extrapolée à tort depuis ce seul échantillon (voir l'annexe des
+faits mesurés). L'urgence invoquée ci-dessus pour renverser le verdict n'était donc pas
+fondée : il n'y avait pas de corvée toutes les six semaines qui s'annonçait.
+
+Le déménagement reste néanmoins la bonne décision, mais pour ses autres motifs, restés
+vrais indépendamment de la durée réelle du certificat : un renouvellement entièrement
+automatique plutôt que semestriel (~189 jours) et manuel, la fin du port `8443` et de
+`auto_https disable_redirects`, et la fin d'un certificat partagé entre deux rôles
+(`caddy_proxy` et `headscale`) — un partage qui couple leurs pannes sans raison
+technique. Le raisonnement des paragraphes précédents est conservé tel qu'écrit sur le
+moment ; ce correctif ne le supprime pas, il le complète, dans le même esprit que le
+retournement A→B→A documenté plus haut.
+
 ### D2 — Le résolveur local va dans une VM sur la Freebox Ultra
 
 | Option                                                | Verdict            |
@@ -189,6 +214,14 @@ d'une dépendance à un service de délégation tiers.
 E est rejetée par la mesure des 45 jours : le renouvellement supposé annuel revient en
 réalité toutes les six semaines, et son oubli est sans recours sous HSTS.
 
+**Correction du 2026-08-18 : la mesure des 45 jours était une extrapolation à tort (voir
+la correction dans D1 et l'annexe des faits mesurés) — le cycle réel est d'environ 189
+jours, pas six semaines.** E reste rejetée, mais pour un motif plus faible que celui
+écrit sur le moment : un renouvellement manuel semestriel plutôt qu'aux six semaines, avec
+le même défaut structurel — un oubli reste sans recours sous HSTS, et rien dans un
+processus manuel ne garantit qu'il aura lieu à temps. Le verdict ne change pas ; l'urgence
+qui le soutenait, si.
+
 **Conséquence sur les vhosts privés :** HTTP-01 exige que chaque nom soit résolvable
 publiquement et joignable sur le 80. Les noms internes (`ha`, `dsm`, `pve`) auront donc
 des enregistrements A publics, leur confidentialité reposant sur le seul matcher
@@ -261,16 +294,16 @@ caddy_vhosts:
   - name: nas.eonelia.fr
     backend: 192.168.1.7:443
     upstream_tls: true
-    header_up_host: true
   - name: ha.eonelia.fr
     backend: 192.168.1.6:8123
     allow_networks: [100.64.0.0/10, 192.168.1.0/24]
 ```
 
-`upstream_tls` et `header_up_host` existent pour DSM et sont **indissociables** : sans
-`header_up Host`, nginx ne trouve aucun `server_name` correspondant et retombe sur son
-`default_server` — Web Station, qui répond 403. Le SNI est forcé plutôt que la
-vérification désactivée.
+`upstream_tls` est le seul levier ; il n'existe pas de `header_up_host` distinct. Le
+template (`Caddyfile.j2`) émet `header_up Host {{ vhost.name }}` automatiquement dès que
+`upstream_tls` est vrai — c'est délibéré, et c'est mieux qu'une seconde clé : il devient
+impossible d'activer l'un sans l'autre. Sans ce `header_up Host`, nginx ne trouve aucun
+`server_name` correspondant et retombe sur son `default_server` — Web Station, qui répond 403. Le SNI est forcé plutôt que la vérification désactivée.
 
 `allow_networks` produit un matcher `remote_ip` : Caddy écoute pour tout le monde mais ne
 répond qu'aux origines déclarées. C'est ce qui apporte le bénéfice absent aujourd'hui —
@@ -294,8 +327,10 @@ servi aux navigateurs, donc aucun repli en HTTP n'est possible si l'émission é
 staging valide toute la chaîne — redirection Freebox du 80, résolution publique des noms,
 accessibilité du challenge — sans consommer les quotas de production.
 
-Une fois la production validée, `caddy list-certificates` et les journaux du CT donnent
-les échéances. Le renouvellement intervient à 30 jours de la fin, sans intervention.
+Une fois la production validée, les journaux du CT et une lecture directe des `.crt` du
+répertoire de données de Caddy (`openssl x509 -noout -issuer -dates`, la commande
+`caddy list-certificates` n'existant pas dans la version déployée) donnent les
+échéances. Le renouvellement intervient à 30 jours de la fin, sans intervention.
 
 ## §5 — Ports : ce qui s'ouvre et ce qui se ferme
 
@@ -382,20 +417,29 @@ lui la dernière manipulation manuelle. À instruire dans son propre cycle.
 
 Ces valeurs datent d'une session unique et doivent être re-mesurées avant décision.
 
-| Mesure                                | Valeur                                                     |
-| ------------------------------------- | ---------------------------------------------------------- |
-| Certificat en service                 | `CN=*.eonelia.fr`, Sectigo DV, 11 juil. → **25 août 2026** |
-| API DNS IONOS                         | « not available for your contract »                        |
-| Serveurs de noms de `eonelia.fr`      | `ns1054.ui-dns.com` et homologues `.de/.org/.biz` (IONOS)  |
-| Courrier de la zone                   | `mx00`/`mx01.ionos.fr`, SPF IONOS, DMARC, `autodiscover`   |
-| CPU du NAS                            | Intel Celeron N3160 @ 1,60 GHz, 4 cœurs                    |
-| Load average du NAS                   | 21 → 57 → 38, `0.0 id`                                     |
-| RAM libre du NAS                      | 121 à 487 Mo, 2,0 à 2,7 Go de swap                         |
-| Poste CPU dominant du NAS             | `synoelasticd` (SynoFinder), 77 % CPU, 195 min cumulées    |
-| Instance Immich en service            | VM 101 de l'Optiplex, `192.168.1.112:2283`, `v3.1.0`       |
-| Résolution LAN de `photos.eonelia.fr` | `82.67.69.38` (aucun split-horizon)                        |
-| Hairpin Freebox                       | fonctionnel, TLS en 0,22 s                                 |
-| Plage DHCP                            | `.2` → `.200`, assignation fixe par machine active         |
-| DNS distribué                         | `192.168.1.254` seul, quatre champs libres                 |
-| Marge RAM de l'Optiplex               | ~1,4 Go après réduction de Home Assistant à 2 Go           |
-| Tailnet                               | 8 nœuds, **aucun Optiplex** malgré le commit `a5625d4`     |
+> **Correction du 2026-08-18.** La ligne « Certificat en service » ci-dessous a été lue
+> comme la durée nominale du cycle de renouvellement (« 45 jours »), extrapolée à tort
+> depuis ce seul échantillon — voir la correction dans D1. Le renouvellement effectué le
+> 2026-08-18 a produit un certificat valable jusqu'au **22 février 2027**, soit environ
+> 189 jours depuis son émission. L'échantillon du 11 juillet au 25 août 2026 était
+> vraisemblablement un remplacement héritant de la fin d'un cycle précédent, pas une
+> mesure du cycle complet.
+
+| Mesure                                 | Valeur                                                     |
+| -------------------------------------- | ---------------------------------------------------------- |
+| Certificat en service (mesuré le 17)   | `CN=*.eonelia.fr`, Sectigo DV, 11 juil. → **25 août 2026** |
+| Certificat renouvelé le 18 (correctif) | 17 août 2026 → **22 février 2027**, soit ~189 jours        |
+| API DNS IONOS                          | « not available for your contract »                        |
+| Serveurs de noms de `eonelia.fr`       | `ns1054.ui-dns.com` et homologues `.de/.org/.biz` (IONOS)  |
+| Courrier de la zone                    | `mx00`/`mx01.ionos.fr`, SPF IONOS, DMARC, `autodiscover`   |
+| CPU du NAS                             | Intel Celeron N3160 @ 1,60 GHz, 4 cœurs                    |
+| Load average du NAS                    | 21 → 57 → 38, `0.0 id`                                     |
+| RAM libre du NAS                       | 121 à 487 Mo, 2,0 à 2,7 Go de swap                         |
+| Poste CPU dominant du NAS              | `synoelasticd` (SynoFinder), 77 % CPU, 195 min cumulées    |
+| Instance Immich en service             | VM 101 de l'Optiplex, `192.168.1.112:2283`, `v3.1.0`       |
+| Résolution LAN de `photos.eonelia.fr`  | `82.67.69.38` (aucun split-horizon)                        |
+| Hairpin Freebox                        | fonctionnel, TLS en 0,22 s                                 |
+| Plage DHCP                             | `.2` → `.200`, assignation fixe par machine active         |
+| DNS distribué                          | `192.168.1.254` seul, quatre champs libres                 |
+| Marge RAM de l'Optiplex                | ~1,4 Go après réduction de Home Assistant à 2 Go           |
+| Tailnet                                | 8 nœuds, **aucun Optiplex** malgré le commit `a5625d4`     |

@@ -1,8 +1,30 @@
 ---
-# `reload` et non `restart` : Caddy recharge sa configuration sans fermer les
-# connexions en cours, ce qui évite de couper un envoi vidéo en plein transfert.
+# `restart`, pas `reload` : le Caddyfile porte `admin off` (voir son commentaire) — l'API
+# admin locale n'existe donc jamais. Or l'`ExecReload` de l'unité systemd packagée
+# (`/usr/lib/systemd/system/caddy.service`, hors du contrôle de ce rôle) invoque
+# `caddy reload --config ... --force`, qui pousse la nouvelle config à travers cette même
+# API : avec `admin off`, cette commande échoue systématiquement (« connection refused » sur
+# localhost:2019). Le rechargement à chaud est donc structurellement indisponible ; `restart`
+# est le seul mécanisme qui fonctionne, puisque `ExecStart` relit le Caddyfile depuis le
+# disque à chaque démarrage du process. La coupure d'environ une seconde qui en résulte
+# n'affecte pas qu'Immich : `restart` coupe TOUS les vhosts du CT en même temps, puisque
+# c'est un seul process Caddy qui les sert tous. Aujourd'hui ça veut dire DSM en plus
+# d'Immich ; demain, si les vhosts privés du design se concrétisent (Home Assistant,
+# Proxmox), ça les coupera eux aussi. C'est assumé : les changements de Caddyfile sont
+# rares (ajout d'un vhost), et le client le plus exposé à une coupure d'une seconde — l'app
+# Immich qui envoie des vidéos — reprend automatiquement un transfert interrompu ; les
+# autres vhosts n'ont qu'à retenter la requête suivante.
+#
+# Alternative envisagée et différée, pas rejetée : exposer l'API admin sur un socket Unix
+# (`admin unix//run/caddy/admin.sock` ou équivalent) plutôt que de la désactiver
+# cumulerait les deux bénéfices — rechargement à chaud, donc plus de coupure, sans jamais
+# ouvrir de port TCP ni d'écoute réseau. Ce n'est pas fait ici parce que ça demande une
+# vérification empirique avant d'être fiable : que systemd crée bien le socket au bon
+# chemin et avec les bonnes permissions, et que `caddy reload` (via l'`ExecReload` packagé)
+# sache effectivement s'y connecter. C'est un chantier en soi, distinct de celui-ci, alors
+# que le `restart` actuel est déjà correct et sûr.
 - name: Recharger Caddy
   ansible.builtin.systemd_service:
     name: caddy
-    state: reloaded
+    state: restarted
   when: not ansible_check_mode

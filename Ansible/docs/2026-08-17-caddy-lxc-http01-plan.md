@@ -64,6 +64,13 @@ tâche est indépendante du reste et ne coûte que quelques minutes.
 
 **Fichiers :** aucun. Action d'exploitation.
 
+**Note du 2026-08-18 :** cette tâche part de la prémisse que le cycle de renouvellement
+du wildcard est de 45 jours (« toutes les six semaines »). Cette prémisse était une
+extrapolation à tort depuis un seul échantillon — voir la correction dans D1 et l'annexe
+des faits mesurés du design doc. Le cycle réel constaté est d'environ 189 jours. Cette
+tâche a déjà été exécutée sur cette base ; un futur lecteur qui la rejouerait ne doit pas
+s'attendre à revenir tous les six semaines.
+
 - [ ] **Étape 1 : vérifier l'état du certificat en service**
 
 ```bash
@@ -75,8 +82,12 @@ Attendu : `subject=CN = *.eonelia.fr`, `issuer=… Sectigo …`, `notAfter=Aug 2
 
 - [ ] **Étape 2 : vérifier chez IONOS si le renouvellement est automatique**
 
-Espace client IONOS → certificats SSL. Sa durée de 45 jours suggère un renouvellement
-automatique. Noter si un nouveau certificat est déjà disponible.
+Espace client IONOS → certificats SSL. La durée de 45 jours de ce certificat avait été
+lue comme le cycle nominal de renouvellement ; c'était une extrapolation à tort depuis un
+seul échantillon (voir la correction dans D1 et l'annexe du design doc). Vérifier malgré
+tout, dans le panneau IONOS, si le renouvellement y est indiqué comme automatique — c'est
+ce panneau qui tranche, pas la durée d'un échantillon. Noter si un nouveau certificat est
+déjà disponible.
 
 - [ ] **Étape 3 : rafraîchir l'entrée KeePass**
 
@@ -107,7 +118,10 @@ echo | openssl s_client -servername mom.eonelia.fr -connect mom.eonelia.fr:34443
   | openssl x509 -noout -enddate
 ```
 
-Attendu : les trois `notAfter` repoussés d'environ 45 jours.
+Attendu : les trois `notAfter` repoussés au-delà de leur valeur précédente — pas
+forcément d'environ 45 jours : cette figure venait d'une extrapolation à tort (voir la
+correction dans D1 et l'annexe du design doc), et la durée exacte dépend du cycle réel du
+fournisseur. Le critère est le sens du mouvement, pas un nombre de jours fixe.
 
 ---
 
@@ -727,9 +741,10 @@ Remplacer le contenu de `Ansible/inventory/host_vars/caddy/main.yml` par :
 # Vhosts servis par le CT.
 #
 # DSM reste sur le NAS : ce vhost traverse donc le LAN vers 192.168.1.7, là où
-# l'ancien proxy visait son propre loopback. `upstream_tls` et `header_up_host` sont
-# indissociables — voir le commentaire du template, qui documente le 403 Web Station
-# et le « Your login is invalid » que leur absence provoque.
+# l'ancien proxy visait son propre loopback. `upstream_tls: true` suffit : le template
+# émet `header_up Host` automatiquement dès qu'il est vrai (il n'existe pas de clé
+# `header_up_host` séparée) — voir son commentaire, qui documente le 403 Web Station
+# et le « Your login is invalid » que l'absence de ce header provoque.
 caddy_vhosts:
   - name: photos.eonelia.fr
     backend: 192.168.1.112:2283
@@ -819,8 +834,12 @@ si le certificat n'était pas reconnu, `curl` échouerait.
 
 - [ ] **Étape 4 : confirmer l'émetteur**
 
+`caddy list-certificates` n'existe pas dans la version de Caddy déployée
+(`Error: unknown command "list-certificates"`, constaté à l'exécution de cette étape —
+voir `task-4-report.md`). Lire directement l'émetteur et l'échéance des `.crt` sur disque :
+
 ```bash
-run-on auto ssh root@192.168.1.210 'caddy list-certificates 2>/dev/null | head -20'
+run-on auto ssh root@192.168.1.210 'for f in /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/*/*.crt; do echo "== $f =="; openssl x509 -noout -issuer -dates -in "$f"; done'
 ```
 
 Attendu : l'émetteur est Let's Encrypt (et non `acme-staging`), avec une échéance à

@@ -1,6 +1,44 @@
 ---
-# Vhosts servis par le CT. Un seul pour le premier essai : on valide la chaîne ACME
-# avant d'y mettre le service dont dépendent deux utilisatrices non techniques.
+# Staging validé : certificats émis, challenge HTTP-01 fonctionnel sur les deux noms. On
+# passe en production.
+#
+# NON FAIT — reste dû avant toute bascule du port 443 : un vrai login DSM dans un
+# navigateur, pas un simple code 200 (ce prérequis avait été levé par erreur dans le
+# brief de la tâche 4 ; ce commentaire le corrige, il ne l'avait jamais été en réalité).
+# Vérification objective de l'état de la bascule : l'émetteur du certificat servi sur le
+# 443 public — Sectigo = l'ancien proxy du NAS répond encore (bascule pas faite) ;
+# Let's Encrypt = la bascule a eu lieu.
+caddy_acme_staging: false
+
+# Vhosts servis par le CT.
+#
+# DSM reste sur le NAS : ce vhost traverse donc le LAN vers 192.168.1.7, là où
+# l'ancien proxy visait son propre loopback. `upstream_tls: true` suffit : le template
+# émet `header_up Host` automatiquement dès qu'il est vrai (il n'existe pas de clé
+# `header_up_host` séparée) — voir son commentaire, qui documente le 403 Web Station
+# et le « Your login is invalid » que l'absence de ce header provoque.
 caddy_vhosts:
   - name: photos.eonelia.fr
     backend: 192.168.1.112:2283
+  - name: nas.eonelia.fr
+    backend: 192.168.1.7:443
+    upstream_tls: true
+    # Le certificat que DSM présente EN INTERNE sur 192.168.1.7:443 est encore
+    # l'ancien wildcard Sectigo (*.eonelia.fr, expire le 25 août 2026) : le
+    # renouvellement récent a mis à jour le certificat que le proxy présente au
+    # public, pas celui que DSM sert dans son propre magasin — ce sont deux
+    # magasins distincts. Sans upstream_insecure, Caddy vérifierait ce
+    # certificat via tls_server_name et le 26 août ce vhost tomberait en 502.
+    #
+    # On abandonne cette vérification amont uniquement parce que le saut se
+    # fait entièrement sur le LAN, du CT (192.168.1.210) au NAS (192.168.1.7) —
+    # deux machines de la maison, jamais sur Internet. Ça retire toute
+    # dépendance de DSM à un certificat wildcard commercial et fait disparaître
+    # l'échéance du 26 août.
+    #
+    # IMPORTANT — ce que ça NE change PAS : la connexion publique reste
+    # entièrement chiffrée et vérifiée. Le client externe parle à Caddy en TLS
+    # avec le certificat Let's Encrypt normal de nas.eonelia.fr ; seul le
+    # tronçon interne Caddy→DSM, sur le LAN, échappe à la vérification du
+    # certificat amont.
+    upstream_insecure: true
