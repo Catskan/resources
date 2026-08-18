@@ -20,7 +20,15 @@ fi
 # qui refusent de fork() côté Python 3.x.
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
-export KEEPASS_LOCATION="${KEEPASS_LOCATION:-/Volumes/home/Drive/Vault/Aurel-vault.kdbx}"
+# Base KeePass de RÉFÉRENCE : partage « Aurelien » du NAS, PAS le partage « home ».
+#
+# ⚠️ Il existe plusieurs copies de ce fichier sur le NAS, et l'ancien défaut pointait vers
+# l'une d'elles (/Volumes/home/Drive/Vault/) qui n'est PLUS mise à jour. Le 2026-08-17,
+# cela a failli faire redéployer un certificat périmé de dix jours : le run « réussit »,
+# mais avec les anciens secrets, et la panne ne se découvre qu'à l'expiration.
+# Les autres copies connues (backups de machines, versions datées, un fichier de conflit
+# Synology Drive de mai 2026) ne doivent JAMAIS servir de source.
+export KEEPASS_LOCATION="${KEEPASS_LOCATION:-/Volumes/Aurelien/Vault/Aurel-vault.kdbx}"
 
 if [[ ! -f "$KEEPASS_LOCATION" ]]; then
   echo "KeePass DB introuvable : $KEEPASS_LOCATION" >&2
