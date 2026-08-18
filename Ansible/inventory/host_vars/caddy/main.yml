@@ -1,6 +1,13 @@
 ---
-# Vhosts servis par le CT. Un seul pour le premier essai : on valide la chaîne ACME
-# avant d'y mettre le service dont dépendent deux utilisatrices non techniques.
+# Vhosts servis par le CT.
+#
+# DSM reste sur le NAS : ce vhost traverse donc le LAN vers 192.168.1.7, là où
+# l'ancien proxy visait son propre loopback. `upstream_tls` et `header_up_host` sont
+# indissociables — voir le commentaire du template, qui documente le 403 Web Station
+# et le « Your login is invalid » que leur absence provoque.
 caddy_vhosts:
   - name: photos.eonelia.fr
     backend: 192.168.1.112:2283
+  - name: nas.eonelia.fr
+    backend: 192.168.1.7:443
+    upstream_tls: true
