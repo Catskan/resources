@@ -1,14 +1,22 @@
 ---
-# Staging validé : certificats émis, challenge HTTP-01 fonctionnel sur les deux noms,
-# DSM vérifié par un login réel et non par un simple code 200. On passe en production.
+# Staging validé : certificats émis, challenge HTTP-01 fonctionnel sur les deux noms. On
+# passe en production.
+#
+# NON FAIT — reste dû avant toute bascule du port 443 : un vrai login DSM dans un
+# navigateur, pas un simple code 200 (ce prérequis avait été levé par erreur dans le
+# brief de la tâche 4 ; ce commentaire le corrige, il ne l'avait jamais été en réalité).
+# Vérification objective de l'état de la bascule : l'émetteur du certificat servi sur le
+# 443 public — Sectigo = l'ancien proxy du NAS répond encore (bascule pas faite) ;
+# Let's Encrypt = la bascule a eu lieu.
 caddy_acme_staging: false
 
 # Vhosts servis par le CT.
 #
 # DSM reste sur le NAS : ce vhost traverse donc le LAN vers 192.168.1.7, là où
-# l'ancien proxy visait son propre loopback. `upstream_tls` et `header_up_host` sont
-# indissociables — voir le commentaire du template, qui documente le 403 Web Station
-# et le « Your login is invalid » que leur absence provoque.
+# l'ancien proxy visait son propre loopback. `upstream_tls: true` suffit : le template
+# émet `header_up Host` automatiquement dès qu'il est vrai (il n'existe pas de clé
+# `header_up_host` séparée) — voir son commentaire, qui documente le 403 Web Station
+# et le « Your login is invalid » que l'absence de ce header provoque.
 caddy_vhosts:
   - name: photos.eonelia.fr
     backend: 192.168.1.112:2283
