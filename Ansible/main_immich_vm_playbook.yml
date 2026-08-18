@@ -12,7 +12,9 @@
 #   - `immich.service` installé, qui refuse de lancer les conteneurs sans le
 #     montage — Immich sur un /data vide croirait les 149 Go d'originaux disparus ;
 #   - `aurel` dans adm/systemd-journal, sans quoi journalctl reste muet ;
-#   - `onboot: 1` côté hôte, sinon la VM ne remonte pas au retour du courant.
+#   - `onboot: 1` côté hôte, sinon la VM ne remonte pas au retour du courant ;
+#   - l'agent invité QEMU, pour un arrêt propre piloté par Proxmox, et le
+#     presse-papiers de la console noVNC (`clipboard=vnc`).
 #
 # Le second play cible l'HÔTE Proxmox et non la VM : `qm` n'existe que là. Il attend
 # `immich_vm_vmid` dans host_vars de l'hôte — pas de défaut, un `qm set` sur le
@@ -46,11 +48,11 @@
     - role: immich_service
       tags: [service]
 
-- name: Démarrage automatique de la VM Immich au boot de l'hôte
+- name: Réglages de la VM Immich côté hôte Proxmox
   hosts: proxmox_optiplex
   gather_facts: false
   tasks:
-    - name: Activer onboot sur la VM Immich
+    - name: Poser onboot, l'agent invité et le presse-papiers
       ansible.builtin.include_role:
         name: immich_vm
-        tasks_from: onboot.yml
+        tasks_from: host.yml
