@@ -1,4 +1,8 @@
 ---
+# Staging validé : certificats émis, challenge HTTP-01 fonctionnel sur les deux noms,
+# DSM vérifié par un login réel et non par un simple code 200. On passe en production.
+caddy_acme_staging: false
+
 # Vhosts servis par le CT.
 #
 # DSM reste sur le NAS : ce vhost traverse donc le LAN vers 192.168.1.7, là où
