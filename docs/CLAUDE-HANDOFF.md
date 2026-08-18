@@ -24,6 +24,8 @@
 2. **Freebox LAN VPN** — if it routes `192.168.1.0/24`, reach `https://192.168.1.12:8006` directly. Note the host may drop ICMP (ping fails while TCP works) — test with `nc -vz 192.168.1.12 8006`, not ping.
 3. **SSH tunnel** (fallback, confirmed working) — `ssh -L 8006:127.0.0.1:8006 aurel@82.67.182.91 -p 34343` → `https://localhost:8006`.
 
+> **Correction 2026-08-18** — the line above blaming a Freebox port-forward restriction ("< 32768") was wrong about the cause. This wasn't a box limitation or a reservation of port 443: the line was on **shared IPv4** (CGNAT), which only granted this subscriber a range of high ports and forwarded nothing below it. The switch to **full-stack IPv4** on 2026-08-18 (new public IP `82.67.182.91`, replacing `88.172.204.162`) lifted that constraint — a `WAN:443` forward now works. ⚠️ **Don't move `headscale` to 443 just because it's newly possible**: its `server_url` is baked in as `:34443` in every already-enrolled tailnet node's config, and repointing the port would drop them all.
+
 ## Update 2026-07-03 — storage fix from the NAS (page file relocation + robust hibernation)
 
 > Done from the NAS "brain" container over `run-on` (SSHFS-mounted repo), **not** from the MacBook. Syntax-checked with `ansible-playbook --syntax-check` on the MacBook; **not yet applied** to the physical machine (needs `make windows ARGS='--tags gaming_optim'` + a reboot).
