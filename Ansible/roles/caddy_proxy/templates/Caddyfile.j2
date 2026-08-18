@@ -7,7 +7,13 @@
 # nginx/DSM occupait les deux ports et imposait le 8443 plus un certificat manuel.
 
 {
-	# Pas d'API d'administration : le rôle recharge par systemctl.
+	# Pas d'API d'administration : elle est non authentifiée, et son seul bénéfice ici
+	# serait le rechargement à chaud d'un vhost ajouté rarement — trop mince pour justifier
+	# d'ouvrir une interface de reconfiguration. Conséquence directe et volontaire : le
+	# rechargement à chaud est impossible (l'`ExecReload` packagé appelle `caddy reload`,
+	# qui a besoin de cette API). Le handler du rôle (roles/caddy_proxy/handlers/main.yml)
+	# le sait et fait donc un `restart` plutôt qu'un `reload` — ne réactive pas cette API en
+	# lisant seulement ce fichier : le lien entre les deux est ici, pas ailleurs.
 	admin off
 	email {{ caddy_acme_email }}
 {% if caddy_acme_staging %}

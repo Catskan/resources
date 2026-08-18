@@ -1,8 +1,17 @@
 ---
-# `reload` et non `restart` : Caddy recharge sa configuration sans fermer les
-# connexions en cours, ce qui évite de couper un envoi vidéo en plein transfert.
+# `restart`, pas `reload` : le Caddyfile porte `admin off` (voir son commentaire) — l'API
+# admin locale n'existe donc jamais. Or l'`ExecReload` de l'unité systemd packagée
+# (`/usr/lib/systemd/system/caddy.service`, hors du contrôle de ce rôle) invoque
+# `caddy reload --config ... --force`, qui pousse la nouvelle config à travers cette même
+# API : avec `admin off`, cette commande échoue systématiquement (« connection refused » sur
+# localhost:2019). Le rechargement à chaud est donc structurellement indisponible ; `restart`
+# est le seul mécanisme qui fonctionne, puisque `ExecStart` relit le Caddyfile depuis le
+# disque à chaque démarrage du process. La coupure d'environ une seconde qui en résulte est
+# assumée : les changements de Caddyfile sont rares (ajout d'un vhost), et le client qui
+# compte — l'app Immich qui envoie des vidéos — reprend automatiquement un transfert
+# interrompu.
 - name: Recharger Caddy
   ansible.builtin.systemd_service:
     name: caddy
-    state: reloaded
+    state: restarted
   when: not ansible_check_mode
