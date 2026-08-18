@@ -727,9 +727,10 @@ Remplacer le contenu de `Ansible/inventory/host_vars/caddy/main.yml` par :
 # Vhosts servis par le CT.
 #
 # DSM reste sur le NAS : ce vhost traverse donc le LAN vers 192.168.1.7, là où
-# l'ancien proxy visait son propre loopback. `upstream_tls` et `header_up_host` sont
-# indissociables — voir le commentaire du template, qui documente le 403 Web Station
-# et le « Your login is invalid » que leur absence provoque.
+# l'ancien proxy visait son propre loopback. `upstream_tls: true` suffit : le template
+# émet `header_up Host` automatiquement dès qu'il est vrai (il n'existe pas de clé
+# `header_up_host` séparée) — voir son commentaire, qui documente le 403 Web Station
+# et le « Your login is invalid » que l'absence de ce header provoque.
 caddy_vhosts:
   - name: photos.eonelia.fr
     backend: 192.168.1.112:2283
@@ -819,8 +820,12 @@ si le certificat n'était pas reconnu, `curl` échouerait.
 
 - [ ] **Étape 4 : confirmer l'émetteur**
 
+`caddy list-certificates` n'existe pas dans la version de Caddy déployée
+(`Error: unknown command "list-certificates"`, constaté à l'exécution de cette étape —
+voir `task-4-report.md`). Lire directement l'émetteur et l'échéance des `.crt` sur disque :
+
 ```bash
-run-on auto ssh root@192.168.1.210 'caddy list-certificates 2>/dev/null | head -20'
+run-on auto ssh root@192.168.1.210 'for f in /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/*/*.crt; do echo "== $f =="; openssl x509 -noout -issuer -dates -in "$f"; done'
 ```
 
 Attendu : l'émetteur est Let's Encrypt (et non `acme-staging`), avec une échéance à
