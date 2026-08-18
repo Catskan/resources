@@ -18,3 +18,16 @@
     chdir: "{{ immich_vm_repo_dir }}"
   become: true
   changed_when: true
+
+- name: Recharger la configuration système d'Immich
+  # `up -d` ne recrée pas immich-server quand seul le CONTENU d'un fichier monté
+  # change : sa définition dans le compose est identique. Or immich-system-config.yaml
+  # n'est relu qu'au démarrage — sans ce redémarrage, un réglage poussé dans le dépôt
+  # reste sans effet, et l'API refuse de le corriger tant qu'IMMICH_CONFIG_FILE est
+  # actif. Redémarrage assumé à chaque mise à jour du dépôt : une trentaine de
+  # secondes d'interruption, contre une configuration silencieusement périmée.
+  ansible.builtin.command:
+    cmd: docker compose restart immich-server
+    chdir: "{{ immich_vm_repo_dir }}"
+  become: true
+  changed_when: true

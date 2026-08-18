@@ -122,7 +122,9 @@
     dest: "{{ immich_vm_repo_dir }}"
     version: "{{ immich_vm_repo_version }}"
     update: true
-  notify: Appliquer la mise à jour du stack
+  notify:
+    - Appliquer la mise à jour du stack
+    - Recharger la configuration système d'Immich
 
 - name: Activer et démarrer Immich au boot
   # Gardée hors --check : en dry-run l'unité n'a pas été écrite, et systemd répond
