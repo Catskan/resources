@@ -1,0 +1,6 @@
+---
+# Vhosts servis par le CT. Un seul pour le premier essai : on valide la chaîne ACME
+# avant d'y mettre le service dont dépendent deux utilisatrices non techniques.
+caddy_vhosts:
+  - name: photos.eonelia.fr
+    backend: 192.168.1.112:2283

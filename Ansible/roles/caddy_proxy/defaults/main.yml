@@ -1,0 +1,20 @@
+---
+# Reverse-proxy Caddy du CT. Contrairement au rôle immich_proxy qu'il remplace, la
+# cible est un Debian ordinaire : modules Ansible standards, pas de contrainte `raw`.
+
+# Adresse de contact ACME. Let's Encrypt s'en sert pour les avis d'expiration —
+# donc l'unique alerte si le renouvellement automatique cessait de fonctionner.
+caddy_acme_email: "a.busutil@icloud.com"
+
+# Staging par défaut. La bascule en production est un choix EXPLICITE (tâche 4) :
+# HSTS interdit tout repli si le certificat de production est mauvais.
+caddy_acme_staging: true
+caddy_acme_staging_ca: "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+# HSTS : un an. Mettre 0 pour désactiver l'en-tête pendant une investigation — un
+# navigateur ayant mémorisé HSTS refusera tout repli en HTTP sur ce domaine.
+caddy_hsts_max_age: 31536000
+
+# Liste VOLONTAIREMENT VIDE : les vhosts sont propres à l'installation et se
+# définissent dans inventory/host_vars/caddy/main.yml.
+caddy_vhosts: []

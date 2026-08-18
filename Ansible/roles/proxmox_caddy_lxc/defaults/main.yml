@@ -1,0 +1,34 @@
+---
+# CT Caddy sur l'Optiplex — reverse-proxy public de la maison.
+# Aligné sur proxmox_headscale_lxc : création via pct, idempotente, sans token API.
+
+caddy_ct_vmid: 102
+caddy_ct_hostname: caddy
+caddy_ct_template_storage: local
+caddy_ct_template: debian-13-standard_13.6-1_amd64.tar.zst
+caddy_ct_unprivileged: 1
+# Aucune fonctionnalité spéciale : Caddy est installé en paquet natif, donc ni
+# nesting (pas de Docker) ni FUSE.
+caddy_ct_features: ""
+caddy_ct_cores: 1
+# 512 Mo suffisent largement : Caddy consomme 50 à 80 Mo pour ce nombre de vhosts.
+# L'hôte n'a qu'environ 1,4 Go de marge, mais un LXC ne préalloue rien — c'est un
+# plafond cgroup, pas une réservation.
+caddy_ct_memory: 512
+caddy_ct_swap: 512
+# rootfs sur local-zfs et NON sur local : sur cet hôte ZFS est le pool principal,
+# ce qui donne les snapshots avant montée de version de Caddy. Le choix « local »
+# du Wyse était motivé par son pool thin, absent ici.
+caddy_ct_rootfs: local-zfs:4
+caddy_ct_bridge: vmbr0
+
+# IP STATIQUE obligatoire : la porte d'entrée publique ne peut pas dépendre d'un bail.
+# .210 est au-delà de la plage DHCP de la Freebox (.2 à .200).
+caddy_ct_ip: "192.168.1.210"
+caddy_ct_cidr: 24
+caddy_ct_gateway: "192.168.1.254"
+caddy_ct_nameserver: "192.168.1.254"
+
+caddy_ct_onboot: 1
+# Clé publique du contrôleur (le MacBook Air), injectée à la création.
+caddy_ct_controller_pubkey_path: "~/.ssh/id_ed25519.pub"

@@ -1,0 +1,10 @@
+# ansible_port EXPLICITE, même si 22 est le défaut SSH standard : sans lui, Ansible
+# n'ajoute aucun -p et ssh retombe sur le ~/.ssh/config du contrôleur (le Air), dont
+# le bloc Host * impose un port non standard à tous les hôtes. Résultat sans cette
+# ligne : « Connection refused » sur le port du bloc générique au lieu du 22 réel du
+# CT. Ne pas supprimer comme « valeur par défaut inutile ».
+ansible_connection: ssh
+ansible_host: 192.168.1.210
+ansible_port: 22
+ansible_user: root
+ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
