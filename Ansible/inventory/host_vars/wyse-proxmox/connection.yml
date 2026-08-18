@@ -5,7 +5,7 @@
 # ⚠️ Prérequis : la clé publique du contrôleur (Air) doit être autorisée sur le
 #    Wyse pour l'utilisateur `aurel` (comme l'est celle du M2).
 ansible_connection: ssh
-ansible_host: 88.172.204.162
+ansible_host: 82.67.182.91
 ansible_port: 34343
 ansible_user: aurel
 ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
