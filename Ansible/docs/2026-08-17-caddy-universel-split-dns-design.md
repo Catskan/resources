@@ -25,6 +25,14 @@ Cinq faits mesurés le 2026-08-17 fixent le contenu et l'ordre de ce chantier.
 manipulation toutes les six semaines : télécharger le certificat, le remettre dans
 KeePass, relancer deux rôles. Son oubli casse l'accès sans recours, HSTS oblige.
 
+**Correction du 2026-08-18 : ce cycle de 45 jours n'existe pas.** La mesure ci-dessus est
+exacte pour ce seul certificat (11 juillet → 25 août), mais en déduire un cycle de
+renouvellement de 45 jours était une extrapolation à tort depuis un unique échantillon. Le
+renouvellement effectué le 2026-08-18 a produit un certificat valable jusqu'au 22 février
+2027, soit environ 189 jours — voir la correction dans D1 et l'annexe des faits mesurés.
+Le reste du constat (renouvellement manuel, cassure sans recours sous HSTS en cas d'oubli)
+reste vrai ; seule la fréquence était fausse.
+
 **L'API DNS d'IONOS est fermée à ce contrat.** Le portail développeur affiche « API
 Programme is not yet active », et le lien d'inscription répond « This article is not
 available for your contract ». Le challenge DNS-01 est donc hors d'atteinte.
@@ -205,6 +213,14 @@ d'une dépendance à un service de délégation tiers.
 
 E est rejetée par la mesure des 45 jours : le renouvellement supposé annuel revient en
 réalité toutes les six semaines, et son oubli est sans recours sous HSTS.
+
+**Correction du 2026-08-18 : la mesure des 45 jours était une extrapolation à tort (voir
+la correction dans D1 et l'annexe des faits mesurés) — le cycle réel est d'environ 189
+jours, pas six semaines.** E reste rejetée, mais pour un motif plus faible que celui
+écrit sur le moment : un renouvellement manuel semestriel plutôt qu'aux six semaines, avec
+le même défaut structurel — un oubli reste sans recours sous HSTS, et rien dans un
+processus manuel ne garantit qu'il aura lieu à temps. Le verdict ne change pas ; l'urgence
+qui le soutenait, si.
 
 **Conséquence sur les vhosts privés :** HTTP-01 exige que chaque nom soit résolvable
 publiquement et joignable sur le 80. Les noms internes (`ha`, `dsm`, `pve`) auront donc

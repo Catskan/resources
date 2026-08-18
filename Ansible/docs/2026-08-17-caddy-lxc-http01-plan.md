@@ -64,6 +64,13 @@ tâche est indépendante du reste et ne coûte que quelques minutes.
 
 **Fichiers :** aucun. Action d'exploitation.
 
+**Note du 2026-08-18 :** cette tâche part de la prémisse que le cycle de renouvellement
+du wildcard est de 45 jours (« toutes les six semaines »). Cette prémisse était une
+extrapolation à tort depuis un seul échantillon — voir la correction dans D1 et l'annexe
+des faits mesurés du design doc. Le cycle réel constaté est d'environ 189 jours. Cette
+tâche a déjà été exécutée sur cette base ; un futur lecteur qui la rejouerait ne doit pas
+s'attendre à revenir tous les six semaines.
+
 - [ ] **Étape 1 : vérifier l'état du certificat en service**
 
 ```bash
