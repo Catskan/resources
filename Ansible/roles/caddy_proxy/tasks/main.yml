@@ -18,6 +18,35 @@
     state: present
     update_cache: true
 
+# gnupg et le répertoire des keyrings sont des PRÉ-REQUIS de la tâche « Dépôt Caddy »
+# ci-dessous, et ils portent `check_mode: false` à dessein.
+#
+# En `--check`, la tâche apt qui précède ne pose rien réellement : le binaire `gpg`
+# n'existe donc pas quand `apt_repository` (avec `signed-by=`) en a besoin pour traiter
+# la clé, et le dry-run échoue sur un CT vierge — alors que le run réel fonctionne.
+#
+# On force donc ces deux effets de bord, minimes et idempotents, pendant le dry-run, pour
+# que le reste de la simulation ait un sens. Même parti pris que roles/headscale, dont le
+# `get_url` du .deb porte la même garde pour la même raison.
+#
+# L'alternative — poser `not ansible_check_mode` sur « Dépôt Caddy » — a été ÉCARTÉE :
+# elle ferait passer le dry-run en le rendant aveugle, on perdrait le `--diff` sur l'ajout
+# du dépôt, qui est précisément ce qu'un dry-run doit montrer.
+- name: gnupg présent, même en dry-run
+  ansible.builtin.apt:
+    name: gnupg
+    state: present
+  check_mode: false
+
+- name: Répertoire des keyrings apt présent, même en dry-run
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  check_mode: false
+
 - name: Clé du dépôt Caddy
   ansible.builtin.get_url:
     url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
