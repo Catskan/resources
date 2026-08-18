@@ -24,7 +24,7 @@ immich_service_kp_field: "API Key"
 immich_service_participants:
   - name: aurelien
     kp_entry: "Proxmox Aurélien/Immich Aurélien"
-    kp_field: "API Key scripts"
+    kp_field: "API Key"
     # Borne basse de sync-faces. Large à dessein : ne coûte que du temps de requête
     # en --full-scan, à resserrer sur la plus ancienne photo du compte.
     start_date: 2020-01-01

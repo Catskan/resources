@@ -5,3 +5,13 @@
   ansible.builtin.systemd_service:
     daemon_reload: true
   become: true
+
+- name: Appliquer la mise à jour du stack
+  # `systemctl start` ne ferait rien sur un service déjà actif : un compose modifié ne
+  # serait jamais pris en compte. `up -d` recrée les seuls conteneurs qui ont changé,
+  # là où un restart de l'unité arrêterait toute la pile Immich.
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ immich_vm_repo_dir }}"
+  become: true
+  changed_when: true

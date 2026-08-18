@@ -80,6 +80,25 @@
       {{ immich_vm_nfs_path }} est monté mais {{ immich_vm_nfs_sentinel }}/ est
       introuvable. Immich démarrerait sur un /data vide — ne pas continuer.
 
+- name: Mettre le dépôt applicatif à jour sur la VM
+  # Le dépôt porte le docker-compose que l'unité lance et la configuration système
+  # d'Immich. Un clone en retard, et la machine ne ressemble pas à ce que décrit ce
+  # playbook : c'est ainsi que le service immich-custom est resté absent du compose
+  # pendant une journée sans que rien ne le signale.
+  #
+  # Sans `become` : le dépôt appartient au compte de connexion, et c'est sa clé SSH
+  # qui authentifie GitHub. Sans `force` non plus — une modification locale doit
+  # arrêter le run, pas être écrasée en silence.
+  #
+  # Placée après les réglages système : si GitHub est injoignable, les correctifs de
+  # boot ont déjà été appliqués.
+  ansible.builtin.git:
+    repo: "{{ immich_vm_repo_url }}"
+    dest: "{{ immich_vm_repo_dir }}"
+    version: "{{ immich_vm_repo_version }}"
+    update: true
+  notify: Appliquer la mise à jour du stack
+
 - name: Activer et démarrer Immich au boot
   # Gardée hors --check : en dry-run l'unité n'a pas été écrite, et systemd répond
   # « Could not find the requested service ». La sauter est plus honnête qu'un
