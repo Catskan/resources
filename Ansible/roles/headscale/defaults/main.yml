@@ -15,9 +15,36 @@ headscale_deb_url: "https://github.com/juanfont/headscale/releases/download/v{{ 
 headscale_server_url: "https://mom.eonelia.fr:34443"
 headscale_listen_addr: "0.0.0.0:34443"
 
-# TLS natif : le wildcard *.eonelia.fr est déposé depuis KeePass (voir host_vars/headscale/secrets.yml).
+# --- TLS : deux modes, sélectionnables par headscale_tls_mode -------------------
+#   - certfile (défaut, comportement actuel) : wildcard commercial *.eonelia.fr recopié
+#     depuis KeePass (voir plus bas + host_vars/headscale/secrets.yml).
+#   - acme : Let's Encrypt natif, géré par headscale lui-même (émission ET renouvellement).
+# Le défaut reste "certfile" tant que l'émission ACME n'a pas été validée en conditions
+# réelles (prérequis réseau chez la mère, voir tasks/main.yml). Le retour arrière en cas
+# d'échec ACME est un simple headscale_tls_mode: certfile + re-run : le control plane du
+# tailnet ne doit jamais dépendre d'une réécriture de code sous pression pour recouvrer TLS.
+headscale_tls_mode: "certfile" # certfile | acme
+
+# TLS natif (mode certfile) : le wildcard *.eonelia.fr est déposé depuis KeePass
+# (voir host_vars/headscale/secrets.yml). Ignorés en mode acme.
 headscale_tls_cert_path: "/etc/headscale/certs/eonelia.crt"
 headscale_tls_key_path: "/etc/headscale/certs/eonelia.key"
+
+# TLS Let's Encrypt natif (mode acme, headscale v0.29.2). Exclusif de tls_cert_path/
+# tls_key_path ci-dessus — headscale refuse de démarrer si les deux jeux d'options sont
+# posés en même temps (voir tasks/main.yml et templates/config.yaml.j2).
+# Défaut STAGING : une émission ratée en production consomme un quota Let's Encrypt limité
+# (échecs/certificats dupliqués par semaine), et une boucle de tentatives le brûle pour
+# plusieurs jours. Basculer en prod (https://acme-v02.api.letsencrypt.org/directory) est un
+# choix explicite, jamais le défaut.
+headscale_acme_url: "https://acme-staging-v02.api.letsencrypt.org/directory"
+headscale_acme_email: "" # à renseigner avant de passer headscale_tls_mode à "acme"
+# Nom public pour lequel émettre le certificat. Doit correspondre au host de
+# headscale_server_url (sans le port) et résoudre vers l'IP publique de la Freebox mère.
+headscale_tls_letsencrypt_hostname: "mom.eonelia.fr"
+headscale_tls_letsencrypt_cache_dir: "/var/lib/headscale/cache"
+# TLS-ALPN-01, pas HTTP-01 : voir le commentaire détaillé dans tasks/main.yml.
+headscale_tls_letsencrypt_challenge_type: "TLS-ALPN-01"
 
 # MagicDNS : suffixe interne du tailnet (DOIT différer du domaine de server_url).
 headscale_base_domain: "ts.eonelia.fr"

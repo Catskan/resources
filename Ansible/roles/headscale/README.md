@@ -69,6 +69,97 @@ make headscale                                 # run complet : + tun CT101 + cli
 
 Puis rattacher le Mac (étape 4.3) et mettre son `100.x` dans `hosts.json`.
 
+## 6. Mode TLS : `certfile` (défaut) vs `acme` (Let's Encrypt natif)
+
+Le rôle sait poser TLS de deux façons, sélectionnées par `headscale_tls_mode`
+(`roles/headscale/defaults/main.yml`) :
+
+| Mode                    | Ce qu'il fait                                                         | Statut                |
+| ----------------------- | --------------------------------------------------------------------- | --------------------- |
+| `certfile` (**défaut**) | wildcard commercial `*.eonelia.fr` recopié depuis KeePass (section 3) | comportement actuel   |
+| `acme`                  | headscale émet/renouvelle lui-même via Let's Encrypt (TLS-ALPN-01)    | préparé, PAS appliqué |
+
+Les deux mécaniques coexistent dans le rôle : passer de l'un à l'autre est un
+changement de variable + un run, jamais une réécriture de code.
+
+### Pourquoi TLS-ALPN-01 (et pas HTTP-01)
+
+- **TLS-ALPN-01** : le challenge est répondu directement sur le listener TLS que
+  headscale a déjà ouvert (`headscale_listen_addr`). Aucun port 80 à exposer sur
+  un réseau tiers (chez la mère), aucun service supplémentaire à faire tourner.
+- **HTTP-01** aurait exigé un listener `:http` dédié (`tls_letsencrypt_listen`
+  dans la config headscale) — donc un port 80 en plus du 34443/443 déjà en jeu.
+  Pas retenu.
+
+### Prérequis réseau — À FAIRE À LA MAIN avant de basculer en `acme`
+
+1. **Redirection `WAN:443 → CT:34443` sur la Freebox de la mère.** Let's Encrypt
+   se connecte systématiquement sur le port **443** de `mom.eonelia.fr` (fixe,
+   non configurable côté protocole ACME) — **la redirection existante du 34443
+   ne suffit pas**, elle ne couvre que le trafic tailnet normal, pas la
+   validation ACME qui arrive sur 443.
+   ⚠️ Ce même document et `defaults/main.yml` rappellent déjà que « la Freebox
+   mère interdit les redirections sur port < 32768 (443 réservé à Freebox OS) » —
+   c'est justement pourquoi headscale écoute sur 34443 aujourd'hui. **Vérifier
+   concrètement, avant de committer sur ce mode, que l'interface de la Freebox
+   accepte une règle avec 443 en port WAN.** Si ce n'est pas possible, le mode
+   `acme` est bloqué par le matériel réseau, indépendamment de ce rôle.
+2. **Réservation DHCP du CT headscale (VMID 102), pas encore posée.**
+   `inventory/host_vars/headscale/connection.yml` documente déjà que
+   `ansible_host: 192.168.1.168` est une IP **DHCP** et attend cette réservation.
+   Rediriger le port 443 vers une IP qui peut bouger casse le **renouvellement**
+   en silence : headscale continue de servir l'ancien certificat jusqu'à son
+   expiration, puis la panne TLS apparaît **~60 jours plus tard**, sans lien
+   apparent avec sa cause réelle. La réservation DHCP est un **prérequis** du
+   mode `acme`, pas un confort.
+
+### Variables (`roles/headscale/defaults/main.yml`)
+
+```yaml
+headscale_tls_mode: "certfile" # certfile | acme
+
+headscale_acme_url: "https://acme-staging-v02.api.letsencrypt.org/directory" # staging par défaut
+headscale_acme_email: "" # à renseigner avant de passer en acme
+headscale_tls_letsencrypt_hostname: "mom.eonelia.fr"
+headscale_tls_letsencrypt_cache_dir: "/var/lib/headscale/cache"
+headscale_tls_letsencrypt_challenge_type: "TLS-ALPN-01"
+```
+
+Le **staging** Let's Encrypt (`acme-staging-v02`) est le défaut : une émission
+ratée en **production** consomme un quota limité (échecs / certificats dupliqués
+par semaine), et une boucle de tentatives le brûle pour plusieurs jours. Passer
+en prod (`https://acme-v02.api.letsencrypt.org/directory`) est un choix
+explicite — jamais automatique.
+
+### Procédure d'application (quand les 2 prérequis réseau ci-dessus sont posés)
+
+```bash
+# 1. Poser la réservation DHCP + le port-forward WAN:443 → CT:34443 sur la Freebox mère.
+# 2. Renseigner headscale_acme_email (host_vars/headscale ou defaults).
+# 3. headscale_tls_mode: acme reste sur le staging LE par défaut → valider que le
+#    certificat staging est bien émis et que headscale redémarre proprement :
+make headscale ARGS='--limit headscale_hosts'
+# 4. Une fois le staging validé, passer headscale_acme_url en prod et re-run :
+#    headscale_acme_url: "https://acme-v02.api.letsencrypt.org/directory"
+make headscale ARGS='--limit headscale_hosts'
+```
+
+### Repli vers `certfile`
+
+Le mode `certfile` reste le chemin de repli — **rien n'a été supprimé** de la
+mécanique existante (wildcard KeePass, section 3 ci-dessus). En cas de problème
+avec l'émission ACME (quota épuisé, redirection Freebox impossible à poser,
+renouvellement en échec) :
+
+```yaml
+headscale_tls_mode: "certfile" # dans defaults/main.yml ou en override host_vars
+```
+
+puis `make headscale ARGS='--limit headscale_hosts'`. Le rôle re-dépose le
+wildcard KeePass (toujours utilisable — `secrets.yml` n'a pas été touché) et
+retemplate `config.yaml` avec `tls_cert_path`/`tls_key_path`. Aucune étape
+manuelle supplémentaire : c'est le but de garder les deux mécaniques en place.
+
 ## Prérequis / notes
 
 - Collection **`viczem.keepass`** déjà utilisée par le repo (secrets).
