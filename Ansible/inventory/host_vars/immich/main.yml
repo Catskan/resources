@@ -16,7 +16,6 @@ immich_service_album_id: 5ff4ffcc-5d56-4aad-be54-4fa884a292d6
 
 # Compte de service « Famille », propriétaire de l'album. Sa clé n'est lue que par
 # process-removals, mais le schéma la rend obligatoire.
-# ⚠️ À CONFIRMER : entrée et champ personnalisé exacts dans le coffre.
 immich_service_kp_entry: "Proxmox Aurélien/Immich Famille"
 immich_service_kp_field: "API Key"
 
