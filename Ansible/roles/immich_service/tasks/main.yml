@@ -18,6 +18,12 @@
       immich_service_album_id, immich_service_kp_entry et immich_service_participants
       doivent être définis dans inventory/host_vars/{{ inventory_hostname }}/main.yml.
 
+- name: Vérifier si le répertoire de données existe déjà
+  # Sert uniquement à décider si le dépôt de config.yaml est jouable en --check.
+  ansible.builtin.stat:
+    path: "{{ immich_service_data_dir }}"
+  register: immich_service_data_stat
+
 - name: Créer le répertoire de données du service
   # Monté sur /data par le docker-compose : il porte config.yaml et state.json, hors
   # de l'image pour survivre à un rebuild.
@@ -38,3 +44,7 @@
     mode: "0600"
   become: true
   no_log: true
+  # En --check, le répertoire n'est pas créé s'il manque, et le template échouerait
+  # sur un parent inexistant. Le cas ne se présente qu'avant le premier run réel :
+  # ensuite le dry-run redevient complet, plutôt qu'aveugle en permanence.
+  when: not ansible_check_mode or immich_service_data_stat.stat.exists

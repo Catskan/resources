@@ -24,6 +24,12 @@
 # Ne pas confondre avec `main_immich_playbook.yml`, qui déploie le reverse-proxy TLS
 # devant Immich : celui-ci configure la machine qui l'héberge.
 #
+# ⚠️ Le PREMIER passage doit être réel, pas un --check : deux tâches dépendent de
+#    fichiers que le dry-run n'écrit pas — l'unité systemd, qu'on ne peut activer
+#    avant qu'elle existe, et data/config.yaml, dont le répertoire parent est créé
+#    juste avant. Les deux sont gardées par `not ansible_check_mode` ; une fois le
+#    run réel passé, le --check redevient complet.
+#
 # make immich-vm                        → réglages VM + service + démarrage auto
 # make check-immich-vm                  → dry-run (--check --diff)
 # make immich-vm ARGS='--tags service'  → régénère seulement data/config.yaml

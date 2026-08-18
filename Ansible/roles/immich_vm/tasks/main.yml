@@ -81,8 +81,12 @@
       introuvable. Immich démarrerait sur un /data vide — ne pas continuer.
 
 - name: Activer et démarrer Immich au boot
+  # Gardée hors --check : en dry-run l'unité n'a pas été écrite, et systemd répond
+  # « Could not find the requested service ». La sauter est plus honnête qu'un
+  # check_mode: false, qui lancerait réellement les conteneurs pendant un dry-run.
   ansible.builtin.systemd_service:
     name: immich.service
     enabled: true
     state: started
   become: true
+  when: not ansible_check_mode
