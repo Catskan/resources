@@ -82,8 +82,12 @@ Attendu : `subject=CN = *.eonelia.fr`, `issuer=… Sectigo …`, `notAfter=Aug 2
 
 - [ ] **Étape 2 : vérifier chez IONOS si le renouvellement est automatique**
 
-Espace client IONOS → certificats SSL. Sa durée de 45 jours suggère un renouvellement
-automatique. Noter si un nouveau certificat est déjà disponible.
+Espace client IONOS → certificats SSL. La durée de 45 jours de ce certificat avait été
+lue comme le cycle nominal de renouvellement ; c'était une extrapolation à tort depuis un
+seul échantillon (voir la correction dans D1 et l'annexe du design doc). Vérifier malgré
+tout, dans le panneau IONOS, si le renouvellement y est indiqué comme automatique — c'est
+ce panneau qui tranche, pas la durée d'un échantillon. Noter si un nouveau certificat est
+déjà disponible.
 
 - [ ] **Étape 3 : rafraîchir l'entrée KeePass**
 
@@ -114,7 +118,10 @@ echo | openssl s_client -servername mom.eonelia.fr -connect mom.eonelia.fr:34443
   | openssl x509 -noout -enddate
 ```
 
-Attendu : les trois `notAfter` repoussés d'environ 45 jours.
+Attendu : les trois `notAfter` repoussés au-delà de leur valeur précédente — pas
+forcément d'environ 45 jours : cette figure venait d'une extrapolation à tort (voir la
+correction dans D1 et l'annexe du design doc), et la durée exacte dépend du cycle réel du
+fournisseur. Le critère est le sens du mouvement, pas un nombre de jours fixe.
 
 ---
 
