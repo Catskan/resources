@@ -1,0 +1,29 @@
+---
+# Service `immich-custom` : ses quatre tâches tournent en conteneur sur la VM Immich,
+# planifiées par cron dans l'image. Ce rôle ne déploie que sa configuration —
+# le conteneur lui-même est lancé par le docker-compose du dépôt, via immich.service.
+#
+# `config.yaml` porte les trois clés API : c'est le secret le plus sensible du
+# dispositif. Il n'est écrit qu'ici, en 0600, et jamais versionné : les clés sont lues
+# dans KeePass au moment du rendu.
+
+immich_service_repo_dir: /home/aurel/immich-custom
+immich_service_user: aurel
+
+# Le docker-compose monte ./data sur /data ; le crontab de l'image y fait `cd /data`.
+immich_service_data_dir: "{{ immich_service_repo_dir }}/data"
+
+# L'API vue depuis le conteneur du service, sur le réseau de la VM.
+immich_service_base_url: http://192.168.1.112:2283/api
+
+# Réglages des tâches — cf. §3.2 et §4.1 de la note de conception.
+immich_service_sliding_window_days: 30
+immich_service_removal_marker: "/retirer"
+immich_service_max_pairs_per_pass: 50
+# archive : le doublon sort des timelines mais occupe toujours le disque.
+# trash   : il part en outre à la corbeille de son propriétaire — destructif (§4.2).
+immich_service_on_duplicate: archive
+
+# Album et participants n'ont volontairement PAS de défaut : ce sont les identifiants
+# d'une instance précise, et un défaut hérité par erreur verserait des photos dans le
+# mauvais album. Ils vivent dans inventory/host_vars/immich/main.yml.

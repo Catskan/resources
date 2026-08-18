@@ -24,14 +24,21 @@
 # Ne pas confondre avec `main_immich_playbook.yml`, qui déploie le reverse-proxy TLS
 # devant Immich : celui-ci configure la machine qui l'héberge.
 #
-# make immich-vm        → réglages VM + démarrage automatique
-# make check-immich-vm  → dry-run (--check --diff)
+# make immich-vm                        → réglages VM + service + démarrage auto
+# make check-immich-vm                  → dry-run (--check --diff)
+# make immich-vm ARGS='--tags service'  → régénère seulement data/config.yaml
+# make immich-vm ARGS='--tags system'   → seulement les réglages système
 
 - name: Réglages système de la VM Immich
   hosts: immich_hosts
   gather_facts: true
   roles:
     - role: immich_vm
+      tags: [system]
+    # Configuration du service de ce dépôt : data/config.yaml, avec les clés lues
+    # dans KeePass. Après immich_vm, dont l'unité systemd lance le conteneur.
+    - role: immich_service
+      tags: [service]
 
 - name: Démarrage automatique de la VM Immich au boot de l'hôte
   hosts: proxmox_optiplex

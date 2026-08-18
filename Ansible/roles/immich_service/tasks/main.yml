@@ -1,0 +1,40 @@
+---
+# Configuration du service immich-custom sur la VM Immich.
+#
+# Le fichier rendu porte les trois clés API. Deux précautions le concernent : il n'est
+# lisible que par son propriétaire, et son contenu n'apparaît dans aucun journal
+# Ansible (`no_log`) — un `--diff` afficherait sinon les clés en clair.
+
+- name: Exiger les identifiants de l'instance
+  # Pas de défaut côté rôle pour l'album ni les participants : un identifiant hérité
+  # par erreur verserait des photos dans le mauvais album partagé.
+  ansible.builtin.assert:
+    that:
+      - immich_service_album_id is defined
+      - immich_service_participants is defined
+      - immich_service_participants | length > 0
+      - immich_service_kp_entry is defined
+    fail_msg: >-
+      immich_service_album_id, immich_service_kp_entry et immich_service_participants
+      doivent être définis dans inventory/host_vars/{{ inventory_hostname }}/main.yml.
+
+- name: Créer le répertoire de données du service
+  # Monté sur /data par le docker-compose : il porte config.yaml et state.json, hors
+  # de l'image pour survivre à un rebuild.
+  ansible.builtin.file:
+    path: "{{ immich_service_data_dir }}"
+    state: directory
+    owner: "{{ immich_service_user }}"
+    group: "{{ immich_service_user }}"
+    mode: "0750"
+  become: true
+
+- name: Déposer la configuration du service
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ immich_service_data_dir }}/config.yaml"
+    owner: "{{ immich_service_user }}"
+    group: "{{ immich_service_user }}"
+    mode: "0600"
+  become: true
+  no_log: true

@@ -1,0 +1,36 @@
+# {{ ansible_managed }}
+# Source : roles/immich_service/templates/config.yaml.j2 — ne pas éditer sur la VM.
+#
+# Porte les clés API des trois bibliothèques, lues dans KeePass au rendu. Droits 0600,
+# hors de tout dépôt. Le perdre n'est pas grave : ce fichier se régénère par
+# `make immich-vm`. Perdre state.json non plus, mais les photos retirées du pool y
+# reviendraient.
+
+base_url: {{ immich_service_base_url }}
+
+album_id: {{ immich_service_album_id }}
+service_api_key: {{ lookup('viczem.keepass.keepass', immich_service_kp_entry, 'custom_properties', immich_service_kp_field) }}
+
+sliding_window_days: {{ immich_service_sliding_window_days }}
+removal_marker: "{{ immich_service_removal_marker }}"
+max_pairs_per_pass: {{ immich_service_max_pairs_per_pass }}
+on_duplicate: {{ immich_service_on_duplicate }}
+
+participants:
+{% for p in immich_service_participants %}
+  - name: {{ p.name }}
+    api_key: {{ lookup('viczem.keepass.keepass', p.kp_entry, 'custom_properties', p.kp_field) }}
+    start_date: {{ p.start_date }}
+    person_ids:
+{% for person in p.person_ids %}
+      - {{ person.id }}{{ '   # ' ~ person.label if person.label is defined else '' }}
+{% endfor %}
+{% if p.private_tag_id is defined %}
+    private_tag_id: {{ p.private_tag_id }}
+{% endif %}
+{% endfor %}
+
+couple:
+{% for name in immich_service_couple %}
+  - {{ name }}
+{% endfor %}

@@ -8,3 +8,50 @@ ansible_user: aurel
 # port non standard à tous les hôtes ; OpenSSH — donc Ansible — en hérite et la
 # connexion échoue sur un « Connection refused » trompeur.
 ansible_port: 22
+
+# --- Service immich-custom (rôle immich_service) -----------------------------------
+# Identifiants de CETTE instance : le rôle n'en a volontairement aucun défaut, un
+# album hérité par erreur verserait les photos au mauvais endroit.
+immich_service_album_id: 5ff4ffcc-5d56-4aad-be54-4fa884a292d6
+
+# Compte de service « Famille », propriétaire de l'album. Sa clé n'est lue que par
+# process-removals, mais le schéma la rend obligatoire.
+# ⚠️ À CONFIRMER : entrée et champ personnalisé exacts dans le coffre.
+immich_service_kp_entry: "Proxmox Aurélien/Immich Famille"
+immich_service_kp_field: "API Key"
+
+# Les clés API vivent dans des champs personnalisés KeePass, dont le nom diffère d'une
+# entrée à l'autre — d'où kp_field par participant plutôt qu'une convention globale.
+immich_service_participants:
+  - name: aurelien
+    kp_entry: "Proxmox Aurélien/Immich Aurélien"
+    kp_field: "API Key scripts"
+    # Borne basse de sync-faces. Large à dessein : ne coûte que du temps de requête
+    # en --full-scan, à resserrer sur la plus ancienne photo du compte.
+    start_date: 2020-01-01
+    person_ids:
+      - id: 14d6358c-1a2e-4efb-bba9-5be8b2d8f71d
+        label: Alba (16 visages)
+    private_tag_id: 3ca93e0c-11ae-4fde-9fba-c7dfa1cbc93d
+
+  - name: amandine
+    kp_entry: "Proxmox Aurélien/Immich Amandine"
+    kp_field: "API Key"
+    start_date: 2020-01-01
+    person_ids:
+      - id: 55305b40-3c09-499e-9886-80de50a40ac7
+        label: Alba (2257 visages)
+    private_tag_id: c49153a9-5029-405e-b8ec-8467d405b02b
+
+# La recherche par personnes est une UNION : n'ajouter Aurélien, Amandine, Maman ou
+# Geneviève que délibérément — toute photo où la personne figure seule irait au pool.
+#   aurelien : f714d9a1-e970-4e9c-8922-0d7425785a09  Aurélien (6)
+#   amandine : 7eb668d8-b67d-4daf-b7fd-d1485c208421  Aurélien (538)
+#              569e188b-a18b-44d7-8ae0-e55e0aef49b3  Amandine (655)
+#              2745d188-baee-42d7-a4e4-78208eecc0e1  Maman (101)
+#              78db628c-83fb-4658-940f-ea294ab2be8d  Geneviève (37)
+
+# Périmètre de dedupe-couple : exactement deux participants, ou vide.
+immich_service_couple:
+  - aurelien
+  - amandine
