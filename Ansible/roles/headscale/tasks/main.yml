@@ -33,109 +33,36 @@
         deb: "/tmp/headscale_{{ headscale_version }}.deb"
       notify: Restart headscale
 
-# --- TLS wildcard *.eonelia.fr (attachments KeePass, via host_vars/headscale/secrets.yml) ---
-# Mode certfile UNIQUEMENT (headscale_tls_mode, defaults/main.yml) — le repli en cas de
-# problème ACME. Ne rien supprimer ici : c'est le chemin de retour arrière.
-# viczem.keepass écrit chaque attachment dans un fichier temp (contrôleur) et retourne son
-# CHEMIN → on copie ces fichiers sur le CT, on normalise en PEM (.cer = PEM ou DER selon la CA),
-# et on assemble la fullchain feuille+int1+int2. Restart headscale seulement si le contenu change.
-- name: TLS wildcard commercial (mode certfile)
-  when: headscale_tls_mode == "certfile"
-  block:
-    - name: Créer les dossiers de certificats
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-        owner: headscale
-        group: headscale
-        mode: "0750"
-      loop:
-        - "{{ headscale_tls_cert_path | dirname }}"
-        - "{{ headscale_tls_cert_path | dirname }}/src"
-
-    - name: Copier les 4 fichiers du wildcard vers le CT
-      ansible.builtin.copy:
-        src: "{{ item.src }}"
-        dest: "{{ headscale_tls_cert_path | dirname }}/src/{{ item.name }}"
-        owner: headscale
-        group: headscale
-        mode: "0640"
-      loop:
-        - { src: "{{ hs_att_leaf }}", name: leaf.cer }
-        - { src: "{{ hs_att_int1 }}", name: int1.cer }
-        - { src: "{{ hs_att_int2 }}", name: int2.cer }
-        - { src: "{{ hs_att_key }}", name: privkey.key }
-      loop_control:
-        label: "{{ item.name }}"
-      no_log: true
-
-    - name: Normaliser en PEM + assembler la fullchain (feuille + int1 + int2)
-      ansible.builtin.shell: |
-        set -e
-        d="{{ headscale_tls_cert_path | dirname }}"; s="$d/src"
-        for f in leaf int1 int2; do
-          openssl x509 -in "$s/$f.cer" -out "$s/$f.pem" 2>/dev/null \
-            || openssl x509 -inform DER -in "$s/$f.cer" -out "$s/$f.pem"
-        done
-        cat "$s/leaf.pem" "$s/int1.pem" "$s/int2.pem" > "$s/fullchain.pem"
-        changed=no
-        if ! cmp -s "$s/fullchain.pem" "{{ headscale_tls_cert_path }}" 2>/dev/null; then
-          install -o headscale -g headscale -m 0644 "$s/fullchain.pem" "{{ headscale_tls_cert_path }}"; changed=yes
-        fi
-        if ! cmp -s "$s/privkey.key" "{{ headscale_tls_key_path }}" 2>/dev/null; then
-          install -o headscale -g headscale -m 0640 "$s/privkey.key" "{{ headscale_tls_key_path }}"; changed=yes
-        fi
-        rm -rf "$s"
-        echo "changed=$changed"
-      register: hs_tls_assemble
-      changed_when: "'changed=yes' in hs_tls_assemble.stdout"
-      no_log: true
-      notify: Restart headscale
-
-# --- TLS Let's Encrypt natif (mode acme, headscale v0.29.2) ---------------------
-# TLS-ALPN-01 plutôt que HTTP-01 : le challenge est répondu directement sur le listener
-# TLS déjà ouvert par headscale (headscale_listen_addr) — pas de port 80 à exposer sur un
-# réseau tiers, pas de service supplémentaire (contrairement à HTTP-01, qui a besoin d'un
-# listener :http dédié via tls_letsencrypt_listen).
+# --- TLS : voir tasks/tls_certfile.yml et tasks/tls_acme.yml -------------------
+# Chacun des deux modes (headscale_tls_mode, defaults/main.yml) vit dans son propre
+# fichier, inclus CONDITIONNELLEMENT via include_tasks — jamais via un simple
+# `block: ... when:`, malgré la tentation de tout regrouper dans ce seul fichier.
 #
-# Prérequis RÉSEAU (à poser À LA MAIN chez la mère, hors Ansible — jamais exécuté par ce rôle) :
-#   1. Let's Encrypt se connecte à mom.eonelia.fr:443 (port 443 fixe côté protocole ACME,
-#      non négociable) → il faut une redirection WAN:443 → CT:34443 sur la Freebox de la mère.
-#      La redirection existante du 34443 (cf. README) ne suffit pas : elle ne couvre que le
-#      trafic tailnet normal, pas la validation ACME qui arrive sur 443.
-#      ⚠️ Le rôle proxmox_headscale_lxc et ce rôle documentent déjà que « la Freebox mère
-#      interdit les redirections sur port < 32768 » pour le port WAN choisi côté 34443 —
-#      vérifier concrètement, avant de basculer en acme, que l'interface de la Freebox
-#      accepte bien une règle avec 443 en port WAN (443 est par ailleurs réservé à Freebox
-#      OS sur certains modèles). Si ce n'est pas possible, le mode acme est bloqué par le
-#      matériel réseau, indépendamment de ce rôle.
-#   2. inventory/host_vars/headscale/connection.yml : ansible_host du CT (192.168.1.168) est
-#      une IP DHCP — la note « réservation DHCP à poser » y est déjà présente. TANT QUE cette
-#      réservation n'est pas posée, ne PAS router le port-forward 443 vers cette IP : le bail
-#      DHCP peut changer, la redirection pointerait alors dans le vide, le RENOUVELLEMENT
-#      Let's Encrypt échouerait en silence (pas d'alerte immédiate — headscale continue de
-#      servir l'ancien certificat jusqu'à son expiration), et la panne TLS n'apparaîtrait que
-#      ~60 jours plus tard, sans lien apparent avec sa cause réelle. La réservation DHCP est
-#      un PRÉREQUIS du mode acme, pas un confort.
-- name: TLS Let's Encrypt natif (mode acme)
-  when: headscale_tls_mode == "acme"
-  block:
-    - name: Vérifier que acme_email et le hostname Let's Encrypt sont renseignés
-      ansible.builtin.assert:
-        that:
-          - headscale_acme_email | length > 0
-          - headscale_tls_letsencrypt_hostname | length > 0
-        fail_msg: >-
-          headscale_tls_mode=acme nécessite headscale_acme_email et
-          headscale_tls_letsencrypt_hostname non vides (defaults/main.yml ou host_vars).
+# RAISON (piège vécu en dry-run réel, pas théorique) : le bloc certfile a un `loop:`
+# dont les éléments référencent {{ hs_att_leaf }}, {{ hs_att_int1 }}, etc. — des
+# lookups KeePass (host_vars/headscale/secrets.yml). Pour itérer un `loop`, Ansible
+# construit la LISTE ENTIÈRE avant d'évaluer le `when` du bloc/de la tâche : les
+# lookups sont donc résolus MÊME quand headscale_tls_mode != "certfile", et échouent
+# faute de mot de passe maître KeePass — masqué par `no_log: true` ("censored" au lieu
+# du vrai message). `ansible-inventory` laisse croire le contraire (templating
+# paresseux au niveau inventaire), mais l'exécution d'un `loop` ne l'est pas. Le bug
+# reste invisible tant qu'on passe systématiquement par `make headscale` (scripts/run.sh
+# fournit toujours KEEPASS_PSW) — il n'apparaît qu'en dry-run SANS run.sh.
+# `include_tasks` (dynamique, PAS `import_tasks`) est la seule construction qui
+# n'évalue RIEN du fichier inclus quand sa condition est fausse : le fichier n'est
+# même pas chargé, ses tâches (et leurs loops/lookups) ne sont jamais templatées.
+# Le bloc acme n'a pas ce piège aujourd'hui (pas de loop sur lookup), mais il est
+# traité pareil, par symétrie — que personne ne "simplifie" en revenant à un
+# block+when sans relire ce commentaire.
+- name: TLS wildcard commercial (mode certfile)
+  ansible.builtin.include_tasks:
+    file: tls_certfile.yml
+  when: headscale_tls_mode == "certfile"
 
-    - name: Créer le cache Let's Encrypt (StateDirectory=headscale, cf. unit systemd)
-      ansible.builtin.file:
-        path: "{{ headscale_tls_letsencrypt_cache_dir }}"
-        state: directory
-        owner: headscale
-        group: headscale
-        mode: "0750"
+- name: TLS Let's Encrypt natif (mode acme)
+  ansible.builtin.include_tasks:
+    file: tls_acme.yml
+  when: headscale_tls_mode == "acme"
 
 # --- Configuration --------------------------------------------------------------
 - name: Templater /etc/headscale/config.yaml

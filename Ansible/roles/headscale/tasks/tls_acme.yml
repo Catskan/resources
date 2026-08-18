@@ -1,0 +1,49 @@
+---
+# TLS Let's Encrypt natif (mode acme, headscale v0.29.2).
+# TLS-ALPN-01 plutôt que HTTP-01 : le challenge est répondu directement sur le listener
+# TLS déjà ouvert par headscale (headscale_listen_addr) — pas de port 80 à exposer sur un
+# réseau tiers, pas de service supplémentaire (contrairement à HTTP-01, qui a besoin d'un
+# listener :http dédié via tls_letsencrypt_listen).
+#
+# Prérequis RÉSEAU (à poser À LA MAIN chez la mère, hors Ansible — jamais exécuté par ce rôle) :
+#   1. Let's Encrypt se connecte à mom.eonelia.fr:443 (port 443 fixe côté protocole ACME,
+#      non négociable) → il faut une redirection WAN:443 → CT:34443 sur la Freebox de la mère.
+#      La redirection existante du 34443 (cf. README) ne suffit pas : elle ne couvre que le
+#      trafic tailnet normal, pas la validation ACME qui arrive sur 443.
+#      ⚠️ Le rôle proxmox_headscale_lxc et ce rôle documentent déjà que « la Freebox mère
+#      interdit les redirections sur port < 32768 » pour le port WAN choisi côté 34443 —
+#      vérifier concrètement, avant de basculer en acme, que l'interface de la Freebox
+#      accepte bien une règle avec 443 en port WAN (443 est par ailleurs réservé à Freebox
+#      OS sur certains modèles). Si ce n'est pas possible, le mode acme est bloqué par le
+#      matériel réseau, indépendamment de ce rôle.
+#   2. inventory/host_vars/headscale/connection.yml : ansible_host du CT (192.168.1.168) est
+#      une IP DHCP — la note « réservation DHCP à poser » y est déjà présente. TANT QUE cette
+#      réservation n'est pas posée, ne PAS router le port-forward 443 vers cette IP : le bail
+#      DHCP peut changer, la redirection pointerait alors dans le vide, le RENOUVELLEMENT
+#      Let's Encrypt échouerait en silence (pas d'alerte immédiate — headscale continue de
+#      servir l'ancien certificat jusqu'à son expiration), et la panne TLS n'apparaîtrait que
+#      ~60 jours plus tard, sans lien apparent avec sa cause réelle. La réservation DHCP est
+#      un PRÉREQUIS du mode acme, pas un confort.
+#
+# Fichier inclus CONDITIONNELLEMENT depuis main.yml (include_tasks, pas block+when), par
+# symétrie avec tls_certfile.yml : ce bloc n'a pas de loop sur des lookups coûteux
+# aujourd'hui, mais le garder en include_tasks évite qu'un futur ajout (ex: boucle sur
+# plusieurs domaines/lookups) ne retombe silencieusement dans le même piège que celui
+# documenté dans main.yml pour le mode certfile (loop qui force l'évaluation des éléments
+# avant le when).
+- name: Vérifier que acme_email et le hostname Let's Encrypt sont renseignés
+  ansible.builtin.assert:
+    that:
+      - headscale_acme_email | length > 0
+      - headscale_tls_letsencrypt_hostname | length > 0
+    fail_msg: >-
+      headscale_tls_mode=acme nécessite headscale_acme_email et
+      headscale_tls_letsencrypt_hostname non vides (defaults/main.yml ou host_vars).
+
+- name: Créer le cache Let's Encrypt (StateDirectory=headscale, cf. unit systemd)
+  ansible.builtin.file:
+    path: "{{ headscale_tls_letsencrypt_cache_dir }}"
+    state: directory
+    owner: headscale
+    group: headscale
+    mode: "0750"
