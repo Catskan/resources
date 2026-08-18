@@ -20,7 +20,10 @@ fi
 # qui refusent de fork() côté Python 3.x.
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
-export KEEPASS_LOCATION="${KEEPASS_LOCATION:-/Volumes/home/Drive/Vault/Aurel-vault.kdbx}"
+# Partage SMB du NAS monté sur le contrôleur. L'ancien défaut
+# (/Volumes/home/Drive/Vault) pointait un montage qui n'existe plus : run.sh
+# sortait alors sur « KeePass DB introuvable » avant toute exécution.
+export KEEPASS_LOCATION="${KEEPASS_LOCATION:-/Volumes/Aurelien/Vault/Aurel-vault.kdbx}"
 
 if [[ ! -f "$KEEPASS_LOCATION" ]]; then
   echo "KeePass DB introuvable : $KEEPASS_LOCATION" >&2
