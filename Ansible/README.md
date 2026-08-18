@@ -1,6 +1,6 @@
 # Ansible
 
-Configuration automatisée des machines persos, lancée **depuis le MacBook contrôleur**. Secrets dans une base KeePass sur le NAS Synology (`/Volumes/home/Drive/Vault/Aurel-vault.kdbx` par défaut — le partage SMB `home` doit être monté), master password prompté à chaque run. Override via `KEEPASS_LOCATION` pour pointer une copie locale.
+Configuration automatisée des machines persos, lancée **depuis le MacBook contrôleur**. Secrets dans une base KeePass sur le NAS Synology (`/Volumes/Aurelien/Vault/Aurel-vault.kdbx` par défaut — le partage SMB `Aurelien` doit être monté), master password prompté à chaque run. Override via `KEEPASS_LOCATION` pour pointer une autre base. ⚠️ Plusieurs copies de ce `.kdbx` traînent sur le NAS ; seule celle-ci est tenue à jour — voir le commentaire de `scripts/run.sh`.
 
 Plus de pipeline cloud : ni AWS, ni Vagrant, ni container Debian-Ansible. Seul reste un workflow GitHub Actions de lint (`.github/workflows/ansible-lint.yml`, yamllint + ansible-lint). Tous les runs tournent en local.
 
