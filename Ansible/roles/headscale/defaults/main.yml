@@ -6,8 +6,12 @@ headscale_arch: amd64
 headscale_deb_url: "https://github.com/juanfont/headscale/releases/download/v{{ headscale_version }}/headscale_{{ headscale_version }}_linux_{{ headscale_arch }}.deb"
 
 # Endpoint public (résolu en DynDNS vers le WAN de la mère, cf. rôle ci-dessous).
-# Port haut (> 32768) : la Freebox mère interdit les redirections sur port < 32768
-# (443 réservé à Freebox OS). headscale écoute donc sur ce port, local ET public.
+# Port 34443 conservé pour des raisons historiques : l'abonnement était en IPv4
+# partagée (plage de ports > 32768 seulement, aucune redirection possible sous ce
+# seuil — pas une limitation de la box, pas une réservation du port 443). Depuis
+# le passage en IPv4 full-stack (2026-08-18), cette contrainte a disparu.
+# ⚠️ NE PAS migrer vers 443 pour autant : le server_url en :34443 est inscrit
+# dans la config de chaque nœud déjà enrôlé, changer de port les décrocherait tous.
 headscale_server_url: "https://mom.eonelia.fr:34443"
 headscale_listen_addr: "0.0.0.0:34443"
 
@@ -29,4 +33,4 @@ headscale_preauthkey_expiration: "87600h" # ~10 ans
 
 
 # NB : pas de DynDNS — la Freebox de la mère a une IP publique FIXE.
-# → enregistrement A statique mom.eonelia.fr → 88.172.204.162 chez IONOS (manuel, une fois).
+# → enregistrement A statique mom.eonelia.fr → 82.67.182.91 chez IONOS (manuel, une fois).

@@ -11,4 +11,4 @@ ansible_port: 22
 ansible_user: root
 ansible_ssh_common_args: >-
   -o StrictHostKeyChecking=accept-new
-  -o ProxyJump=aurel@88.172.204.162:34343
+  -o ProxyJump=aurel@82.67.182.91:34343

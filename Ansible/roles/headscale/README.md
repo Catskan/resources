@@ -51,8 +51,8 @@ Références dans `inventory/host_vars/headscale/secrets.yml` (lookups `viczem.k
 
 ## 4. Étapes manuelles (hors Ansible)
 
-1. **IONOS** : enregistrement **A statique** `mom.eonelia.fr → 88.172.204.162` (IP publique fixe de la Freebox de la mère). Pas de DynDNS (IP fixe).
-2. **Freebox de la mère** (`88.172.204.162`) : redirection **`TCP 34443 → 192.168.1.168:34443`** (la Freebox interdit les redirections sur port < 32768, 443 réservé → headscale écoute sur 34443).
+1. **IONOS** : enregistrement **A statique** `mom.eonelia.fr → 82.67.182.91` (IP publique fixe de la Freebox de la mère). Pas de DynDNS (IP fixe).
+2. **Freebox de la mère** (`82.67.182.91`) : redirection **`TCP 34443 → 192.168.1.168:34443`**. headscale écoute sur **34443 pour des raisons historiques** : la ligne était en **IPv4 partagée**, qui ne donnait à cet abonné qu'une plage de ports > 32768 et interdisait toute redirection sous ce seuil (dont 443) — ce n'était ni une limitation de la box ni une réservation du port 443. Le passage en **IPv4 full-stack** (2026-08-18) a levé cette contrainte : une redirection `WAN:443` fonctionne désormais. ⚠️ **Ne pas migrer headscale vers 443 pour autant** : son `server_url` en `:34443` est inscrit dans la config de chaque nœud déjà enrôlé, changer de port les décrocherait tous.
 3. **Mac** (à la maison) : installer Tailscale, puis
    `tailscale up --login-server=https://mom.eonelia.fr:34443 --authkey <preauthkey>`.
    Récupérer son IP : `tailscale ip -4` → **la mettre dans `hosts.json` `.public` = `abusutil@100.x.y.z:2022`**.
