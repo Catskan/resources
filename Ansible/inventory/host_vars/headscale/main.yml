@@ -1,0 +1,12 @@
+---
+# Bascule ACME (Let's Encrypt) contre le STAGING, pour cet hôte uniquement — le
+# défaut du rôle (roles/headscale/defaults/main.yml) reste "certfile", volontairement
+# (control plane du tailnet : pas de dépendance à une réécriture de code sous pression
+# pour recouvrer TLS, cf. commentaire du rôle). Ce fichier est l'override explicite,
+# posé une fois les prérequis réseau validés (redirection WAN:443, DNS, réservation DHCP).
+#
+# headscale_acme_url N'EST PAS surchargé ici : le défaut du rôle est déjà le staging
+# Let's Encrypt (https://acme-staging-v02.api.letsencrypt.org/directory). Passer en
+# production est une décision distincte, explicite, après validation du staging.
+headscale_tls_mode: "acme"
+headscale_acme_email: "a.busutil@icloud.com"
