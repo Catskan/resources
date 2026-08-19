@@ -42,6 +42,25 @@ immich_service_participants:
         label: Alba (2257 visages)
     private_tag_id: c49153a9-5029-405e-b8ec-8467d405b02b
 
+# --- Synology Photos (tâche import-syno-albums) -------------------------------------
+# Les albums de Synology Photos ne sont pas des dossiers : ils vivent dans sa base, et
+# seule son API les expose. La tâche les recrée dans Immich en appariant par nom de
+# fichier — les assets viennent d'être importés depuis ces mêmes fichiers du NAS.
+#
+# L'entrée « Nas » est celle que référencent déjà aurelien-gaming et nas.eonelia.fr ;
+# son compte (a.busutil) est bien celui dont le home porte Synology Photos. Aucun secret
+# ici : seul le nom de l'entrée, le lookup a lieu au rendu.
+immich_service_synology:
+  base_url: https://192.168.1.7:5001
+  kp_entry: Nas
+  # DSM se présente avec un certificat auto-signé sur son adresse locale.
+  verify_tls: false
+  # Le compte a la double authentification : sans son second facteur, DSM refuse le
+  # login par un code 403 — qui ne dit pas ce qui manque. L'entrée « Nas » porte le TOTP,
+  # la tâche calcule donc le code elle-même. Cf. l'avertissement du template : la graine
+  # se retrouve dans config.yaml, à côté du mot de passe.
+  kp_otp: true
+
 # La recherche par personnes est une UNION : n'ajouter Aurélien, Amandine, Maman ou
 # Geneviève que délibérément — toute photo où la personne figure seule irait au pool.
 #   aurelien : f714d9a1-e970-4e9c-8922-0d7425785a09  Aurélien (6)

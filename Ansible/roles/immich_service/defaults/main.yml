@@ -27,3 +27,12 @@ immich_service_on_duplicate: archive
 # Album et participants n'ont volontairement PAS de défaut : ce sont les identifiants
 # d'une instance précise, et un défaut hérité par erreur verserait des photos dans le
 # mauvais album. Ils vivent dans inventory/host_vars/immich/main.yml.
+
+# `immich_service_synology` est facultatif, et sans défaut pour la même raison : défini,
+# il rend la section `synology` de config.yaml, que seule la tâche `import-syno-albums`
+# consomme. Sa forme :
+#
+#   immich_service_synology:
+#     base_url: https://192.168.1.7:5001
+#     kp_entry: Nas          # compte ET mot de passe : champs standard de l'entrée
+#     verify_tls: false      # certificat auto-signé sur l'adresse locale du NAS
