@@ -21,10 +21,11 @@ immich_vm_repo_version: main
 immich_vm_nfs_source: "192.168.1.7:/volume2/Photos/Immich"
 immich_vm_nfs_path: /mnt/nas/immich
 
-# `nofail` pour ne pas bloquer un boot si le NAS est absent, `retry=5` pour que
-# mount.nfs réessaie pendant 5 minutes au lieu d'abandonner au premier échec.
-# C'est le second filet : le premier est `ifupdown-wait-online`, ci-dessous.
-immich_vm_nfs_options: "hard,noatime,nfsvers=4,_netdev,nofail,retry=5"
+# `nofail` pour ne pas bloquer un boot si le NAS est absent. Pas de `retry` : mesuré
+# le 19 août, il ne sert à rien ici — mount.nfs échoue sur « Network is unreachable »
+# dès que la route manque, et cette option ne couvre que les délais d'attente. C'est
+# l'ExecStartPre d'immich.service qui réessaie, seul endroit où l'attente est possible.
+immich_vm_nfs_options: "hard,noatime,nfsvers=4,_netdev,nofail"
 
 # Répertoire qui doit être visible sous le point de montage pour prouver que le NFS
 # est bien monté — sert de sentinelle à l'unité systemd comme à ce rôle.
