@@ -6,19 +6,26 @@
 # manquaient et qu'un `docker compose up -d` ne peut pas garantir — l'ordre de
 # démarrage entre le montage NFS des originaux et les conteneurs.
 
-# Dépôt immich-custom sur la VM : il fournit le docker-compose que l'unité systemd
-# lance. C'est le WorkingDirectory de cette unité, rien de plus — le rôle n'y lit
-# aucun fichier, il rend l'unité depuis son propre template.
+# Dépôt immich-custom sur la VM. Il fournit le docker-compose que l'unité systemd
+# lance et la configuration système d'Immich montée sur /config/immich.yaml — l'unité
+# elle-même vient du template de ce rôle, pas du dépôt.
 immich_vm_repo_dir: /home/aurel/immich-custom
+
+# URL en SSH, comme le clone existant : c'est la clé de la VM qui authentifie GitHub,
+# le dépôt étant privé. La changer en HTTPS casserait l'authentification, le module
+# git reconfigurant le remote sur cette valeur.
+immich_vm_repo_url: git@github.com:Catskan/immich-custom.git
+immich_vm_repo_version: main
 
 # Montage NFS des originaux (UPLOAD_LOCATION du .env côté Immich).
 immich_vm_nfs_source: "192.168.1.7:/volume2/Photos/Immich"
 immich_vm_nfs_path: /mnt/nas/immich
 
-# `nofail` pour ne pas bloquer un boot si le NAS est absent, `retry=5` pour que
-# mount.nfs réessaie pendant 5 minutes au lieu d'abandonner au premier échec.
-# C'est le second filet : le premier est `ifupdown-wait-online`, ci-dessous.
-immich_vm_nfs_options: "hard,noatime,nfsvers=4,_netdev,nofail,retry=5"
+# `nofail` pour ne pas bloquer un boot si le NAS est absent. Pas de `retry` : mesuré
+# le 19 août, il ne sert à rien ici — mount.nfs échoue sur « Network is unreachable »
+# dès que la route manque, et cette option ne couvre que les délais d'attente. C'est
+# l'ExecStartPre d'immich.service qui réessaie, seul endroit où l'attente est possible.
+immich_vm_nfs_options: "hard,noatime,nfsvers=4,_netdev,nofail"
 
 # Répertoire qui doit être visible sous le point de montage pour prouver que le NFS
 # est bien monté — sert de sentinelle à l'unité systemd comme à ce rôle.

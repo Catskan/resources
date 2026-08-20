@@ -36,6 +36,14 @@ RequiresMountsFor={{ immich_vm_nfs_path }}
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory={{ immich_vm_repo_dir }}
+
+# Le montage NFS échoue régulièrement au boot sur « mount.nfs: Network is unreachable » :
+# network-online.target est atteinte avant que la route par défaut soit posée, et
+# l'option `retry` de mount.nfs ne couvre pas ce cas — elle traite les délais d'attente,
+# pas l'absence de route, et abandonne aussitôt. Une unité .mount issue du fstab ne sait
+# pas se relancer seule, d'où cette attente : jusqu'à 2 min 30, par essais de 5 s.
+ExecStartPre=/bin/sh -c 'i=0; while [ $i -lt 30 ]; do findmnt -M {{ immich_vm_nfs_path }} >/dev/null && exit 0; systemctl start {{ immich_vm_nfs_path | regex_replace("^/", "") | regex_replace("/", "-") }}.mount >/dev/null 2>&1; sleep 5; i=$((i+1)); done; exit 1'
+
 # Garde-fou : ne jamais démarrer sur un point de montage vide.
 ExecStartPre=/usr/bin/test -d {{ immich_vm_nfs_path }}/{{ immich_vm_nfs_sentinel }}
 ExecStart=/usr/bin/docker compose up -d

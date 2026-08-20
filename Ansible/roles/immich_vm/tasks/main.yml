@@ -80,9 +80,59 @@
       {{ immich_vm_nfs_path }} est monté mais {{ immich_vm_nfs_sentinel }}/ est
       introuvable. Immich démarrerait sur un /data vide — ne pas continuer.
 
+- name: Installer l'agent invité QEMU
+  # Permet à Proxmox d'arrêter la VM proprement au lieu d'un ACPI aveugle — ce qui
+  # compte ici : Postgres a déjà subi plusieurs coupures brutales. Donne aussi l'IP
+  # dans l'interface et des snapshots cohérents (fsfreeze).
+  #
+  # Il ne gère PAS le presse-papiers, contrairement à une idée répandue : celui de
+  # noVNC vient de `clipboard=vnc` côté hôte, posé par tasks/host.yml.
+  ansible.builtin.apt:
+    name: qemu-guest-agent
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Activer l'agent invité QEMU
+  # Le service ne démarre que si le canal virtio-serial existe côté hôte. Tant que la
+  # VM n'a pas redémarré après `qm set --agent enabled=1`, il échoue — d'où
+  # `failed_when: false` plutôt qu'un run rouge sur une machine par ailleurs saine.
+  ansible.builtin.systemd_service:
+    name: qemu-guest-agent
+    enabled: true
+    state: started
+  become: true
+  failed_when: false
+
+- name: Mettre le dépôt applicatif à jour sur la VM
+  # Le dépôt porte le docker-compose que l'unité lance et la configuration système
+  # d'Immich. Un clone en retard, et la machine ne ressemble pas à ce que décrit ce
+  # playbook : c'est ainsi que le service immich-custom est resté absent du compose
+  # pendant une journée sans que rien ne le signale.
+  #
+  # Sans `become` : le dépôt appartient au compte de connexion, et c'est sa clé SSH
+  # qui authentifie GitHub. Sans `force` non plus — une modification locale doit
+  # arrêter le run, pas être écrasée en silence.
+  #
+  # Placée après les réglages système : si GitHub est injoignable, les correctifs de
+  # boot ont déjà été appliqués.
+  ansible.builtin.git:
+    repo: "{{ immich_vm_repo_url }}"
+    dest: "{{ immich_vm_repo_dir }}"
+    version: "{{ immich_vm_repo_version }}"
+    update: true
+  notify:
+    - Appliquer la mise à jour du stack
+    - Recharger la configuration système d'Immich
+
 - name: Activer et démarrer Immich au boot
+  # Gardée hors --check : en dry-run l'unité n'a pas été écrite, et systemd répond
+  # « Could not find the requested service ». La sauter est plus honnête qu'un
+  # check_mode: false, qui lancerait réellement les conteneurs pendant un dry-run.
   ansible.builtin.systemd_service:
     name: immich.service
     enabled: true
     state: started
   become: true
+  when: not ansible_check_mode
