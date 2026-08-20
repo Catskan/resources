@@ -89,7 +89,7 @@ caddy_vhosts:
 # Prérequis : une preauthkey Headscale valide. Le rôle la lit dans
 # hostvars['headscale'].hs_preauthkey, produite par `make headscale`. En run isolé :
 #   make caddy ARGS='--tags tailscale -e tailscale_authkey=<clé>'
-caddy_ct_tailscale: false
+caddy_ct_tailscale: true
 
 # Nom du nœud sur le tailnet. Le défaut du rôle est `inventory_hostname`, soit
 # « caddy » — trop générique dans une liste de nœuds où figurent déjà le NAS et
