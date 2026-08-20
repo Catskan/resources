@@ -51,6 +51,23 @@ headscale_base_domain: "ts.eonelia.fr"
 headscale_dns_nameservers:
   - "1.1.1.1"
 
+# Enregistrements DNS servis aux nœuds du tailnet, en plus de MagicDNS. C'est
+# l'horizon « tailnet » du split-horizon décrit dans
+# docs/2026-08-17-caddy-universel-split-dns-design.md : un même nom public résout
+# vers l'IP tailnet du reverse-proxy quand on vient du tailnet, vers son IP LAN
+# depuis la maison, vers l'IP publique depuis Internet. Un seul certificat reste
+# valide sur les trois chemins, et une seule URL est configurée dans les
+# applications — ce que des noms en `.local` ou des IP casseraient.
+#
+# Liste vide par défaut : ces enregistrements sont propres à l'installation et se
+# déclarent dans inventory/host_vars/headscale/main.yml.
+#
+# Format attendu par Headscale :
+#   - name: "service.exemple.fr"
+#     type: "A"
+#     value: "100.64.0.12"
+headscale_dns_extra_records: []
+
 # Utilisateur (namespace) du tailnet auquel sont rattachés Mac + CT.
 headscale_user: "aurelien"
 

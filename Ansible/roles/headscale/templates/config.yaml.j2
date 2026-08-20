@@ -60,6 +60,16 @@ dns:
 {% for ns in headscale_dns_nameservers %}
       - {{ ns }}
 {% endfor %}
+{% if headscale_dns_extra_records %}
+  # Horizon « tailnet » du split-horizon DNS : ces noms résolvent vers l'IP tailnet
+  # du service, et non vers son IP publique, pour les nœuds du tailnet uniquement.
+  extra_records:
+{% for rec in headscale_dns_extra_records %}
+    - name: "{{ rec.name }}"
+      type: "{{ rec.type | default('A') }}"
+      value: "{{ rec.value }}"
+{% endfor %}
+{% endif %}
 
 policy:
   mode: file
