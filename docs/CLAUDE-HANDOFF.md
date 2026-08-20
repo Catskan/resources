@@ -4,7 +4,7 @@
 
 ## Update 2026-07-13 — Wyse Proxmox (`domotique-box`) disk saturation → guardrails + tailnet access
 
-> **New infra not otherwise covered in this doc.** The repo now also provisions a **Proxmox VE host on a Dell Wyse 5070** (`wyse-proxmox`, hostname `domotique-box`, at the user's mother's place, reached via `88.172.204.162:34343`) running three guests: VM 100 `home-assistant` (on `local-lvm`, separate from `pve-root`), LXC 101 `claude-code` (Docker host for the `claude-code-nas` image — the "brain" container), LXC 102 `headscale` (self-hosted Tailscale control plane at `mom.eonelia.fr:34443`). Entry points: `main_wyse_playbook.yml` (`make wyse`) and `main_headscale_playbook.yml` (`make headscale`). Roles involved: `proxmox_claude_lxc`, `claude_code_host`, `cloudcli_service`, `proxmox_headscale_lxc`, `headscale`, `tailscale_client`.
+> **New infra not otherwise covered in this doc.** The repo now also provisions a **Proxmox VE host on a Dell Wyse 5070** (`wyse-proxmox`, hostname `domotique-box`, at the user's mother's place, reached via `82.67.182.91:34343`) running three guests: VM 100 `home-assistant` (on `local-lvm`, separate from `pve-root`), LXC 101 `claude-code` (Docker host for the `claude-code-nas` image — the "brain" container), LXC 102 `headscale` (self-hosted Tailscale control plane at `mom.eonelia.fr:34443`). Entry points: `main_wyse_playbook.yml` (`make wyse`) and `main_headscale_playbook.yml` (`make headscale`). Roles involved: `proxmox_claude_lxc`, `claude_code_host`, `cloudcli_service`, `proxmox_headscale_lxc`, `headscale`, `tailscale_client`.
 
 **Incident**: `pve-root` (25 GB) hit **100 %**. The `claude-code` container's Docker **build cache had grown to 3.6 GB**, and blocks freed inside the LXC never returned to the host (sparse `.raw` on `dir` storage `/var/lib/vz/images` isn't auto-trimmed). Full disk → the CT's ext4 remounted **read-only** → all in-container Claude sessions died with `EROFS`.
 
@@ -22,7 +22,9 @@
 
 1. **Tailnet** (chosen, permanent) — commit `0bb4292` added a 4th play to `main_headscale_playbook.yml` running `tailscale_client` on `proxmox_hosts` (the host has `/dev/net/tun` natively → no tun prereq, unlike the CT). `make headscale` (full run, regenerates the preauthkey) joins the host and prints its tailnet IP → `https://<wyse-tailnet-ip>:8006`.
 2. **Freebox LAN VPN** — if it routes `192.168.1.0/24`, reach `https://192.168.1.12:8006` directly. Note the host may drop ICMP (ping fails while TCP works) — test with `nc -vz 192.168.1.12 8006`, not ping.
-3. **SSH tunnel** (fallback, confirmed working) — `ssh -L 8006:127.0.0.1:8006 aurel@88.172.204.162 -p 34343` → `https://localhost:8006`.
+3. **SSH tunnel** (fallback, confirmed working) — `ssh -L 8006:127.0.0.1:8006 aurel@82.67.182.91 -p 34343` → `https://localhost:8006`.
+
+> **Correction 2026-08-18** — the line above blaming a Freebox port-forward restriction ("< 32768") was wrong about the cause. This wasn't a box limitation or a reservation of port 443: the line was on **shared IPv4** (CGNAT), which only granted this subscriber a range of high ports and forwarded nothing below it. The switch to **full-stack IPv4** on 2026-08-18 (new public IP `82.67.182.91`, replacing `88.172.204.162`) lifted that constraint — a `WAN:443` forward now works. ⚠️ **Don't move `headscale` to 443 just because it's newly possible**: its `server_url` is baked in as `:34443` in every already-enrolled tailnet node's config, and repointing the port would drop them all.
 
 ## Update 2026-07-03 — storage fix from the NAS (page file relocation + robust hibernation)
 

@@ -1,5 +1,7 @@
 # {{ ansible_managed }}
-# Config Headscale — TLS natif via wildcard *.eonelia.fr (déposé par le rôle).
+# Config Headscale — TLS : {{ headscale_tls_mode }} (headscale_tls_mode, defaults/main.yml).
+#   certfile : wildcard *.eonelia.fr déposé par le rôle (KeePass).
+#   acme     : Let's Encrypt natif (TLS-ALPN-01), voir tasks/main.yml pour les prérequis réseau.
 server_url: {{ headscale_server_url }}
 listen_addr: {{ headscale_listen_addr }}
 metrics_listen_addr: 127.0.0.1:9090
@@ -33,8 +35,18 @@ database:
   sqlite:
     path: /var/lib/headscale/db.sqlite
 
+{# certfile et acme sont EXCLUSIFS : headscale refuse de démarrer si tls_letsencrypt_hostname
+   et tls_cert_path/tls_key_path sont posés en même temps (hscontrol/types/config.go, v0.29.2). #}
+{% if headscale_tls_mode == "acme" %}
+acme_url: {{ headscale_acme_url }}
+acme_email: {{ headscale_acme_email }}
+tls_letsencrypt_hostname: {{ headscale_tls_letsencrypt_hostname }}
+tls_letsencrypt_cache_dir: {{ headscale_tls_letsencrypt_cache_dir }}
+tls_letsencrypt_challenge_type: {{ headscale_tls_letsencrypt_challenge_type }}
+{% else %}
 tls_cert_path: {{ headscale_tls_cert_path }}
 tls_key_path: {{ headscale_tls_key_path }}
+{% endif %}
 
 log:
   level: info
@@ -48,6 +60,16 @@ dns:
 {% for ns in headscale_dns_nameservers %}
       - {{ ns }}
 {% endfor %}
+{% if headscale_dns_extra_records %}
+  # Horizon « tailnet » du split-horizon DNS : ces noms résolvent vers l'IP tailnet
+  # du service, et non vers son IP publique, pour les nœuds du tailnet uniquement.
+  extra_records:
+{% for rec in headscale_dns_extra_records %}
+    - name: "{{ rec.name }}"
+      type: "{{ rec.type | default('A') }}"
+      value: "{{ rec.value }}"
+{% endfor %}
+{% endif %}
 
 policy:
   mode: file

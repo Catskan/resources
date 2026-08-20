@@ -6,19 +6,67 @@ headscale_arch: amd64
 headscale_deb_url: "https://github.com/juanfont/headscale/releases/download/v{{ headscale_version }}/headscale_{{ headscale_version }}_linux_{{ headscale_arch }}.deb"
 
 # Endpoint public (résolu en DynDNS vers le WAN de la mère, cf. rôle ci-dessous).
-# Port haut (> 32768) : la Freebox mère interdit les redirections sur port < 32768
-# (443 réservé à Freebox OS). headscale écoute donc sur ce port, local ET public.
+# Port 34443 conservé pour des raisons historiques : l'abonnement était en IPv4
+# partagée (plage de ports > 32768 seulement, aucune redirection possible sous ce
+# seuil — pas une limitation de la box, pas une réservation du port 443). Depuis
+# le passage en IPv4 full-stack (2026-08-18), cette contrainte a disparu.
+# ⚠️ NE PAS migrer vers 443 pour autant : le server_url en :34443 est inscrit
+# dans la config de chaque nœud déjà enrôlé, changer de port les décrocherait tous.
 headscale_server_url: "https://mom.eonelia.fr:34443"
 headscale_listen_addr: "0.0.0.0:34443"
 
-# TLS natif : le wildcard *.eonelia.fr est déposé depuis KeePass (voir host_vars/headscale/secrets.yml).
+# --- TLS : deux modes, sélectionnables par headscale_tls_mode -------------------
+#   - certfile (défaut, comportement actuel) : wildcard commercial *.eonelia.fr recopié
+#     depuis KeePass (voir plus bas + host_vars/headscale/secrets.yml).
+#   - acme : Let's Encrypt natif, géré par headscale lui-même (émission ET renouvellement).
+# Le défaut reste "certfile" tant que l'émission ACME n'a pas été validée en conditions
+# réelles (prérequis réseau chez la mère, voir tasks/main.yml). Le retour arrière en cas
+# d'échec ACME est un simple headscale_tls_mode: certfile + re-run : le control plane du
+# tailnet ne doit jamais dépendre d'une réécriture de code sous pression pour recouvrer TLS.
+headscale_tls_mode: "certfile" # certfile | acme
+
+# TLS natif (mode certfile) : le wildcard *.eonelia.fr est déposé depuis KeePass
+# (voir host_vars/headscale/secrets.yml). Ignorés en mode acme.
 headscale_tls_cert_path: "/etc/headscale/certs/eonelia.crt"
 headscale_tls_key_path: "/etc/headscale/certs/eonelia.key"
+
+# TLS Let's Encrypt natif (mode acme, headscale v0.29.2). Exclusif de tls_cert_path/
+# tls_key_path ci-dessus — headscale refuse de démarrer si les deux jeux d'options sont
+# posés en même temps (voir tasks/main.yml et templates/config.yaml.j2).
+# Défaut STAGING : une émission ratée en production consomme un quota Let's Encrypt limité
+# (échecs/certificats dupliqués par semaine), et une boucle de tentatives le brûle pour
+# plusieurs jours. Basculer en prod (https://acme-v02.api.letsencrypt.org/directory) est un
+# choix explicite, jamais le défaut.
+headscale_acme_url: "https://acme-staging-v02.api.letsencrypt.org/directory"
+headscale_acme_email: "" # à renseigner avant de passer headscale_tls_mode à "acme"
+# Nom public pour lequel émettre le certificat. Doit correspondre au host de
+# headscale_server_url (sans le port) et résoudre vers l'IP publique de la Freebox mère.
+headscale_tls_letsencrypt_hostname: "mom.eonelia.fr"
+headscale_tls_letsencrypt_cache_dir: "/var/lib/headscale/cache"
+# TLS-ALPN-01, pas HTTP-01 : voir le commentaire détaillé dans tasks/main.yml.
+headscale_tls_letsencrypt_challenge_type: "TLS-ALPN-01"
 
 # MagicDNS : suffixe interne du tailnet (DOIT différer du domaine de server_url).
 headscale_base_domain: "ts.eonelia.fr"
 headscale_dns_nameservers:
   - "1.1.1.1"
+
+# Enregistrements DNS servis aux nœuds du tailnet, en plus de MagicDNS. C'est
+# l'horizon « tailnet » du split-horizon décrit dans
+# docs/2026-08-17-caddy-universel-split-dns-design.md : un même nom public résout
+# vers l'IP tailnet du reverse-proxy quand on vient du tailnet, vers son IP LAN
+# depuis la maison, vers l'IP publique depuis Internet. Un seul certificat reste
+# valide sur les trois chemins, et une seule URL est configurée dans les
+# applications — ce que des noms en `.local` ou des IP casseraient.
+#
+# Liste vide par défaut : ces enregistrements sont propres à l'installation et se
+# déclarent dans inventory/host_vars/headscale/main.yml.
+#
+# Format attendu par Headscale :
+#   - name: "service.exemple.fr"
+#     type: "A"
+#     value: "100.64.0.12"
+headscale_dns_extra_records: []
 
 # Utilisateur (namespace) du tailnet auquel sont rattachés Mac + CT.
 headscale_user: "aurelien"
@@ -29,4 +77,4 @@ headscale_preauthkey_expiration: "87600h" # ~10 ans
 
 
 # NB : pas de DynDNS — la Freebox de la mère a une IP publique FIXE.
-# → enregistrement A statique mom.eonelia.fr → 88.172.204.162 chez IONOS (manuel, une fois).
+# → enregistrement A statique mom.eonelia.fr → 82.67.182.91 chez IONOS (manuel, une fois).

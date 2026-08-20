@@ -27,6 +27,9 @@ all:
     immich_hosts:
       hosts:
         immich:
+    caddy_hosts:
+      hosts:
+        caddy:
     claude_code_hosts:
       hosts:
         claude-code:

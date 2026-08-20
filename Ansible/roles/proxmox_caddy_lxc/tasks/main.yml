@@ -1,0 +1,102 @@
+---
+# Création idempotente du CT Caddy via pct/pveam (sans token API), sur l'hôte Proxmox.
+# Même logique que proxmox_headscale_lxc : CT créé, démarré, JOIGNABLE EN SSH (clé du
+# contrôleur injectée + sshd) → devient ensuite un hôte Ansible dédié (rôle caddy_proxy).
+# pct exec n'est utilisé QUE pour le bootstrap SSH.
+#
+# Différence assumée avec le CT headscale : IP STATIQUE et non dhcp. La porte d'entrée
+# publique de la maison ne peut pas changer d'adresse au gré d'un bail, et la redirection
+# de ports de la Freebox pointe une IP fixe.
+
+- name: Lister les templates LXC présents
+  ansible.builtin.command: "pveam list {{ caddy_ct_template_storage }}"
+  register: caddy_pveam_list
+  changed_when: false
+  check_mode: false
+
+- name: Rafraîchir le catalogue des templates si le nôtre est absent
+  ansible.builtin.command: pveam update
+  when: caddy_ct_template not in caddy_pveam_list.stdout
+  changed_when: true
+
+- name: Télécharger le template Debian si absent
+  ansible.builtin.command: "pveam download {{ caddy_ct_template_storage }} {{ caddy_ct_template }}"
+  when: caddy_ct_template not in caddy_pveam_list.stdout
+  changed_when: true
+
+- name: "Vérifier l'existence du CT {{ caddy_ct_vmid }}"
+  ansible.builtin.command: "pct status {{ caddy_ct_vmid }}"
+  register: caddy_pct_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Déposer la clé publique du contrôleur sur l'hôte Proxmox
+  ansible.builtin.copy:
+    content: "{{ lookup('file', caddy_ct_controller_pubkey_path) }}\n"
+    dest: /root/caddy-controller.pub
+    owner: root
+    group: root
+    mode: "0600"
+  when: caddy_pct_status.rc != 0
+
+- name: "Créer le CT {{ caddy_ct_vmid }} (caddy)"
+  ansible.builtin.command: >-
+    pct create {{ caddy_ct_vmid }}
+    {{ caddy_ct_template_storage }}:vztmpl/{{ caddy_ct_template }}
+    --hostname {{ caddy_ct_hostname }}
+    --unprivileged {{ caddy_ct_unprivileged }}
+    {% if caddy_ct_features %}--features {{ caddy_ct_features }}{% endif %}
+    --cores {{ caddy_ct_cores }}
+    --memory {{ caddy_ct_memory }}
+    --swap {{ caddy_ct_swap }}
+    --rootfs {{ caddy_ct_rootfs }}
+    --net0 name=eth0,bridge={{ caddy_ct_bridge }},ip={{ caddy_ct_ip }}/{{ caddy_ct_cidr }},gw={{ caddy_ct_gateway }}
+    --nameserver {{ caddy_ct_nameserver }}
+    --onboot {{ caddy_ct_onboot }}
+    --ssh-public-keys /root/caddy-controller.pub
+  when: caddy_pct_status.rc != 0
+  changed_when: true
+
+- name: "Démarrer le CT {{ caddy_ct_vmid }}"
+  ansible.builtin.command: "pct start {{ caddy_ct_vmid }}"
+  when: "'status: running' not in (caddy_pct_status.stdout | default(''))"
+  changed_when: true
+
+- name: Bootstrap SSH dans le CT (openssh-server + activation)
+  ansible.builtin.command: >-
+    pct exec {{ caddy_ct_vmid }} -- bash -lc
+    'apt-get update && apt-get install -y openssh-server && systemctl enable --now ssh'
+  register: caddy_ct_sshd
+  changed_when: "'Setting up openssh-server' in caddy_ct_sshd.stdout"
+
+# Sautée en --check : la création du CT elle-même (tâche « Créer le CT ») est sautée
+# en dry-run (le module command n'est pas check-mode aware), donc le CT n'existe pas
+# encore quand cette vérification tournerait → « Configuration file ... does not
+# exist » cassant le dry-run à chaque fois, même quand le rôle serait sans effet.
+- name: Vérifier que le CT porte bien l'IP statique attendue
+  ansible.builtin.command: "pct exec {{ caddy_ct_vmid }} -- ip -4 -o addr show eth0"
+  register: caddy_ct_addr
+  changed_when: false
+  failed_when: caddy_ct_ip not in caddy_ct_addr.stdout
+  when: not ansible_check_mode
+
+# --- Prérequis Tailscale ------------------------------------------------------
+# Monté depuis l'hôte : un CT non privilégié n'a pas /dev/net/tun, et le rôle
+# tailscale_client échoue explicitement sans lui.
+#
+# `unsafe_writes` est nécessaire : /etc/pve est pmxcfs, un système de fichiers FUSE
+# répliqué où l'écriture atomique par fichier temporaire puis rename() n'est pas
+# garantie. Sans ce réglage, la tâche peut échouer sur « Could not replace file ».
+- name: "Monter /dev/net/tun (prérequis Tailscale) dans le CT {{ caddy_ct_vmid }}"
+  ansible.builtin.blockinfile:
+    path: "/etc/pve/lxc/{{ caddy_ct_vmid }}.conf"
+    marker: "# {mark} ANSIBLE tailscale — roles/proxmox_caddy_lxc"
+    block: |
+      lxc.cgroup2.devices.allow: c 10:200 rwm
+      lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+    unsafe_writes: true
+  when:
+    - caddy_ct_tailscale | bool
+    - not ansible_check_mode or caddy_pct_status.rc == 0
+  notify: Redémarrer le CT Caddy

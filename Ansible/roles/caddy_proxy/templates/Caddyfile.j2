@@ -1,0 +1,109 @@
+{#
+  Géré par Ansible — rôle caddy_proxy. Ne pas éditer à la main sur le CT.
+#}
+# Reverse proxy public de la maison — généré par Ansible (roles/caddy_proxy).
+# Le CT détient 80 et 443 : Caddy fonctionne en mode nominal, redirection HTTP→HTTPS
+# et émission ACME incluses. C'est tout l'intérêt du déménagement depuis le NAS, où
+# nginx/DSM occupait les deux ports et imposait le 8443 plus un certificat manuel.
+
+{
+	# Pas d'API d'administration : elle est non authentifiée, et son seul bénéfice ici
+	# serait le rechargement à chaud d'un vhost ajouté rarement — trop mince pour justifier
+	# d'ouvrir une interface de reconfiguration. Conséquence directe et volontaire : le
+	# rechargement à chaud est impossible (l'`ExecReload` packagé appelle `caddy reload`,
+	# qui a besoin de cette API). Le handler du rôle (roles/caddy_proxy/handlers/main.yml)
+	# le sait et fait donc un `restart` plutôt qu'un `reload` — ne réactive pas cette API en
+	# lisant seulement ce fichier : le lien entre les deux est ici, pas ailleurs.
+	admin off
+	email {{ caddy_acme_email }}
+{% if caddy_acme_staging %}
+	# ⚠️ STAGING : les certificats émis ne sont PAS reconnus par les navigateurs.
+	# Basculer en production en passant caddy_acme_staging à false.
+	acme_ca {{ caddy_acme_staging_ca }}
+{% endif %}
+}
+
+(secure_headers) {
+	header {
+{% if caddy_hsts_max_age | int > 0 %}
+		Strict-Transport-Security "max-age={{ caddy_hsts_max_age }}; includeSubDomains"
+{% endif %}
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+{% for vhost in caddy_vhosts %}
+# --- {{ vhost.name }} {{ '(privé, filtré)' if vhost.allow_networks is defined else '(public)' }}
+https://{{ vhost.name }} {
+	import secure_headers
+
+	# Le matcher de réponse par défaut d'`encode` ne cible que text/*, JSON, JS, wasm,
+	# SVG et polices : les JPEG, HEIC et vidéos, déjà compressés, sont exclus d'office.
+	encode zstd gzip
+
+{% if vhost.allow_networks is defined %}
+	# Vhost privé : Caddy écoute pour tout le monde — il le faut pour le challenge
+	# ACME — mais ne répond qu'aux origines déclarées.
+	@allowed remote_ip {{ vhost.allow_networks | join(' ') }}
+	handle @allowed {
+{% if vhost.upstream_tls | default(false) %}
+		reverse_proxy https://{{ vhost.backend }} {
+			header_up Host {{ vhost.name }}
+			transport http {
+{% if vhost.upstream_insecure | default(false) %}
+				# Amont à certificat auto-signé (Proxmox, DSM avant déclaration du
+				# nom) : on saute la vérification. Acceptable UNIQUEMENT parce que le
+				# saut se fait sur le LAN, entre le CT et une machine de la maison —
+				# jamais sur un amont traversant Internet.
+				tls
+				tls_insecure_skip_verify
+{% else %}
+				tls
+				tls_server_name {{ vhost.name }}
+{% endif %}
+			}
+		}
+{% else %}
+		reverse_proxy {{ vhost.backend }}
+{% endif %}
+	}
+	handle {
+		respond "Not found" 404
+	}
+{% else %}
+{% if vhost.upstream_tls | default(false) %}
+	# `header_up Host` est INDISPENSABLE devant DSM. Sans lui, nginx reçoit
+	# `Host: <ip>:<port>`, ne trouve aucun server_name correspondant et retombe sur son
+	# default_server — Web Station, pas DSM — qui répond 403 (« directory index of
+	# /var/services/web/ is forbidden »). Avec l'ancien backend 5001 le default_server
+	# servait DSM, d'où un 200 trompeur : mais DSM bâtissait ses redirections sur ce
+	# Host et renvoyait le navigateur vers https://127.0.0.1:5001, lui faisant perdre
+	# son cookie de session → « Your login is invalid. Please sign-in again ».
+	reverse_proxy https://{{ vhost.backend }} {
+		header_up Host {{ vhost.name }}
+		transport http {
+{% if vhost.upstream_insecure | default(false) %}
+			# Amont à certificat auto-signé. Même traitement que pour les vhosts
+			# privés, pour que l'option se comporte identiquement dans les deux cas.
+			tls
+			tls_insecure_skip_verify
+{% else %}
+			# Le vhost 443 de DSM présente le certificat system_FQDN : on force le SNI
+			# plutôt que de désactiver la vérification.
+			tls
+			tls_server_name {{ vhost.name }}
+{% endif %}
+		}
+	}
+{% else %}
+	# X-Forwarded-{For,Proto,Host} et les WebSockets sont gérés nativement. Caddy
+	# n'impose ni limite de taille de corps ni timeout de lecture : les envois vidéo
+	# de l'app mobile passent sans réglage.
+	reverse_proxy {{ vhost.backend }}
+{% endif %}
+{% endif %}
+}
+
+{% endfor %}

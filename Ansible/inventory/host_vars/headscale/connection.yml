@@ -2,14 +2,21 @@
 # directement depuis le contrôleur → ProxyJump À TRAVERS l'hôte Proxmox (le Wyse),
 # comme pour le CT claude-code.
 # ⚠️ ansible_host = IP DHCP actuelle du CT 102 (affichée en fin de play proxmox_headscale_lxc).
-#    Poser une réservation DHCP sur la Freebox de la mère pour la figer.
+#    Une réservation DHCP a été posée le 2026-08-18 sur 192.168.1.168 (cf. tâche ACME) :
+#    l'IP ci-dessous n'est plus seulement "l'IP DHCP actuelle", elle est fixée.
 # ⚠️ ansible_port 22 EXPLICITE : le CT écoute en 22 ; le contrôleur remappe ssh->2122
 #    dans /etc/services → on force 22 pour le saut final.
+# ⚠️ IP PUBLIQUE mise à jour le 2026-08-18 : la ligne de la mère est passée en
+#    full-stack, nouvelle IP 82.67.182.91 (ancienne 88.172.204.162 injoignable —
+#    vérifié : `nc -zv 88.172.204.162 34343` time out, `nc -zv 82.67.182.91 34343`
+#    réussit). host_vars/wyse-proxmox/connection.yml utilise la même ancienne IP en
+#    dur et n'a PAS été corrigé ici (hors scope de cette tâche headscale) — à traiter
+#    séparément si un autre play passant par le Wyse échoue pareil.
 ansible_connection: ssh
 
-ansible_host: 192.168.1.168 # IP DHCP du CT 102 (poser une réservation DHCP sur la Freebox mère)
+ansible_host: 192.168.1.168 # IP DHCP du CT 102, réservation DHCP posée le 2026-08-18
 ansible_port: 22
 ansible_user: root
 ansible_ssh_common_args: >-
   -o StrictHostKeyChecking=accept-new
-  -o ProxyJump=aurel@88.172.204.162:34343
+  -o ProxyJump=aurel@82.67.182.91:34343
