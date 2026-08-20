@@ -21,3 +21,20 @@
   roles:
     - role: caddy_proxy
       tags: [proxy]
+
+    # Rattachement au tailnet, pour que les vhosts privés soient joignables depuis
+    # l'extérieur du LAN. Conditionné au même drapeau que le montage de /dev/net/tun
+    # côté hôte : sans le périphérique, ce rôle échoue volontairement plutôt que de
+    # basculer en userspace-networking.
+    #
+    # Placé APRÈS caddy_proxy à dessein : si le rattachement échoue (Headscale
+    # injoignable, preauthkey expirée), le reverse-proxy est déjà configuré et sert
+    # ses vhosts publics. L'inverse laisserait le proxy non déployé pour une panne
+    # qui ne le concerne pas.
+    #
+    # La preauthkey vient du play headscale (`make headscale`) via hostvars ; en run
+    # isolé, la passer en ligne de commande :
+    #   make caddy ARGS='--tags tailscale -e tailscale_authkey=<clé>'
+    - role: tailscale_client
+      when: caddy_ct_tailscale | bool
+      tags: [tailscale]
