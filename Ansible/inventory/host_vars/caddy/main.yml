@@ -42,3 +42,61 @@ caddy_vhosts:
     # tronçon interne Caddy→DSM, sur le LAN, échappe à la vérification du
     # certificat amont.
     upstream_insecure: true
+
+  # WebUI du vinted-bot, hébergée sur le NAS (conteneur `vinted-bot-webui`, en
+  # `network_mode: host` → port 8089 de 192.168.1.7). Vhost PRIVÉ : l'interface
+  # écrit des `user_action` ensuite poussés sur Vinted, et sa route
+  # `/cookies/import` remplace les cookies de session d'un compte à partir d'un
+  # fichier HAR déposé. Derrière une simple authentification Basic, elle n'a rien
+  # à faire sur Internet — d'où `allow_networks`, qui laisse Caddy écouter pour
+  # tous (le challenge HTTP-01 en a besoin) mais ne répond qu'aux origines
+  # déclarées, 404 sinon.
+  #
+  # Deux réseaux autorisés, pour couvrir les deux chemins d'accès :
+  #   - 192.168.1.0/24 : depuis la maison, chemin direct vers le CT.
+  #   - 100.64.0.0/10  : depuis le tailnet.
+  #
+  # ⚠️ Le second ne fonctionnera QUE lorsque le CT aura rejoint le tailnet — ce que
+  # prévoit le design du 2026-08-17 (« CT Caddy dédié sur l'Optiplex, rôle
+  # proxmox_caddy_lxc, rattaché au tailnet ») mais qui n'est PAS fait à ce jour :
+  # vérifié le 2026-08-19, `tailscale` est absent du CT 102 comme de l'hôte
+  # Proxmox. En attendant, seul l'accès LAN répondra ; le filtre tailnet est posé
+  # d'avance pour qu'aucune modification ne soit nécessaire le jour du
+  # rattachement. Le rôle `tailscale_client` existe déjà dans ce dépôt.
+  #
+  # DNS : `vinted.eonelia.fr` a besoin d'un A public vers la Freebox pour que le
+  # challenge HTTP-01 aboutisse, exactement comme photos et nas. Le split-horizon
+  # dnsmasq du même design le fera ensuite résoudre vers 192.168.1.210 depuis la
+  # maison, évitant l'aller-retour par le NAT.
+  - name: vinted.eonelia.fr
+    backend: 192.168.1.7:8089
+    allow_networks:
+      - 192.168.1.0/24
+      - 100.64.0.0/10
+
+# --- Rattachement au tailnet (non activé) -------------------------------------
+# Mettre à true pour que `make caddy` monte /dev/net/tun dans le CT et y applique
+# le rôle tailscale_client. Tant que ce drapeau est faux, le vhost privé
+# vinted.eonelia.fr ne répond que depuis le LAN : son filtre 100.64.0.0/10 est
+# posé d'avance mais aucune requête n'en vient, le CT n'étant pas sur le tailnet.
+#
+# ⚠️ L'activer entraîne un REDÉMARRAGE DU CT — une modification de configuration
+# LXC n'est prise en compte qu'au démarrage. Tous les vhosts tombent le temps du
+# reboot : photos.eonelia.fr (Immich, app mobile comprise) et nas.eonelia.fr (DSM
+# en externe), une quinzaine de secondes. À planifier, pas à subir au détour d'un
+# déploiement de routine.
+#
+# Prérequis : une preauthkey Headscale valide. Le rôle la lit dans
+# hostvars['headscale'].hs_preauthkey, produite par `make headscale`. En run isolé :
+#   make caddy ARGS='--tags tailscale -e tailscale_authkey=<clé>'
+caddy_ct_tailscale: false
+
+# Nom du nœud sur le tailnet. Le défaut du rôle est `inventory_hostname`, soit
+# « caddy » — trop générique dans une liste de nœuds où figurent déjà le NAS et
+# deux Mac. Ce nom dit la machine ET son rôle.
+tailscale_hostname: "caddy-optiplex"
+
+# --accept-dns=false (défaut du rôle) est conservé : le CT résout par 192.168.1.254
+# et le split-horizon DNS du design du 2026-08-17 s'appuie dessus. Laisser Tailscale
+# imposer son résolveur ferait diverger la résolution vue par Caddy de celle vue par
+# le reste de la maison.

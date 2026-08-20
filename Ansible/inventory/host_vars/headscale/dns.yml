@@ -1,0 +1,31 @@
+---
+# Horizon « tailnet » du split-horizon DNS
+# (cf. docs/2026-08-17-caddy-universel-split-dns-design.md, §1).
+#
+# Les noms servis par le reverse-proxy ont tous un enregistrement A PUBLIC, imposé
+# par le challenge ACME HTTP-01 : Let's Encrypt doit joindre le CT sur le port 80.
+# Ce n'est pas une fuite — les certificats sont de toute façon publiés dans les
+# journaux Certificate Transparency. Ce qui protège un service privé, c'est le
+# matcher `remote_ip` du vhost, pas l'obscurité de son nom.
+#
+# Sans les enregistrements ci-dessous, un nœud du tailnet résout l'IP publique et
+# ressort donc par la Freebox pour y revenir — chemin plus lent, et surtout source
+# vue par Caddy qui n'est plus une adresse du tailnet, ce qui ferait échouer le
+# filtre `allow_networks` des vhosts privés.
+#
+# ⚠️ À COMPLÉTER APRÈS le rattachement du CT au tailnet. L'IP n'existe pas encore :
+# le CT 102 n'est pas sur le tailnet à ce jour (vérifié le 2026-08-19, confirmé par
+# le design du 2026-08-17 : « l'Optiplex lui-même n'y est pas »). Elle sera attribuée
+# quand `caddy_ct_tailscale: true` aura été appliqué. La relever ensuite avec :
+#
+#   ssh root@192.168.1.100 -p 2125 'pct exec 102 -- tailscale ip -4'
+#
+# puis décommenter le bloc, renseigner la valeur et relancer `make headscale`.
+#
+# Ne concerne QUE les vhosts privés : photos.eonelia.fr et nas.eonelia.fr sont
+# publics et doivent continuer à résoudre l'IP publique partout.
+headscale_dns_extra_records: []
+# headscale_dns_extra_records:
+#   - name: "vinted.eonelia.fr"
+#     type: "A"
+#     value: "100.64.0.X"   # IP tailnet du CT 102, à relever après rattachement

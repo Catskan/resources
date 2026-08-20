@@ -80,3 +80,23 @@
   changed_when: false
   failed_when: caddy_ct_ip not in caddy_ct_addr.stdout
   when: not ansible_check_mode
+
+# --- Prérequis Tailscale ------------------------------------------------------
+# Monté depuis l'hôte : un CT non privilégié n'a pas /dev/net/tun, et le rôle
+# tailscale_client échoue explicitement sans lui.
+#
+# `unsafe_writes` est nécessaire : /etc/pve est pmxcfs, un système de fichiers FUSE
+# répliqué où l'écriture atomique par fichier temporaire puis rename() n'est pas
+# garantie. Sans ce réglage, la tâche peut échouer sur « Could not replace file ».
+- name: "Monter /dev/net/tun (prérequis Tailscale) dans le CT {{ caddy_ct_vmid }}"
+  ansible.builtin.blockinfile:
+    path: "/etc/pve/lxc/{{ caddy_ct_vmid }}.conf"
+    marker: "# {mark} ANSIBLE tailscale — roles/proxmox_caddy_lxc"
+    block: |
+      lxc.cgroup2.devices.allow: c 10:200 rwm
+      lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+    unsafe_writes: true
+  when:
+    - caddy_ct_tailscale | bool
+    - not ansible_check_mode or caddy_pct_status.rc == 0
+  notify: Redémarrer le CT Caddy

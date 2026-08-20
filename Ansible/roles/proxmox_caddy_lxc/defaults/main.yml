@@ -32,3 +32,21 @@ caddy_ct_nameserver: "192.168.1.254"
 caddy_ct_onboot: 1
 # Clé publique du contrôleur (le MacBook Air), injectée à la création.
 caddy_ct_controller_pubkey_path: "~/.ssh/id_ed25519.pub"
+
+# --- Rattachement au tailnet -------------------------------------------------
+# Tailscale (rôle tailscale_client, second play de main_caddy_playbook.yml) exige
+# /dev/net/tun : son rôle échoue explicitement si le périphérique est absent, il
+# ne sait pas fonctionner en `--tun=userspace-networking`. Un CT non privilégié
+# n'expose pas ce périphérique par défaut, d'où les deux directives montées par
+# ce drapeau.
+#
+# ⚠️ COUPURE DE SERVICE. Activer ce drapeau sur un CT DÉJÀ EN SERVICE modifie sa
+# configuration LXC, ce qui n'est pris en compte qu'au redémarrage du conteneur.
+# Le handler le redémarre donc, et tous les vhosts servis tombent le temps du
+# reboot — aujourd'hui photos.eonelia.fr (Immich, y compris l'app mobile) et
+# nas.eonelia.fr (DSM en externe), soit une quinzaine de secondes. À faire à une
+# heure choisie, pas au fil d'un déploiement de routine.
+#
+# Le handler ne se déclenche que si le bloc a réellement été ajouté ou modifié :
+# une seconde exécution est sans effet et ne redémarre rien.
+caddy_ct_tailscale: false
