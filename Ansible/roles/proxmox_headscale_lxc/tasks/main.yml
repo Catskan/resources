@@ -4,23 +4,40 @@
 # (clé du contrôleur injectée + sshd) → devient ensuite un hôte Ansible dédié
 # (rôle headscale). pct exec n'est utilisé QUE pour le bootstrap SSH.
 
-- name: Lister les templates LXC présents
-  ansible.builtin.command: "pveam list {{ hs_ct_template_storage }}"
-  register: hs_pveam_list
-  changed_when: false
-  check_mode: false
-
-- name: Télécharger le template Debian si absent
-  ansible.builtin.command: "pveam download {{ hs_ct_template_storage }} {{ hs_ct_template }}"
-  when: hs_ct_template not in hs_pveam_list.stdout
-  changed_when: true
-
+# L'existence du CT se vérifie AVANT tout ce qui touche au template : une fois le
+# conteneur créé, son image ne sert plus à rien. Or Proxmox ne garde au catalogue
+# qu'UNE version courante par template, et l'épinglage à une version précise devient
+# faux dès que Debian publie un point release — `pveam download` répond alors
+# « no such template » et fait échouer un rôle qui, sans cette tâche, n'aurait eu
+# aucun changement à appliquer.
+#
+# Constaté le 2026-08-20 : hs_ct_template valait debian-13-standard_13.1-2, disparu
+# du catalogue, et un `make headscale` de routine s'arrêtait au premier play alors
+# que le CT headscale tournait depuis des semaines. La version épinglée reste
+# volontairement inchangée : elle ne sert plus qu'à une création initiale, cas où
+# elle sera de toute façon à réviser.
 - name: Vérifier l'existence du CT {{ hs_ct_vmid }}
   ansible.builtin.command: "pct status {{ hs_ct_vmid }}"
   register: hs_pct_status
   changed_when: false
   failed_when: false
   check_mode: false
+
+- name: Lister les templates LXC présents
+  ansible.builtin.command: "pveam list {{ hs_ct_template_storage }}"
+  register: hs_pveam_list
+  changed_when: false
+  check_mode: false
+  when: hs_pct_status.rc != 0
+
+# `| default('')` est nécessaire : quand le CT existe, la tâche précédente est sautée
+# et `hs_pveam_list.stdout` n'est pas défini.
+- name: Télécharger le template Debian si absent
+  ansible.builtin.command: "pveam download {{ hs_ct_template_storage }} {{ hs_ct_template }}"
+  when:
+    - hs_pct_status.rc != 0
+    - hs_ct_template not in (hs_pveam_list.stdout | default(''))
+  changed_when: true
 
 - name: Lire le contenu autorisé du storage 'local'
   ansible.builtin.shell: >-

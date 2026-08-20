@@ -8,28 +8,47 @@
 # publique de la maison ne peut pas changer d'adresse au gré d'un bail, et la redirection
 # de ports de la Freebox pointe une IP fixe.
 
-- name: Lister les templates LXC présents
-  ansible.builtin.command: "pveam list {{ caddy_ct_template_storage }}"
-  register: caddy_pveam_list
-  changed_when: false
-  check_mode: false
-
-- name: Rafraîchir le catalogue des templates si le nôtre est absent
-  ansible.builtin.command: pveam update
-  when: caddy_ct_template not in caddy_pveam_list.stdout
-  changed_when: true
-
-- name: Télécharger le template Debian si absent
-  ansible.builtin.command: "pveam download {{ caddy_ct_template_storage }} {{ caddy_ct_template }}"
-  when: caddy_ct_template not in caddy_pveam_list.stdout
-  changed_when: true
-
+# L'existence du CT se vérifie AVANT tout ce qui touche au template : une fois le
+# conteneur créé, son image ne sert plus à rien. Or Proxmox ne garde au catalogue
+# qu'UNE version courante par template, et l'épinglage à une version précise devient
+# faux dès que Debian publie un point release — `pveam download` répond alors
+# « no such template » et fait échouer un rôle qui, sans cette tâche, n'aurait eu
+# aucun changement à appliquer.
+#
+# Constaté le 2026-08-20 sur proxmox_headscale_lxc, épinglé à
+# debian-13-standard_13.1-2 disparu du catalogue : un `make headscale` de routine
+# s'arrêtait au premier play alors que le CT headscale tournait depuis des semaines.
+# Ce rôle-ci avait le même défaut, masqué par le fait que sa version épinglée était
+# encore la version courante.
 - name: "Vérifier l'existence du CT {{ caddy_ct_vmid }}"
   ansible.builtin.command: "pct status {{ caddy_ct_vmid }}"
   register: caddy_pct_status
   changed_when: false
   failed_when: false
   check_mode: false
+
+- name: Lister les templates LXC présents
+  ansible.builtin.command: "pveam list {{ caddy_ct_template_storage }}"
+  register: caddy_pveam_list
+  changed_when: false
+  check_mode: false
+  when: caddy_pct_status.rc != 0
+
+# `| default('')` est nécessaire : quand le CT existe, la tâche précédente est sautée
+# et `caddy_pveam_list.stdout` n'est pas défini.
+- name: Rafraîchir le catalogue des templates si le nôtre est absent
+  ansible.builtin.command: pveam update
+  when:
+    - caddy_pct_status.rc != 0
+    - caddy_ct_template not in (caddy_pveam_list.stdout | default(''))
+  changed_when: true
+
+- name: Télécharger le template Debian si absent
+  ansible.builtin.command: "pveam download {{ caddy_ct_template_storage }} {{ caddy_ct_template }}"
+  when:
+    - caddy_pct_status.rc != 0
+    - caddy_ct_template not in (caddy_pveam_list.stdout | default(''))
+  changed_when: true
 
 - name: Déposer la clé publique du contrôleur sur l'hôte Proxmox
   ansible.builtin.copy:
