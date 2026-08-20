@@ -29,8 +29,12 @@ immich_service_participants:
     # en --full-scan, à resserrer sur la plus ancienne photo du compte.
     start_date: 2020-01-01
     person_ids:
-      - id: 14d6358c-1a2e-4efb-bba9-5be8b2d8f71d
-        label: Alba (16 visages)
+      # Changé le 20 août : `merge-people` a fondu quatre grappes d'Alba dans ce compte,
+      # et l'ancien identifiant (14d6358c) a disparu avec la fusion. Un person_id mort ne
+      # provoque pas d'erreur — la recherche ne rend simplement plus rien, et le pool
+      # cesse d'être alimenté en silence.
+      - id: be53765b-3efb-4d91-8e7c-ab3e2013dd6e
+        label: Alba
     private_tag_id: 3ca93e0c-11ae-4fde-9fba-c7dfa1cbc93d
 
   - name: amandine

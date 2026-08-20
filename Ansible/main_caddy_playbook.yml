@@ -12,7 +12,14 @@
   hosts: proxmox_optiplex
   gather_facts: true
   roles:
+    # `caddy_ct_tailscale` décrit le CT et vit donc dans host_vars/caddy. Mais le
+    # montage de /dev/net/tun qu'il pilote s'exécute ICI, sur l'hôte Proxmox, qui
+    # ne voit pas les variables du CT : sans cette indirection la tâche est
+    # silencieusement SAUTÉE, et le rôle tailscale_client du play suivant échoue
+    # sur « /dev/net/tun absent » — constaté le 2026-08-20, le drapeau étant à true
+    # côté CT et non défini côté hôte.
     - role: proxmox_caddy_lxc
+      caddy_ct_tailscale: "{{ hostvars['caddy'].caddy_ct_tailscale | default(false) }}"
       tags: [ct]
 
 - name: Configuration du reverse-proxy Caddy
