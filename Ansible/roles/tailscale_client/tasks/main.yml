@@ -60,26 +60,93 @@
   failed_when: false
   check_mode: false
 
-- name: Garde-fou — preauthkey requise si le client n'est pas déjà rattaché
+# Une seule évaluation du besoin de (re)login, réutilisée par la génération de
+# clé et par « tailscale up » — la condition était dupliquée entre les deux, avec
+# le risque de les voir diverger.
+- name: Déterminer si un (re)login est nécessaire
+  ansible.builtin.set_fact:
+    tailscale_needs_up: >-
+      {{ ((ts_status.stdout | from_json).BackendState | default('NoState') != 'Running')
+         or (tailscale_login_server not in (ts_prefs.stdout | default(''))) }}
+
+# La preauthkey n'était héritée que des plays de main_headscale_playbook.yml, via
+# hostvars['headscale'].hs_preauthkey. Tout client absent de ce playbook — caddy —
+# devait donc se voir passer -e tailscale_authkey=<clé> à la main. On la fabrique
+# désormais en déléguant au CT headscale, que le contrôleur joint de toute façon
+# (ProxyJump déclaré dans son host_vars). Rien à fournir pour un client neuf.
+- name: Preauthkey — la générer sur le CT headscale si aucune n'a été fournie
+  when:
+    - tailscale_needs_up | bool
+    - tailscale_authkey | length == 0
+    - tailscale_authkey_autogenerate | bool
+  block:
+    - name: Lister les utilisateurs headscale (pour en déduire l'ID)
+      ansible.builtin.command: "headscale users list -o json"
+      delegate_to: headscale
+      register: ts_hs_users
+      changed_when: false
+      check_mode: false
+
+    # Sans ce contrôle, un nom d'utilisateur mal aligné ferait échouer la tâche
+    # suivante sur un « No first item, sequence was empty » de Jinja, illisible.
+    - name: Vérifier que l'utilisateur headscale existe
+      ansible.builtin.assert:
+        that:
+          - ts_hs_users.stdout | from_json
+            | selectattr('name', 'equalto', tailscale_headscale_user)
+            | list | length == 1
+        fail_msg: >-
+          Utilisateur headscale « {{ tailscale_headscale_user }} » introuvable
+          (connus : {{ ts_hs_users.stdout | from_json
+                       | map(attribute='name') | join(', ') }}).
+          Aligner tailscale_headscale_user sur headscale_user du rôle headscale,
+          ou créer l'utilisateur : headscale users create <nom>.
+        quiet: true
+
+    # « preauthkeys create » attend l'ID numérique (-u/--user uint), pas le nom.
+    # Et c'est la SEULE commande qui renvoie le secret en clair : « list » n'en
+    # expose qu'une forme abrégée, d'où le no_log ici.
+    - name: Générer une preauthkey réutilisable
+      ansible.builtin.command: >-
+        headscale preauthkeys create
+        --user {{ ts_hs_users.stdout | from_json
+                  | selectattr('name', 'equalto', tailscale_headscale_user)
+                  | map(attribute='id') | first }}
+        --reusable --expiration {{ tailscale_preauthkey_expiration }}
+        --output json
+      delegate_to: headscale
+      register: ts_pak
+      changed_when: true
+      no_log: true
+
+    - name: Adopter la preauthkey générée
+      ansible.builtin.set_fact:
+        tailscale_authkey: "{{ (ts_pak.stdout | from_json).key }}"
+      no_log: true
+
+# Filet : la génération a pu être désactivée, ou le CT headscale être injoignable.
+# Ignoré en --check, où la création est volontairement sautée : sans cela un simple
+# « make check-caddy » échouerait sur un client non encore rattaché.
+- name: Garde-fou — aucune preauthkey disponible et client non rattaché
   ansible.builtin.fail:
     msg: >-
-      tailscale_authkey vide et {{ inventory_hostname }} non rattaché.
-      La clé n'est héritée par hostvars que des plays de
-      main_headscale_playbook.yml, qui ne couvre PAS tous les clients : caddy
-      n'y figure pas, donc « make headscale » ne le rattachera jamais. Passer
-      la clé explicitement, par exemple
+      {{ inventory_hostname }} n'est pas rattaché et aucune preauthkey n'est
+      disponible.
+      {{ 'Génération automatique désactivée (tailscale_authkey_autogenerate).'
+         if not tailscale_authkey_autogenerate | bool
+         else 'La génération déléguée au CT headscale n a rien renvoyé — CT injoignable depuis le contrôleur ?' }}
+      Repli : passer la clé à la main, p. ex.
       make caddy ARGS='--tags tailscale -e tailscale_authkey=<clé>'.
-      Clé à CRÉER sur le CT headscale — le secret n'est affiché qu'à la
-      création :
+      La CRÉER sur le CT headscale, le secret n'étant affiché qu'à la création :
       headscale preauthkeys create -u 1 --reusable -e 87600h -o json
-      Ne PAS reprendre une clé via « preauthkeys list » : son champ "key" y est
-      abrégé (16 caractères après le préfixe au lieu de 77) et tailscale up
-      échoue sur « failed to parse auth-key: key too short » — piège vérifié le
-      2026-08-21. En v0.29 « list » n'accepte pas --user, et « create » attend
-      l'ID numérique de l'utilisateur, pas son nom.
+      Ne PAS la reprendre via « preauthkeys list » : le champ "key" y est abrégé
+      (16 caractères après le préfixe au lieu de 77) et tailscale up échoue alors
+      sur « failed to parse auth-key: key too short » — piège vérifié le
+      2026-08-21.
   when:
+    - tailscale_needs_up | bool
     - tailscale_authkey | length == 0
-    - (ts_status.stdout | from_json).BackendState | default('NoState') != 'Running'
+    - not ansible_check_mode
 
 - name: Déduire le hostname du login-server (sans schéma ni port)
   ansible.builtin.set_fact:
@@ -113,10 +180,9 @@
     --hostname {{ tailscale_hostname }}
     --timeout=60s
     {{ tailscale_up_args }}
-  # (re)login si pas encore rattaché OU si le login-server a changé (ex. changement de port)
-  when: >-
-    ((ts_status.stdout | from_json).BackendState | default('NoState') != 'Running')
-    or (tailscale_login_server not in (ts_prefs.stdout | default('')))
+  # (re)login si pas encore rattaché OU si le login-server a changé (ex. changement
+  # de port) — cf. le fait tailscale_needs_up calculé plus haut.
+  when: tailscale_needs_up | bool
   register: ts_up
   changed_when: ts_up.rc == 0
   # no_log protège la clé, mais masquait AUSSI le message d'erreur : trois runs à
