@@ -7,11 +7,11 @@
 # ⚠️ ansible_port 22 EXPLICITE : le CT écoute en 22 ; le contrôleur remappe ssh->2122
 #    dans /etc/services → on force 22 pour le saut final.
 # ⚠️ IP PUBLIQUE mise à jour le 2026-08-18 : la ligne de la mère est passée en
-#    full-stack, nouvelle IP 82.67.182.91 (ancienne 88.172.204.162 injoignable —
-#    vérifié : `nc -zv 88.172.204.162 34343` time out, `nc -zv 82.67.182.91 34343`
-#    réussit). host_vars/wyse-proxmox/connection.yml utilise la même ancienne IP en
-#    dur et n'a PAS été corrigé ici (hors scope de cette tâche headscale) — à traiter
-#    séparément si un autre play passant par le Wyse échoue pareil.
+#    full-stack, nouvelle IP 82.67.182.91 (l'ancienne 88.172.204.162 ne répondait
+#    plus). L'avertissement qui figurait ici — « wyse-proxmox/connection.yml garde
+#    l'ancienne IP en dur, à traiter séparément » — est RÉSOLU : ce fichier porte
+#    bien 82.67.182.91, et un grep du dépôt le 2026-08-20 ne trouve plus aucune
+#    occurrence de l'ancienne IP hors de ce commentaire. Rien à reprendre.
 ansible_connection: ssh
 
 ansible_host: 192.168.1.168 # IP DHCP du CT 102, réservation DHCP posée le 2026-08-18
