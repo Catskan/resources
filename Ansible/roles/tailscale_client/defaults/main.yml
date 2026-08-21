@@ -10,5 +10,13 @@ tailscale_hostname: "{{ inventory_hostname }}"
 tailscale_authkey: "{{ hostvars['headscale'].hs_preauthkey | default(tailscale_authkey_fallback) }}"
 tailscale_authkey_fallback: ""
 
+# Le client est-il sur le MÊME LAN que le CT headscale (chez la mère) ?
+# true  → /etc/hosts résout le login-server vers l'IP LAN du CT (évite le hairpin NAT).
+#         À poser sur claude-code et wyse-proxmox, et sur eux seuls.
+# false → voie publique (DNS + forward 34443), et l'entrée /etc/hosts est retirée si
+#         elle traîne. Défaut, parce qu'une entrée erronée casse le rattachement de
+#         façon opaque : tailscale up échoue en « No route to host » sous no_log.
+tailscale_login_via_lan: false
+
 # Options `tailscale up`. --accept-routes off par défaut (on veut juste joindre le Mac).
 tailscale_up_args: "--accept-dns=false"
