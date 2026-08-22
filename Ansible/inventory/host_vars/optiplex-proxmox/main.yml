@@ -1,10 +1,16 @@
 ---
-# Plafond ARC de ZFS. 4 GiB max / 1 GiB min sur 16 Go de RAM : laisse la mémoire
-# aux conteneurs applicatifs. Valeur propre à CETTE machine — le rôle
-# proxmox_host_maintenance n'a volontairement pas de défaut, pour éviter qu'un
-# autre hôte ZFS hérite d'un plafond calibré ailleurs.
-pve_zfs_arc_max_bytes: 4294967296
-pve_zfs_arc_min_bytes: 1073741824
+# Plafond ARC de ZFS. 8 GiB max / 2 GiB min sur 32 Go de RAM. Valeur propre à
+# CETTE machine — le rôle proxmox_host_maintenance n'a volontairement pas de
+# défaut, pour éviter qu'un autre hôte ZFS hérite d'un plafond calibré ailleurs.
+#
+# Historique, parce que le sens du réglage s'est INVERSÉ : en août 2026 la machine
+# avait 16 Go et était sur-engagée (déficit de 640 Mo absorbé par le swap). Le
+# plafond était alors à 4 GiB, et le baisser était le levier le plus rentable.
+# Depuis le passage à 32 Go, l'engagement maximum retombe à ~25 Go et c'est
+# l'inverse qui est vrai : un ARC à 4 GiB bride inutilement le cache d'un hôte qui
+# sert Immich sur ZFS. D'où 8 GiB.
+pve_zfs_arc_max_bytes: 8589934592
+pve_zfs_arc_min_bytes: 2147483648
 
 # VMID de la VM Immich, consommé par roles/immich_vm/tasks/onboot.yml pour lui poser
 # `onboot: 1`. Sans défaut côté rôle, délibérément : un `qm set` sur le mauvais
