@@ -20,17 +20,27 @@
 # `/data` vide et considère les 149 Go d'originaux disparus.
 #
 # D'où les deux garde-fous :
-#   RequiresMountsFor   → systemd monte {{ immich_vm_nfs_path }} avant, et abandonne sinon
-#   ExecStartPre        → refus explicite de démarrer si `{{ immich_vm_nfs_sentinel }}/`
+#   ExecStartPre (1)    → monte {{ immich_vm_nfs_path }}, en réessayant, car personne d'autre
+#                         ne le refera : une unité .mount issue du fstab n'a pas de Restart=
+#   ExecStartPre (2)    → refus explicite de démarrer si `{{ immich_vm_nfs_sentinel }}/`
 #                         n'est pas visible, ce qui attrape le point de montage vide
+#
+# Pourquoi PAS de `RequiresMountsFor` : cette directive crée une dépendance dure, et
+# systemd ANNULE alors le service dès que le montage échoue — « Dependency failed », sans
+# qu'aucun ExecStartPre ne s'exécute. `After=` sans `Requires=` donne l'ordre sans ce veto.
+#
+# Vécu le 21 août, après un simple redémarrage de maintenance de l'hôte — arrêt propre à
+# 20:35, retour à 20:39, le NAS n'ayant pas bougé : le montage a échoué à 20:39:17 sur
+# « Network is unreachable », le service est resté `inactive` avec un `Result=success`
+# trompeur, et l'instance est restée quinze heures hors service alors que l'attente
+# ci-dessous aurait suffi. Ni coupure de courant ni panne : un reboot ordinaire suffit.
 
 [Unit]
 Description=Immich (docker compose)
 Documentation=https://docs.immich.app
 Requires=docker.service
-After=docker.service network-online.target
+After=docker.service network-online.target {{ immich_vm_nfs_unit }}
 Wants=network-online.target
-RequiresMountsFor={{ immich_vm_nfs_path }}
 
 [Service]
 Type=oneshot
@@ -41,14 +51,23 @@ WorkingDirectory={{ immich_vm_repo_dir }}
 # network-online.target est atteinte avant que la route par défaut soit posée, et
 # l'option `retry` de mount.nfs ne couvre pas ce cas — elle traite les délais d'attente,
 # pas l'absence de route, et abandonne aussitôt. Une unité .mount issue du fstab ne sait
-# pas se relancer seule, d'où cette attente : jusqu'à 2 min 30, par essais de 5 s.
-ExecStartPre=/bin/sh -c 'i=0; while [ $i -lt 30 ]; do findmnt -M {{ immich_vm_nfs_path }} >/dev/null && exit 0; systemctl start {{ immich_vm_nfs_path | regex_replace("^/", "") | regex_replace("/", "-") }}.mount >/dev/null 2>&1; sleep 5; i=$((i+1)); done; exit 1'
+# pas se relancer seule, d'où cette attente : jusqu'à 5 min, par essais de 5 s. Cinq
+# minutes et non deux et demie, parce qu'un Synology qui redémarre après une coupure met
+# plusieurs minutes à servir NFS, et que c'est précisément le scénario des soirs de
+# multiprise coupée.
+ExecStartPre=/bin/sh -c 'i=0; while [ $i -lt 60 ]; do findmnt -M {{ immich_vm_nfs_path }} >/dev/null && exit 0; systemctl start {{ immich_vm_nfs_unit }} >/dev/null 2>&1; sleep 5; i=$((i+1)); done; exit 1'
 
 # Garde-fou : ne jamais démarrer sur un point de montage vide.
 ExecStartPre=/usr/bin/test -d {{ immich_vm_nfs_path }}/{{ immich_vm_nfs_sentinel }}
 ExecStart=/usr/bin/docker compose up -d
 ExecStop=/usr/bin/docker compose stop
-TimeoutStartSec=300
+# 600 s pour laisser les 300 s d'attente du montage se dérouler sans être tronquées.
+TimeoutStartSec=600
+# Si le NAS n'est toujours pas là au bout de cinq minutes, réessayer plutôt qu'abandonner :
+# c'est ce qui manquait le 21 août. `Restart=` sur un oneshot relance l'unité entière,
+# donc l'attente du montage avec elle.
+Restart=on-failure
+RestartSec=120
 
 [Install]
 WantedBy=multi-user.target

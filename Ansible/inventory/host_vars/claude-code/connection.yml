@@ -12,3 +12,9 @@ ansible_user: root
 ansible_ssh_common_args: >-
   -o StrictHostKeyChecking=accept-new
   -o ProxyJump=aurel@82.67.182.91:34343
+
+# Ce client est sur le LAN du CT headscale (chez la mère) : le joindre via le WAN
+# imposerait un hairpin NAT que la Freebox ne fait pas. Le rôle tailscale_client
+# résout donc le login-server en local via /etc/hosts. Cf. le défaut (false) dans
+# roles/tailscale_client/defaults/main.yml : ne poser true QUE pour ce cas.
+tailscale_login_via_lan: true

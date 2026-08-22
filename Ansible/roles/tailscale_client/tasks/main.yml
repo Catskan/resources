@@ -60,30 +60,117 @@
   failed_when: false
   check_mode: false
 
-- name: Garde-fou — preauthkey requise si le client n'est pas déjà rattaché
+# Une seule évaluation du besoin de (re)login, réutilisée par la génération de
+# clé et par « tailscale up » — la condition était dupliquée entre les deux, avec
+# le risque de les voir diverger.
+- name: Déterminer si un (re)login est nécessaire
+  ansible.builtin.set_fact:
+    tailscale_needs_up: >-
+      {{ ((ts_status.stdout | from_json).BackendState | default('NoState') != 'Running')
+         or (tailscale_login_server not in (ts_prefs.stdout | default(''))) }}
+
+# La preauthkey n'était héritée que des plays de main_headscale_playbook.yml, via
+# hostvars['headscale'].hs_preauthkey. Tout client absent de ce playbook — caddy —
+# devait donc se voir passer -e tailscale_authkey=<clé> à la main. On la fabrique
+# désormais en déléguant au CT headscale, que le contrôleur joint de toute façon
+# (ProxyJump déclaré dans son host_vars). Rien à fournir pour un client neuf.
+- name: Preauthkey — la générer sur le CT headscale si aucune n'a été fournie
+  when:
+    - tailscale_needs_up | bool
+    - tailscale_authkey | length == 0
+    - tailscale_authkey_autogenerate | bool
+  block:
+    - name: Lister les utilisateurs headscale (pour en déduire l'ID)
+      ansible.builtin.command: "headscale users list -o json"
+      delegate_to: headscale
+      register: ts_hs_users
+      changed_when: false
+      check_mode: false
+
+    # Sans ce contrôle, un nom d'utilisateur mal aligné ferait échouer la tâche
+    # suivante sur un « No first item, sequence was empty » de Jinja, illisible.
+    - name: Vérifier que l'utilisateur headscale existe
+      ansible.builtin.assert:
+        that:
+          - ts_hs_users.stdout | from_json
+            | selectattr('name', 'equalto', tailscale_headscale_user)
+            | list | length == 1
+        fail_msg: >-
+          Utilisateur headscale « {{ tailscale_headscale_user }} » introuvable
+          (connus : {{ ts_hs_users.stdout | from_json
+                       | map(attribute='name') | join(', ') }}).
+          Aligner tailscale_headscale_user sur headscale_user du rôle headscale,
+          ou créer l'utilisateur : headscale users create <nom>.
+        quiet: true
+
+    # « preauthkeys create » attend l'ID numérique (-u/--user uint), pas le nom.
+    # Et c'est la SEULE commande qui renvoie le secret en clair : « list » n'en
+    # expose qu'une forme abrégée, d'où le no_log ici.
+    - name: Générer une preauthkey réutilisable
+      ansible.builtin.command: >-
+        headscale preauthkeys create
+        --user {{ ts_hs_users.stdout | from_json
+                  | selectattr('name', 'equalto', tailscale_headscale_user)
+                  | map(attribute='id') | first }}
+        --reusable --expiration {{ tailscale_preauthkey_expiration }}
+        --output json
+      delegate_to: headscale
+      register: ts_pak
+      changed_when: true
+      no_log: true
+
+    - name: Adopter la preauthkey générée
+      ansible.builtin.set_fact:
+        tailscale_authkey: "{{ (ts_pak.stdout | from_json).key }}"
+      no_log: true
+
+# Filet : la génération a pu être désactivée, ou le CT headscale être injoignable.
+# Ignoré en --check, où la création est volontairement sautée : sans cela un simple
+# « make check-caddy » échouerait sur un client non encore rattaché.
+- name: Garde-fou — aucune preauthkey disponible et client non rattaché
   ansible.builtin.fail:
     msg: >-
-      tailscale_authkey vide et client non rattaché. Lancer le playbook complet
-      (make headscale) pour générer la clé, ou passer -e tailscale_authkey=<clé>.
+      {{ inventory_hostname }} n'est pas rattaché et aucune preauthkey n'est
+      disponible.
+      {{ 'Génération automatique désactivée (tailscale_authkey_autogenerate).'
+         if not tailscale_authkey_autogenerate | bool
+         else 'La génération déléguée au CT headscale n a rien renvoyé — CT injoignable depuis le contrôleur ?' }}
+      Repli : passer la clé à la main, p. ex.
+      make caddy ARGS='--tags tailscale -e tailscale_authkey=<clé>'.
+      La CRÉER sur le CT headscale, le secret n'étant affiché qu'à la création :
+      headscale preauthkeys create -u 1 --reusable -e 87600h -o json
+      Ne PAS la reprendre via « preauthkeys list » : le champ "key" y est abrégé
+      (16 caractères après le préfixe au lieu de 77) et tailscale up échoue alors
+      sur « failed to parse auth-key: key too short » — piège vérifié le
+      2026-08-21.
   when:
+    - tailscale_needs_up | bool
     - tailscale_authkey | length == 0
-    - (ts_status.stdout | from_json).BackendState | default('NoState') != 'Running'
+    - not ansible_check_mode
 
 - name: Déduire le hostname du login-server (sans schéma ni port)
   ansible.builtin.set_fact:
     tailscale_login_host: "{{ tailscale_login_server | regex_replace('^https?://', '') | regex_replace('/.*$', '') | regex_replace(':[0-9]+$', '') }}"
 
-# Le CT claude-code est sur le MÊME LAN que le CT headscale (chez la mère) : le joindre
-# via le WAN (mom.eonelia.fr → 82.67.182.91) imposerait un hairpin NAT que la Freebox
-# ne fait pas. On résout donc mom.eonelia.fr en LOCAL vers l'IP LAN du CT headscale
-# (le cert wildcard *.eonelia.fr couvre le nom → TLS OK). Les clients distants (Mac)
-# passent eux par le DNS public + forward 443.
-- name: Résolution locale du login-server vers le CT headscale (évite le hairpin NAT)
+# Un client sur le MÊME LAN que le CT headscale (chez la mère) ne peut pas le joindre
+# via le WAN (mom.eonelia.fr → 82.67.182.91) : cela imposerait un hairpin NAT que la
+# Freebox ne fait pas. Pour ceux-là on résout mom.eonelia.fr en LOCAL vers l'IP LAN du
+# CT headscale (le cert wildcard *.eonelia.fr couvre le nom → TLS OK).
+#
+# Pour tous les AUTRES clients (caddy et optiplex-proxmox, chez Aurélien ; le Mac),
+# cette entrée est un piège : l'IP du CT headscale appartient au LAN de la mère, or les
+# deux sites utilisent le même plan 192.168.1.0/24. Elle a fait échouer le rattachement
+# de caddy sur « No route to host » — constaté le 2026-08-21, tailscale up masqué par
+# no_log. Ces clients passent par le DNS public + forward 34443 (port vérifié ouvert).
+#
+# D'où le state dynamique : l'entrée est RETIRÉE là où elle ne doit pas être, plutôt que
+# la tâche simplement sautée — sinon une entrée déjà posée y survivrait indéfiniment.
+- name: Résolution locale du login-server (seulement sur le LAN du CT headscale)
   ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "{{ hostvars['headscale'].ansible_host }} {{ tailscale_login_host }}"
     regexp: "\\s{{ tailscale_login_host | regex_escape }}$"
-    state: present
+    state: "{{ 'present' if tailscale_login_via_lan | bool else 'absent' }}"
 
 - name: Rattacher le client au tailnet (tailscale up)
   ansible.builtin.command: >-
@@ -93,13 +180,29 @@
     --hostname {{ tailscale_hostname }}
     --timeout=60s
     {{ tailscale_up_args }}
-  # (re)login si pas encore rattaché OU si le login-server a changé (ex. changement de port)
-  when: >-
-    ((ts_status.stdout | from_json).BackendState | default('NoState') != 'Running')
-    or (tailscale_login_server not in (ts_prefs.stdout | default('')))
+  # (re)login si pas encore rattaché OU si le login-server a changé (ex. changement
+  # de port) — cf. le fait tailscale_needs_up calculé plus haut.
+  when: tailscale_needs_up | bool
   register: ts_up
   changed_when: ts_up.rc == 0
+  # no_log protège la clé, mais masquait AUSSI le message d'erreur : trois runs à
+  # l'aveugle sur un « Module failed » sans texte, alors que tailscale disait
+  # précisément « failed to parse auth-key: key too short » (2026-08-21). On
+  # n'échoue donc plus ici ; la tâche suivante relaie la sortie, clé caviardée.
+  failed_when: false
   no_log: true
+
+- name: Échec explicite si le rattachement a échoué (sortie relayée, clé caviardée)
+  vars:
+    ts_out: "{{ ts_up.stderr | default('', true) or ts_up.stdout | default('', true) }}"
+  ansible.builtin.fail:
+    msg: >-
+      tailscale up a échoué (rc={{ ts_up.rc }}) :
+      {{ ts_out | replace(tailscale_authkey, '<authkey>')
+         if tailscale_authkey | length > 0 else ts_out }}
+  when:
+    - not (ts_up.skipped | default(false))
+    - (ts_up.rc | default(0)) != 0
 
 - name: Afficher l'IP tailnet du client
   ansible.builtin.command: "tailscale ip -4"

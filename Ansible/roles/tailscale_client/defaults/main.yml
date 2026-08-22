@@ -6,9 +6,31 @@ tailscale_login_server: "https://mom.eonelia.fr:34443"
 tailscale_hostname: "{{ inventory_hostname }}"
 
 # Preauthkey : fournie par le play headscale via hostvars (run complet `make headscale`).
-# En run client-only, passer -e tailscale_authkey=<clé> ou renseigner un fallback KeePass.
+# À défaut, le rôle la GÉNÈRE lui-même en déléguant au CT headscale (cf. ci-dessous) :
+# plus besoin de passer -e tailscale_authkey pour un client absent de ce playbook.
 tailscale_authkey: "{{ hostvars['headscale'].hs_preauthkey | default(tailscale_authkey_fallback) }}"
 tailscale_authkey_fallback: ""
+
+# Génération automatique de la preauthkey, par delegate_to vers l'hôte `headscale`,
+# quand aucune n'a été fournie et que le client doit se (re)connecter. Passer à
+# false pour exiger une clé explicite (le rôle échoue alors avec la marche à suivre).
+tailscale_authkey_autogenerate: true
+
+# Utilisateur headscale propriétaire des nœuds. Doit rester aligné sur headscale_user
+# du rôle headscale : les defaults d'un rôle ne sont pas visibles depuis un autre, la
+# valeur est donc répétée ici faute de group_vars commun.
+tailscale_headscale_user: "aurelien"
+
+# Expiration des clés générées par ce rôle (~10 ans, comme celles du rôle headscale).
+tailscale_preauthkey_expiration: "87600h"
+
+# Le client est-il sur le MÊME LAN que le CT headscale (chez la mère) ?
+# true  → /etc/hosts résout le login-server vers l'IP LAN du CT (évite le hairpin NAT).
+#         À poser sur claude-code et wyse-proxmox, et sur eux seuls.
+# false → voie publique (DNS + forward 34443), et l'entrée /etc/hosts est retirée si
+#         elle traîne. Défaut, parce qu'une entrée erronée casse le rattachement de
+#         façon opaque : tailscale up échoue en « No route to host » sous no_log.
+tailscale_login_via_lan: false
 
 # Options `tailscale up`. --accept-routes off par défaut (on veut juste joindre le Mac).
 tailscale_up_args: "--accept-dns=false"
