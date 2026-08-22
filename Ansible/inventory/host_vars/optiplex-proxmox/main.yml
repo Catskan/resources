@@ -58,14 +58,28 @@ pve_backup_schedule: "sun 01:00"
 # depuis cet hôte : 95 Mio/s. C'est le Wyse, dont le dump traverse le WAN, qui a
 # besoin d'un plafond.
 
-# Rétention. Arithmétique au 2026-08-22, avec les ratios de compression mesurés
-# (2,4:1 et 3,4:1 sur deux CT réels) : ~52 Go d'invités alloués sur local-zfs
-# → ~21 Go par dump complet, soit ~180 Go pour cette règle. Le Wyse en ajoute
-# ~135 Go sur le même volume2, qui a 1,1 To libres — large, avec de la place pour
-# la croissance d'Immich.
+# Rétention, dimensionnée sur un job complet RÉELLEMENT exécuté le 2026-08-23 à
+# 00:07 (8 min 36 s au total) et non sur une estimation :
+#   VM 100 HomeAssistant   2,96 Go   (52 s)
+#   VM 101 Immich         38,40 Go   (6 min 20 s)  ← le poste dominant
+#   CT 102 caddy           0,39 Go   (14 s)
+#   CT 200 pokemon         3,04 Go   (1 min 10 s)
+#   -------------------------------
+#   total                 44,80 Go par dump complet
 #
-# ⚠️ La bibliothèque Immich N'EST PAS dans le disque de la VM (elle vit sur
-#    /volume2/Photos/Immich, côté NAS) : le dump de la VM 101 reste donc autour de
-#    43 Go et n'enflera pas avec les photos. Corollaire : ce job ne sauvegarde
-#    AUCUNE photo.
+# Avec une sauvegarde par semaine, cette règle garde ~6 archives (les 4 semaines
+# de keep-weekly couvrent keep-last, keep-monthly ajoute 2 mois antérieurs), soit
+# ~270 Go. Le Wyse ajoute ~90 Go sur le MÊME volume2, qui a 1,1 To libres.
+#
+# ⚠️ Ne pas ré-estimer ce volume à partir d'un ratio de compression de CT. Une
+#    première estimation à ~21 Go s'est révélée fausse d'un facteur 2 : les CT
+#    compressent à 2,4-3,4:1, mais le disque de la VM Immich contient surtout des
+#    vignettes, du cache de modèles ML et Postgres — des données DÉJÀ compressées,
+#    qui sortent à ~1,1:1.
+#
+# ⚠️ La bibliothèque Immich N'EST PAS dans le disque de la VM : elle vit côté NAS
+#    sur /volume2/Photos/Immich (mesuré le 2026-08-23 : library 749 Go,
+#    encoded-video 292 Go). Le dump de la VM 101 ne grossira donc pas avec les
+#    photos — mais le corollaire est que CE JOB NE SAUVEGARDE AUCUNE PHOTO. La
+#    protection des photos ne dépend que du NAS.
 pve_backup_prune: "keep-last=2,keep-weekly=4,keep-monthly=3"
