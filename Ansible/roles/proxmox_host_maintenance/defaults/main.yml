@@ -31,3 +31,42 @@ pve_nic_watchdog_fail_threshold: 3
 pve_nic_watchdog_cooldown: 600
 # Période du timer, en secondes.
 pve_nic_watchdog_interval: 60
+
+# --- Sauvegarde vzdump ---------------------------------------------------------
+# Stockage cible VOLONTAIREMENT VIDE, même logique que l'ARC et la NIC ci-dessus :
+# la cible dépend de la machine, et un hôte sans cible déclarée saute tout
+# tasks/vzdump.yml. Le bon réglage est la sauvegarde CROISÉE — chaque site dumpe
+# sur le NAS de l'autre — sans quoi les archives partagent le sort de la machine
+# qu'elles sauvegardent.
+pve_backup_storage: ""
+
+# Dimanche tôt. À décaler par hôte quand plusieurs nœuds visent le même NAS :
+# deux dumps simultanés se disputent le même export NFS.
+pve_backup_schedule: "sun 03:00"
+
+# `all` : tout invité présent, y compris ceux créés après coup — le contraire
+# d'une liste d'ID, qui laisse silencieusement de côté les nouvelles VM.
+pve_backup_all: 1
+pve_backup_enabled: 1
+pve_backup_mode: snapshot
+pve_backup_compress: zstd
+
+# Rétention. Sans `prune-backups`, PVE garde TOUT : le stockage du Wyse n'avait
+# aucune règle et n'aurait prévenu qu'en saturant.
+pve_backup_prune: "keep-last=2,keep-weekly=4,keep-monthly=3"
+
+# Limite de débit en Kio/s. Vide = pas de limite. À poser quand le dump traverse
+# un lien qui ne nous appartient pas — le lien montant d'un site distant est
+# partagé avec ses occupants.
+pve_backup_bwlimit: ""
+
+# {% raw %} : ce gabarit est interprété par PVE, pas par Jinja. Sans l'échappement,
+# Ansible chercherait une variable `guestname` et échouerait au templating.
+pve_backup_notes_template: "{% raw %}{{guestname}}{% endraw %}"
+pve_backup_notification_mode: notification-system
+
+# Marqueur d'appartenance, cherché dans le champ `comment` — c'est la seule
+# identité stable dont on dispose, PVE imposant un UUID généré. Voir l'en-tête de
+# tasks/vzdump.yml : ne pas le retirer du commentaire à la main.
+pve_backup_marker: "gere par Ansible - role proxmox_host_maintenance"
+pve_backup_comment: "Sauvegarde hebdomadaire offsite - {{ pve_backup_marker }}"
