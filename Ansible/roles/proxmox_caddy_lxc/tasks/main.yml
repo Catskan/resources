@@ -107,15 +107,63 @@
 # `unsafe_writes` est nécessaire : /etc/pve est pmxcfs, un système de fichiers FUSE
 # répliqué où l'écriture atomique par fichier temporaire puis rename() n'est pas
 # garantie. Sans ce réglage, la tâche peut échouer sur « Could not replace file ».
+# ⚠️ PAS de `blockinfile` ici, et c'est le point à ne pas re-découvrir. PVE
+# ré-sérialise `/etc/pve/lxc/<id>.conf` à chaque écriture : il remonte les
+# commentaires en tête du fichier et repousse les lignes `lxc.*` brutes à la fin,
+# donc HORS des marqueurs. Au run suivant, blockinfile retrouve ses marqueurs —
+# devenus vides et orphelins en tête — et réécrit le bloc, que PVE déplace à
+# nouveau. Résultat : une paire de lignes ajoutée à CHAQUE exécution.
+#
+# Constaté le 2026-08-23 : le CT 101 `claude-code` portait les deux lignes
+# répétées 10 fois (20 lignes de doublons sur 33, plus un bloc de marqueurs vide
+# en tête) et le CT 102 `caddy` en avait déjà 2 paires. Fonctionnellement inoffensif
+# — LXC ignore les redites — mais le fichier grossit sans fin et le rôle mentait
+# en rapportant `changed` à chaque passage.
+#
+# `lineinfile` avec une regexp ancrée sur la ligne exacte la retrouve où que PVE
+# l'ait déplacée, donc reste idempotent malgré la ré-sérialisation.
+#
+# `unsafe_writes` reste nécessaire : /etc/pve est pmxcfs, un FUSE répliqué où
+# l'écriture atomique par fichier temporaire puis rename() n'est pas garantie.
 - name: "Monter /dev/net/tun (prérequis Tailscale) dans le CT {{ caddy_ct_vmid }}"
-  ansible.builtin.blockinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ caddy_ct_vmid }}.conf"
-    marker: "# {mark} ANSIBLE tailscale — roles/proxmox_caddy_lxc"
-    block: |
-      lxc.cgroup2.devices.allow: c 10:200 rwm
-      lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+    line: "{{ item }}"
+    regexp: "^{{ item | regex_escape }}$"
+    state: present
     unsafe_writes: true
+  loop:
+    - "lxc.cgroup2.devices.allow: c 10:200 rwm"
+    - "lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file"
   when:
     - caddy_ct_tailscale | bool
     - not ansible_check_mode or caddy_pct_status.rc == 0
   notify: Redémarrer le CT Caddy
+
+# Nettoyage des dégâts de l'ancienne implémentation. Pas de `notify` : retirer des
+# redites ne change rien à ce que voit LXC, donc ça ne justifie pas de redémarrer
+# le conteneur — contrairement à l'ajout d'une ligne manquante ci-dessus.
+- name: "Retirer les marqueurs blockinfile hérités du CT {{ caddy_ct_vmid }}"
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ caddy_ct_vmid }}.conf"
+    regexp: "^# (BEGIN|END) ANSIBLE tailscale( tun| — roles/proxmox_caddy_lxc)?$"
+    state: absent
+    unsafe_writes: true
+  when: not ansible_check_mode or caddy_pct_status.rc == 0
+
+# awk garde la PREMIÈRE occurrence de chacune des deux lignes gérées et jette les
+# suivantes. Le fichier temporaire vit hors de /etc/pve — pmxcfs ne supporte pas
+# le motif « écrire à côté puis renommer » — et la réécriture se fait en place.
+- name: "Dédupliquer les lignes lxc.* du CT {{ caddy_ct_vmid }}"
+  ansible.builtin.shell: |
+    set -eu
+    f=/etc/pve/lxc/{{ caddy_ct_vmid }}.conf
+    t=$(mktemp /tmp/lxcconf.XXXXXX)
+    before=$(md5sum "$f" | cut -d" " -f1)
+    awk '!(/^lxc\.(cgroup2\.devices\.allow: c 10:200 rwm|mount\.entry: \/dev\/net\/tun )/ && seen[$0]++)' "$f" > "$t"
+    cat "$t" > "$f"
+    rm -f "$t"
+    if [ "$before" = "$(md5sum "$f" | cut -d" " -f1)" ]; then echo "changed=0"; else echo "changed=1"; fi
+  register: caddy_ct_dedup
+  changed_when: "'changed=1' in caddy_ct_dedup.stdout"
+  when: not ansible_check_mode or caddy_pct_status.rc == 0
