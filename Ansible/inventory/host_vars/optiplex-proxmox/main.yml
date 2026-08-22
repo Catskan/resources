@@ -1,10 +1,16 @@
 ---
-# Plafond ARC de ZFS. 4 GiB max / 1 GiB min sur 16 Go de RAM : laisse la mémoire
-# aux conteneurs applicatifs. Valeur propre à CETTE machine — le rôle
-# proxmox_host_maintenance n'a volontairement pas de défaut, pour éviter qu'un
-# autre hôte ZFS hérite d'un plafond calibré ailleurs.
-pve_zfs_arc_max_bytes: 4294967296
-pve_zfs_arc_min_bytes: 1073741824
+# Plafond ARC de ZFS. 8 GiB max / 2 GiB min sur 32 Go de RAM. Valeur propre à
+# CETTE machine — le rôle proxmox_host_maintenance n'a volontairement pas de
+# défaut, pour éviter qu'un autre hôte ZFS hérite d'un plafond calibré ailleurs.
+#
+# Historique, parce que le sens du réglage s'est INVERSÉ : en août 2026 la machine
+# avait 16 Go et était sur-engagée (déficit de 640 Mo absorbé par le swap). Le
+# plafond était alors à 4 GiB, et le baisser était le levier le plus rentable.
+# Depuis le passage à 32 Go, l'engagement maximum retombe à ~25 Go et c'est
+# l'inverse qui est vrai : un ARC à 4 GiB bride inutilement le cache d'un hôte qui
+# sert Immich sur ZFS. D'où 8 GiB.
+pve_zfs_arc_max_bytes: 8589934592
+pve_zfs_arc_min_bytes: 2147483648
 
 # VMID de la VM Immich, consommé par roles/immich_vm/tasks/onboot.yml pour lui poser
 # `onboot: 1`. Sans défaut côté rôle, délibérément : un `qm set` sur le mauvais
@@ -42,3 +48,44 @@ pve_nic_watchdog_iface: nic0
 # l'exécution. La coder en dur ici ferait échouer le watchdog après un changement
 # de plan d'adressage, exactement quand on a besoin de lui.
 pve_nic_watchdog_target: ""
+
+# --- Sauvegarde vzdump --------------------------------------------------------
+# Cet hôte avait déjà un job créé dans l'UI le 2026-08-19, jamais exécuté (créé
+# un mercredi, planifié le dimanche) et sans aucune rétention. Il est repris ici
+# pour qu'il vive en git et qu'il élague.
+pve_backup_storage: NAS_Backup_NFS
+
+# 01:00 conservé de l'existant. Le Wyse dumpe à 03:00 : les deux visent le MÊME
+# volume2 du NAS (exports « Proxmox Aurelien » et « Proxmox maman »), le décalage
+# évite qu'ils se disputent l'export.
+pve_backup_schedule: "sun 01:00"
+
+# Pas de bwlimit : le NAS est sur le LAN. Mesuré le 2026-08-22 sur un dump réel
+# depuis cet hôte : 95 Mio/s. C'est le Wyse, dont le dump traverse le WAN, qui a
+# besoin d'un plafond.
+
+# Rétention, dimensionnée sur un job complet RÉELLEMENT exécuté le 2026-08-23 à
+# 00:07 (8 min 36 s au total) et non sur une estimation :
+#   VM 100 HomeAssistant   2,96 Go   (52 s)
+#   VM 101 Immich         38,40 Go   (6 min 20 s)  ← le poste dominant
+#   CT 102 caddy           0,39 Go   (14 s)
+#   CT 200 pokemon         3,04 Go   (1 min 10 s)
+#   -------------------------------
+#   total                 44,80 Go par dump complet
+#
+# Avec une sauvegarde par semaine, cette règle garde ~6 archives (les 4 semaines
+# de keep-weekly couvrent keep-last, keep-monthly ajoute 2 mois antérieurs), soit
+# ~270 Go. Le Wyse ajoute ~90 Go sur le MÊME volume2, qui a 1,1 To libres.
+#
+# ⚠️ Ne pas ré-estimer ce volume à partir d'un ratio de compression de CT. Une
+#    première estimation à ~21 Go s'est révélée fausse d'un facteur 2 : les CT
+#    compressent à 2,4-3,4:1, mais le disque de la VM Immich contient surtout des
+#    vignettes, du cache de modèles ML et Postgres — des données DÉJÀ compressées,
+#    qui sortent à ~1,1:1.
+#
+# ⚠️ La bibliothèque Immich N'EST PAS dans le disque de la VM : elle vit côté NAS
+#    sur /volume2/Photos/Immich (mesuré le 2026-08-23 : library 749 Go,
+#    encoded-video 292 Go). Le dump de la VM 101 ne grossira donc pas avec les
+#    photos — mais le corollaire est que CE JOB NE SAUVEGARDE AUCUNE PHOTO. La
+#    protection des photos ne dépend que du NAS.
+pve_backup_prune: "keep-last=2,keep-weekly=4,keep-monthly=3"

@@ -1,0 +1,43 @@
+---
+# --- Sauvegarde vzdump vers l'autre site --------------------------------------
+# Constaté le 2026-08-22 : cet hôte n'avait AUCUN job de sauvegarde planifié
+# (`/etc/pve/jobs.cfg` vide), alors que son stockage `NAS_Backup_NFS` pointait
+# déjà `100.64.0.6:/volume2/Sauvegardes/Proxmox maman`, c'est-à-dire le NAS de
+# l'autre site. Les seuls dumps présents dataient du 27 juillet. La cible offsite
+# était donc prête et inutilisée — sur la seule machine du parc qu'on ne peut pas
+# aller redémarrer à la main, et qui porte le Home Assistant de la mère (avec son
+# dongle Zigbee, donc non reconstructible ailleurs) et le CT headscale, plan de
+# contrôle du tailnet.
+pve_backup_storage: NAS_Backup_NFS
+
+# 03:00 et non le défaut du rôle par hasard : l'Optiplex dumpe à 01:00 vers le
+# MÊME NAS (export « Proxmox Aurelien »). Deux jobs simultanés se disputeraient
+# l'export NFS, et celui d'ici traverse le WAN — il est le plus lent des deux.
+pve_backup_schedule: "sun 03:00"
+
+# 8000 Kio/s ≈ 8,2 Mo/s, sous les 11,2 Mo/s mesurés vers le NAS le 2026-08-22.
+# Deux raisons de brider plutôt que de saturer :
+#   - le lien montant est celui de la mère, pas le nôtre ;
+#   - le montage NFS est en `soft,timeo=600` : saturer le lien qu'il emprunte,
+#     c'est fabriquer les délais d'attente qui font échouer le dump.
+# ~37 Go d'invités réels, soit environ 40 min à ce débit. Le poste dominant est le
+# CT 101 claude-code (23,7 Go) : le job s'allégera nettement quand il sera
+# rapatrié sur l'Optiplex.
+pve_backup_bwlimit: 8000
+
+# ⚠️ NE PAS définir pve_zfs_arc_* ici : cet hôte est sur LVM-thin, sans module
+#    ZFS. tasks/zfs_arc.yml se garde déjà tout seul, mais poser les valeurs
+#    laisserait croire qu'elles s'appliquent.
+# ⚠️ NE PAS définir pve_nic_* ici : le bug e1000e concerne l'Intel i219 de
+#    l'Optiplex. Ce Wyse n'a ni ce contrôleur ni cet historique.
+
+# --- Montage NFS dont dépend le CT 103 ----------------------------------------
+# Le `mp0` du CT 103 `ai-agent-astreinte` référence
+# /mnt/nas-aurelien/AI/Claude-data. Le 2026-08-22 ce montage avait échoué au
+# démarrage sans que rien ne le signale — `_netdev` n'attend pas `tailscaled`, et
+# l'export est joint par une adresse du tailnet (100.64.0.6). Le conteneur lisait
+# pourtant ses fichiers, par un montage hérité dans son propre namespace : au
+# prochain redémarrage il aurait vu un dossier vide, et l'agent d'astreinte aurait
+# perdu sa mémoire claude-mem en silence.
+pve_nfs_wait_mounts:
+  - /mnt/nas-aurelien
