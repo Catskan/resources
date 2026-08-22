@@ -76,3 +76,13 @@ pve_backup_comment: "Sauvegarde hebdomadaire offsite - {{ pve_backup_marker }}"
 # CORRECTION — sur le stockage de sauvegarde par défaut, le staging casse la
 # sauvegarde de tout CT non privilégié vers du NFS. Voir tasks/vzdump.yml.
 pve_backup_tmpdir: /var/tmp/vzdump
+
+# --- Montages NFS de l'hôte dont dépendent des invités -------------------------
+# Liste VOLONTAIREMENT VIDE, même logique que l'ARC et la NIC : propre à la machine.
+# Y mettre les points de montage référencés par un `mp0` d'invité, pour qu'ils soient
+# montés avant que Proxmox ne démarre les invités. Voir tasks/nfs_wait.yml.
+pve_nfs_wait_mounts: []
+# 60 × 5 s = 5 min. Cinq minutes parce qu'un Synology qui redémarre après une coupure
+# met plusieurs minutes à servir NFS — même raisonnement que le rôle immich_vm.
+pve_nfs_wait_tries: 60
+pve_nfs_wait_delay: 5

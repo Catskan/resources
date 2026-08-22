@@ -8,9 +8,11 @@
 #   - plafond ARC ZFS (zfs_arc.yml) : conditionné à la présence du module
 #   - carte réseau (nic_watchdog.yml) : contournement du bug e1000e, conditionné
 #     à une interface définie pour l'hôte
+#   - montages NFS (nfs_wait.yml) : fiabilise ceux dont dépendent des invités,
+#     conditionné à une liste non vide pour l'hôte
 #   - sauvegarde (vzdump.yml) : job hebdomadaire vers un stockage offsite,
 #     conditionné à une cible définie pour l'hôte
-# Tags : maintenance, zfs, nic, backup
+# Tags : maintenance, zfs, nic, backup, nfs_wait
 
 - name: "[maint] fstrim hebdomadaire de tous les CT (rend l'espace à pve-root)"
   ansible.builtin.copy:
@@ -55,6 +57,11 @@
 - name: Contournement du bug e1000e (conditionné à une interface définie)
   ansible.builtin.import_tasks: nic_watchdog.yml
   tags: nic
+
+- name: Montages NFS attendus par des invités (conditionné à une liste non vide)
+  ansible.builtin.import_tasks: nfs_wait.yml
+  when: pve_nfs_wait_mounts | length > 0
+  tags: nfs_wait
 
 - name: Job de sauvegarde vzdump (conditionné à un stockage cible défini)
   ansible.builtin.import_tasks: vzdump.yml

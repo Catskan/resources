@@ -30,3 +30,14 @@ pve_backup_bwlimit: 8000
 #    laisserait croire qu'elles s'appliquent.
 # ⚠️ NE PAS définir pve_nic_* ici : le bug e1000e concerne l'Intel i219 de
 #    l'Optiplex. Ce Wyse n'a ni ce contrôleur ni cet historique.
+
+# --- Montage NFS dont dépend le CT 103 ----------------------------------------
+# Le `mp0` du CT 103 `ai-agent-astreinte` référence
+# /mnt/nas-aurelien/AI/Claude-data. Le 2026-08-22 ce montage avait échoué au
+# démarrage sans que rien ne le signale — `_netdev` n'attend pas `tailscaled`, et
+# l'export est joint par une adresse du tailnet (100.64.0.6). Le conteneur lisait
+# pourtant ses fichiers, par un montage hérité dans son propre namespace : au
+# prochain redémarrage il aurait vu un dossier vide, et l'agent d'astreinte aurait
+# perdu sa mémoire claude-mem en silence.
+pve_nfs_wait_mounts:
+  - /mnt/nas-aurelien

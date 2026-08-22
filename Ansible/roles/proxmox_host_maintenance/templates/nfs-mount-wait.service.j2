@@ -1,0 +1,27 @@
+# Géré par Ansible — rôle proxmox_host_maintenance. Ne pas éditer à la main.
+#
+# Garantit que {{ item }} est monté AVANT que Proxmox ne démarre les invités, pour
+# qu'un point de montage (`mp0`) qui le référence ne se lie pas à un dossier vide.
+# Le conteneur hérite du montage à son démarrage : lié une fois à vide, il le reste
+# jusqu'à son prochain redémarrage — sans erreur, en renvoyant simplement rien.
+[Unit]
+Description=Attend le montage de {{ item }} avant les invités Proxmox
+# `After` sans `Requires` sur le montage : on veut l'ordre, pas le veto. Une
+# dépendance dure ferait annuler cette unité quand le montage échoue, alors que
+# c'est précisément le cas qu'elle doit traiter (leçon du commit 33c9f41).
+After=tailscaled.service network-online.target remote-fs.target
+Wants=network-online.target
+Before=pve-guests.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/nfs-mount-wait {{ item }} {{ pve_nfs_wait_tries }} {{ pve_nfs_wait_delay }}
+# Laisse l'attente complète se dérouler sans être tronquée par le délai d'unité.
+TimeoutStartSec={{ (pve_nfs_wait_tries | int * pve_nfs_wait_delay | int) + 60 }}
+# Si le NAS n'est toujours pas là au bout de l'attente, réessayer plutôt qu'abandonner.
+Restart=on-failure
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target
