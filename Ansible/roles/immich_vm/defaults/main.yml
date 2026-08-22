@@ -31,6 +31,12 @@ immich_vm_nfs_options: "hard,noatime,nfsvers=4,_netdev,nofail"
 # est bien monté — sert de sentinelle à l'unité systemd comme à ce rôle.
 immich_vm_nfs_sentinel: library
 
+# Nom de l'unité systemd que le fstab génère pour ce point de montage : /mnt/nas/immich
+# donne mnt-nas-immich.mount. Dérivé plutôt que codé, pour qu'un changement de chemin
+# n'oublie pas l'unité — c'est elle que l'ExecStartPre de immich.service relance.
+immich_vm_nfs_unit: >-
+  {{ immich_vm_nfs_path | regex_replace('^/', '') | regex_replace('/', '-') }}.mount
+
 # Compte de service de la VM. Les groupes lui donnent accès au journal : sans eux,
 # `journalctl -u mnt-nas-immich.mount` répond « No entries » au lieu de l'erreur.
 immich_vm_user: aurel
