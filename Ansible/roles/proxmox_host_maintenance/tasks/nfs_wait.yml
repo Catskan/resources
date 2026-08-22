@@ -72,4 +72,7 @@
   loop: "{{ pve_nfs_wait_mounts }}"
   register: proxmox_host_maintenance_nfs_check
   changed_when: false
+  # Lecture seule : s'exécute aussi en --check, sinon la vérification est muette
+  # exactement dans le mode où on vient chercher une confirmation.
+  check_mode: false
   failed_when: proxmox_host_maintenance_nfs_check.rc != 0
