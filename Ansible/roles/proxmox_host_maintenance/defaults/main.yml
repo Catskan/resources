@@ -70,3 +70,9 @@ pve_backup_notification_mode: notification-system
 # tasks/vzdump.yml : ne pas le retirer du commentaire à la main.
 pve_backup_marker: "gere par Ansible - role proxmox_host_maintenance"
 pve_backup_comment: "Sauvegarde hebdomadaire offsite - {{ pve_backup_marker }}"
+
+# Répertoire temporaire de vzdump. Défaut NON vide, contrairement aux autres
+# réglages du rôle : ce n'est pas un choix propre à une machine mais une
+# CORRECTION — sur le stockage de sauvegarde par défaut, le staging casse la
+# sauvegarde de tout CT non privilégié vers du NFS. Voir tasks/vzdump.yml.
+pve_backup_tmpdir: /var/tmp/vzdump

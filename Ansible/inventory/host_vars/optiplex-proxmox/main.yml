@@ -42,3 +42,30 @@ pve_nic_watchdog_iface: nic0
 # l'exécution. La coder en dur ici ferait échouer le watchdog après un changement
 # de plan d'adressage, exactement quand on a besoin de lui.
 pve_nic_watchdog_target: ""
+
+# --- Sauvegarde vzdump --------------------------------------------------------
+# Cet hôte avait déjà un job créé dans l'UI le 2026-08-19, jamais exécuté (créé
+# un mercredi, planifié le dimanche) et sans aucune rétention. Il est repris ici
+# pour qu'il vive en git et qu'il élague.
+pve_backup_storage: NAS_Backup_NFS
+
+# 01:00 conservé de l'existant. Le Wyse dumpe à 03:00 : les deux visent le MÊME
+# volume2 du NAS (exports « Proxmox Aurelien » et « Proxmox maman »), le décalage
+# évite qu'ils se disputent l'export.
+pve_backup_schedule: "sun 01:00"
+
+# Pas de bwlimit : le NAS est sur le LAN. Mesuré le 2026-08-22 sur un dump réel
+# depuis cet hôte : 95 Mio/s. C'est le Wyse, dont le dump traverse le WAN, qui a
+# besoin d'un plafond.
+
+# Rétention. Arithmétique au 2026-08-22, avec les ratios de compression mesurés
+# (2,4:1 et 3,4:1 sur deux CT réels) : ~52 Go d'invités alloués sur local-zfs
+# → ~21 Go par dump complet, soit ~180 Go pour cette règle. Le Wyse en ajoute
+# ~135 Go sur le même volume2, qui a 1,1 To libres — large, avec de la place pour
+# la croissance d'Immich.
+#
+# ⚠️ La bibliothèque Immich N'EST PAS dans le disque de la VM (elle vit sur
+#    /volume2/Photos/Immich, côté NAS) : le dump de la VM 101 reste donc autour de
+#    43 Go et n'enflera pas avec les photos. Corollaire : ce job ne sauvegarde
+#    AUCUNE photo.
+pve_backup_prune: "keep-last=2,keep-weekly=4,keep-monthly=3"

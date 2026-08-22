@@ -21,6 +21,44 @@
 #
 # Tag : backup
 
+# --- Répertoire temporaire local : SANS ÇA, LES CT NON PRIVILÉGIÉS NE SONT PAS
+#     SAUVEGARDÉS DU TOUT ------------------------------------------------------
+# vzdump met en scène la config du CT dans un répertoire `.tmp` puis lance `tar`
+# à travers `lxc-usernsexec -m u:0:100000:65536` pour un CT **non privilégié** —
+# donc en uid 100000. Par défaut ce répertoire est créé SUR LE STOCKAGE DE
+# SAUVEGARDE : en NFS, le serveur refuse cet uid qu'il ne connaît pas, y compris
+# sur un fichier en 0777. Résultat : `tar: Cannot open: Permission denied`, exit
+# code 2, et une sauvegarde qui échoue à chaque passage.
+#
+# Constaté le 2026-08-22 sur les DEUX nœuds : le partage NFS de chacun refuse
+# l'uid 100000 (vérifié en isolation, `lxc-usernsexec … cat` sur un fichier root
+# en 0777), alors qu'un fichier identique en local se lit sans problème. Les
+# journaux du 2026-07-28 du Wyse portent déjà l'erreur mot pour mot : les CT non
+# privilégiés n'avaient jamais été sauvegardés, seuls les CT privilégiés et les
+# VM l'étaient. Le piège est que l'UI annonce un job actif et que l'échec ne
+# laisse qu'un `.log` sans archive à côté des archives réussies des autres
+# invités — il faut lister les `.tar.zst` pour le voir.
+#
+# ⚠️ Le mode 0755 n'est pas décoratif : en 0700 root, l'uid 100000 ne peut pas
+#    traverser le répertoire et l'échec est identique, juste déplacé.
+- name: "[backup] Répertoire temporaire local pour vzdump"
+  ansible.builtin.file:
+    path: "{{ pve_backup_tmpdir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "[backup] Pointer vzdump sur ce répertoire temporaire"
+  ansible.builtin.lineinfile:
+    path: /etc/vzdump.conf
+    regexp: '^\s*tmpdir\s*:'
+    line: "tmpdir: {{ pve_backup_tmpdir }}"
+    insertafter: "^#tmpdir:"
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: "[backup] Lire le stockage cible dans la configuration du cluster"
   ansible.builtin.command:
     argv:
