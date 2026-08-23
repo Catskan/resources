@@ -47,6 +47,13 @@ pve_backup_schedule: "sun 03:00"
 # `all` : tout invité présent, y compris ceux créés après coup — le contraire
 # d'une liste d'ID, qui laisse silencieusement de côté les nouvelles VM.
 pve_backup_all: 1
+
+# Exceptions à `all`, en VMID séparés par des virgules. Vide par défaut : la règle
+# reste « on sauvegarde tout », et chaque exclusion doit se justifier par hôte.
+# Le besoin est né le 2026-08-23 : `all` prend aussi les invités ARRÊTÉS, donc un
+# CT gardé éteint comme filet de repli continuait d'être dumpé chaque semaine —
+# ici 20 GiB inertes à travers le WAN d'un autre site, 42 min pour rien.
+pve_backup_exclude: ""
 pve_backup_enabled: 1
 pve_backup_mode: snapshot
 pve_backup_compress: zstd
