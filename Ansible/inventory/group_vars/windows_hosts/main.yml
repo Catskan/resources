@@ -227,9 +227,22 @@ ai_llm_model: "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF@Q3_K_S"
 ai_llm_model_glob: "*Mistral-Small-3.2-24B*Q3_K_S*.gguf"
 ai_llm_auto_pull_model: true # `lms get` seulement si le .gguf est absent
 ai_llm_server_port: 1234
-# Clé PUBLIQUE du bot vinted (NAS) autorisée à ssh en tant qu'Aurel (admin →
+# Clé PUBLIQUE du bot vinted autorisée à ssh en tant qu'Aurel (admin →
 # administrators_authorized_keys). Publique : pas de secret, pas de KeePass.
-ai_ssh_authorized_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKgYJpkCm90qKk1yQYT0yh3q5298mON8OmpMOXPJOXdy catskan-vintedbot-nas"
+#
+# ⚠️ CORRIGÉE le 2026-08-23. La valeur précédente était
+# `…OXPJOXdy catskan-vintedbot-nas` (SHA256:ebc9+rbatK8RTa9Ju9pm1OAKn2cwF3qqklbB9lkY9dE),
+# qui ne correspond à AUCUNE clé privée retrouvée : le seul couple existant est
+# `vinted-bot@nas` (SHA256:s7JnWbUO5A36Qb5Y+1tG71VpTOgrThzhs4h3g3a0PgY), unique
+# paire du home DSM `/var/services/homes/a.busutil/.ssh/`, et c'est celle que le
+# bot utilise réellement — migrée telle quelle dans le CT 202 le 2026-08-23.
+#
+# ⚠️ La tâche `ai_llm_host.yml` fait un `Add-Content`, donc elle AJOUTE sans
+# jamais retirer : l'ancienne clé reste dans
+# `C:\ProgramData\ssh\administrators_authorized_keys` du PC après ce
+# changement. Or c'est un accès ADMIN dont la moitié privée n'est pas localisée.
+# Elle doit être retirée À LA MAIN sur le PC — Ansible ne le fera pas.
+ai_ssh_authorized_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIqXGHezE9ycSgIl1a1jswrr47fGxoODuYK3Dgom5mGY vinted-bot@nas"
 
 # --- AppX bloatware (console_ux.yml) ---
 # Unified list (Phase 3 P3d — softwares_uninstall.yml deleted). Removing
