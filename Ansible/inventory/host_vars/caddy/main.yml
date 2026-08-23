@@ -68,8 +68,13 @@ caddy_vhosts:
   # challenge HTTP-01 aboutisse, exactement comme photos et nas. Le split-horizon
   # dnsmasq du même design le fera ensuite résoudre vers 192.168.1.210 depuis la
   # maison, évitant l'aller-retour par le NAT.
+  # Backend déplacé du NAS (192.168.1.7) vers le CT 202 de l'Optiplex le
+  # 2026-08-23 : le bot a été migré du NAS vers ce CT, où le conteneur
+  # `vinted-bot-webui` tourne toujours en `network_mode: host`, donc le port 8089
+  # est celui du CT. Le NAS continue de répondre sur son propre 8089 jusqu'à ce
+  # que ses conteneurs soient arrêtés, mais ce n'est plus lui qu'on sert ici.
   - name: vinted.eonelia.fr
-    backend: 192.168.1.7:8089
+    backend: 192.168.1.120:8089
     allow_networks:
       - 192.168.1.0/24
       - 100.64.0.0/10
