@@ -129,6 +129,8 @@
          '--prune-backups', pve_backup_prune]
         + (['--bwlimit', pve_backup_bwlimit | string]
            if (pve_backup_bwlimit | string | length > 0) else [])
+        + (['--exclude', pve_backup_exclude | string]
+           if (pve_backup_exclude | string | length > 0) else [])
       }}
 
 - name: "[backup] Créer le job de sauvegarde"
@@ -162,6 +164,14 @@
       notes-template: "{{ pve_backup_notes_template }}"
       notification-mode: "{{ pve_backup_notification_mode }}"
       prune: "{{ pve_backup_prune | split(',') | map('trim') | sort | join(',') }}"
+      # `exclude` revient de l'API en chaîne façon CLI (« 101 »), pas en
+      # dictionnaire comme `prune-backups`. On trie tout de même les deux côtés :
+      # rien ne garantit que PVE conserve l'ordre d'une liste de plusieurs VMID,
+      # et une comparaison sensible à l'ordre ferait réécrire le job à chaque
+      # exécution.
+      exclude: >-
+        {{ (pve_backup_exclude | string | split(',') | map('trim')
+            | reject('equalto', '') | sort | join(',')) }}
     current:
       schedule: "{{ job.schedule | default('') }}"
       storage: "{{ job.storage | default('') }}"
@@ -172,6 +182,9 @@
       bwlimit: "{{ job.bwlimit | default('') | string }}"
       notes-template: "{{ job['notes-template'] | default('') }}"
       notification-mode: "{{ job['notification-mode'] | default('') }}"
+      exclude: >-
+        {{ (job.exclude | default('') | string | split(',') | map('trim')
+            | reject('equalto', '') | sort | join(',')) }}
       prune: >-
         {{ job['prune-backups'] | default({}) | dict2items
            | map(attribute='key') | zip(job['prune-backups'] | default({})
