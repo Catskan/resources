@@ -20,10 +20,25 @@ pve_backup_schedule: "sun 03:00"
 #   - le lien montant est celui de la mère, pas le nôtre ;
 #   - le montage NFS est en `soft,timeo=600` : saturer le lien qu'il emprunte,
 #     c'est fabriquer les délais d'attente qui font échouer le dump.
-# ~37 Go d'invités réels, soit environ 40 min à ce débit. Le poste dominant est le
-# CT 101 claude-code (23,7 Go) : le job s'allégera nettement quand il sera
-# rapatrié sur l'Optiplex.
+# Le poste dominant ÉTAIT le CT 101 claude-code, 20 GiB écrits pour 8,69 Go
+# compressés, soit 42 min à lui seul (log du 2026-08-23 04:10). Il est rapatrié
+# depuis le 2026-08-23 (CT 201 sur l'Optiplex) et exclu ci-dessous. Le CT 103
+# ai-agent-astreinte l'a suivi le même jour (CT 103 sur l'Optiplex, VMID conservé)
+# et est exclu aussi : ce job ne porte donc plus que le CT 102 headscale et la
+# VM 100 Home Assistant — les deux seules choses qui DOIVENT rester sur ce site.
 pve_backup_bwlimit: 8000
+
+# CT 101 claude-code, migré vers le CT 201 de l'Optiplex le 2026-08-23. Il est
+# gardé ARRÊTÉ et intact comme filet de repli, `onboot 0`, non détruit — mais
+# `all: 1` sauvegarde aussi les invités arrêtés. Sans cette exclusion, chaque
+# dimanche redumpait 20 GiB figés à travers le WAN de la mère, 42 min pour une
+# archive dont deux copies dorment déjà sur le NAS.
+# Le CT 103 ai-agent-astreinte, migré le même jour, est gardé au même titre :
+# arrêté, `onboot 0`, non détruit. Sans exclusion c'est 642 Mo figés réexpédiés
+# chaque dimanche par le lien montant de la mère.
+# À retirer le jour où ces CT seront détruits : une exclusion survivante
+# deviendrait un piège silencieux si un futur invité héritait du VMID 101 ou 103.
+pve_backup_exclude: "101,103"
 
 # ⚠️ NE PAS définir pve_zfs_arc_* ici : cet hôte est sur LVM-thin, sans module
 #    ZFS. tasks/zfs_arc.yml se garde déjà tout seul, mais poser les valeurs
