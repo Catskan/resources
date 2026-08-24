@@ -89,3 +89,28 @@ pve_backup_schedule: "sun 01:00"
 #    photos — mais le corollaire est que CE JOB NE SAUVEGARDE AUCUNE PHOTO. La
 #    protection des photos ne dépend que du NAS.
 pve_backup_prune: "keep-last=2,keep-weekly=4,keep-monthly=3"
+
+# Le CT 201 claude-code est SORTI du job `--all`, et sauvegardé par un job dédié.
+#
+# Motif, mesuré le 2026-08-24 : son dump échoue par intermittence quand il est
+# pris dans la série du job global — deux échecs sur trois passages, sur
+# « got unexpected control message: » juste après le freeze/thaw, et le job
+# s'arrête là (RC 255). En ciblé il n'a jamais échoué : 4 essais sur 4 réussis,
+# 201 seul, 102→201, 100→201 et même 101→201 avec les 160 GiB d'Immich juste
+# devant. Ni « un CT avant », ni « une VM avant », ni la pression mémoire
+# (13,5 Go disponibles tout du long) n'expliquent donc l'échec — la cause reste
+# INCONNUE. Le faisceau pointe le canal de contrôle LXC de ce CT, seul du parc à
+# faire tourner Docker imbriqué avec onze montages bind : même organe que le
+# « container did not stop » observé sur son extinction.
+#
+# Ce n'est donc pas un correctif, c'est un contournement — mais il évite l'effet
+# le plus grave : un échec sur le 201 INTERROMPAIT le job, laissant le CT 202
+# vinted-bot sans sauvegarde (constaté le 2026-08-24 au matin).
+#
+# ⚠️ Le job dédié (schedule sun 02:00, `all 0` + `vmid 201`) N'EST PAS géré par
+#    ce rôle, et c'est VOULU : tasks/vzdump.yml refuse d'agir si plusieurs jobs
+#    portent le marqueur `pve_backup_marker`. Le job dédié en est donc dépourvu,
+#    le rôle l'ignore, et une convergence ne le recréera pas s'il disparaît. À
+#    reprendre si le rôle apprend un jour à gérer plusieurs jobs.
+#    Détails : Catskan/nas-claude-code, MIGRATION-OPTIPLEX.md §9.6
+pve_backup_exclude: "201"
