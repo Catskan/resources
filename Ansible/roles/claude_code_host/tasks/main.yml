@@ -20,10 +20,30 @@
     state: directory
     mode: "0755"
 
+# `checksum` n'est pas décoratif, il rend la tâche IDEMPOTENTE. Sans lui, get_url
+# arbitre sur les dates : il compare le `Last-Modified` du serveur au mtime du
+# fichier local. Docker a republié cette clé le 2026-08-06 avec un contenu
+# INCHANGÉ (son etag est le md5 du corps, identique de part et d'autre), donc
+# l'amont paraît éternellement plus récent que notre fichier — et la tâche se
+# déclarait « changed » à chaque convergence, sans rien modifier. Un `changed`
+# permanent est pire qu'inutile : il détruit la valeur de `changed=0` comme
+# signal, celui-là même qui sert à valider les autres convergences.
+#
+# Ancrer sur le CONTENU corrige ça et resserre la confiance au passage : le
+# fichier n'est retéléchargé que s'il ne correspond plus à l'empreinte, et rien
+# qui diffère de l'empreinte n'est installé — c'est une ancre de confiance APT,
+# pas un fichier quelconque.
+#
+# ⚠️ Si Docker fait TOURNER sa clé pour de vrai, cette tâche gardera l'ancienne et
+#    apt échouera sur la vérification de signature. C'est le comportement voulu :
+#    un échec bruyant à investiguer, plutôt qu'une nouvelle clé acceptée en
+#    silence. Mettre alors l'empreinte à jour délibérément.
+#    Relevée le 2026-08-24, identique en local et à l'amont.
 - name: Récupérer la clé GPG Docker
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/debian/gpg
     dest: /etc/apt/keyrings/docker.asc
+    checksum: sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570
     mode: "0644"
 
 - name: Ajouter le dépôt Docker
