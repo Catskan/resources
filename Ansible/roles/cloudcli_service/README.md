@@ -13,7 +13,8 @@ le CT hôte n'a ni node ni cloudcli.
 
 ## Intégration
 
-Ajouté au play `claude_code_hosts` de `main_wyse_playbook.yml` :
+Ajouté au play `claude_code_hosts` de `main_optiplex_playbook.yml` (il était dans
+`main_wyse_playbook.yml` avant la migration du CT le 2026-08-23) :
 
 ```yaml
 roles:

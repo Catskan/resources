@@ -81,6 +81,11 @@
   changed_when: false
   check_mode: false
 
-- name: IP du CT — à reporter dans host_vars/claude-code/connection.yml (ProxyJump)
+# Informatif seulement. L'inventaire joint le CT par son adresse TAILNET
+# (100.64.0.1), pas par cette IP LAN et plus par ProxyJump : depuis que le CT vit
+# sur l'Optiplex, il est sur le même LAN que le contrôleur, et le contrôleur est
+# un portable. Cette IP sert à vérifier que le CT a bien pris un bail, pas à être
+# recopiée dans host_vars.
+- name: IP du CT (informatif — l'inventaire passe par le tailnet, pas par cette IP)
   ansible.builtin.debug:
     msg: "CT {{ ct_vmid }} ({{ ct_hostname }}) IP : {{ ct_ip.stdout }}"

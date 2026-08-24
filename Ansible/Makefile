@@ -20,7 +20,7 @@ help:
 	@echo "  make check-windows-sshd — Dry-run durcissement SSH Windows (--tags sshd --check)"
 	@echo "  make wyse             — Déploiement complet Wyse : crée le CT + provisionne (Docker)"
 	@echo "  make check-wyse       — Dry-run déploiement Wyse (--check --diff)"
-	@echo "  make claude-code      — Provisionne le CT seul (main_wyse --limit claude_code_hosts)"
+	@echo "  make claude-code      — Provisionne le CT seul (main_optiplex --limit claude_code_hosts)"
 	@echo "  make check-claude-code — Dry-run provisioning CT seul (--check --diff)"
 	@echo "  make optiplex         — Socle de l'hôte Proxmox Optiplex (dépôts, hygiène, ZFS, SSH)"
 	@echo "  make check-optiplex   — Dry-run socle Optiplex (--check --diff)"
@@ -100,10 +100,10 @@ check-wyse:
 	./scripts/run.sh ansible-playbook main_wyse_playbook.yml --check --diff $(ARGS)
 
 claude-code:
-	./scripts/run.sh ansible-playbook main_wyse_playbook.yml --limit claude_code_hosts $(ARGS)
+	./scripts/run.sh ansible-playbook main_optiplex_playbook.yml --limit claude_code_hosts $(ARGS)
 
 check-claude-code:
-	./scripts/run.sh ansible-playbook main_wyse_playbook.yml --limit claude_code_hosts --check --diff $(ARGS)
+	./scripts/run.sh ansible-playbook main_optiplex_playbook.yml --limit claude_code_hosts --check --diff $(ARGS)
 
 optiplex:
 	./scripts/run.sh ansible-playbook main_optiplex_playbook.yml $(ARGS)

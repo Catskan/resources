@@ -1,19 +1,39 @@
 ---
-# LXC claude-code sur le Wyse. Privilégié (FUSE/SSHFS + réseau natifs).
-ct_vmid: 101
+# LXC claude-code sur l'OPTIPLEX depuis la migration du 2026-08-23 (il était
+# VMID 101 sur le Wyse). Privilégié (FUSE/SSHFS + réseau natifs).
+#
+# ⚠️ 201 et non 101 : sur l'Optiplex, 101 est la VM Immich — les VMID sont
+#    partagés entre VM et CT sur un nœud. Et pointer 101 ferait démarrer par la
+#    tâche « Démarrer le CT » l'ancien CT du Wyse, gardé arrêté comme filet.
+ct_vmid: 201
 ct_hostname: claude-code
 ct_template_storage: local
-ct_template: debian-13-standard_13.1-2_amd64.tar.zst
+# Aligné sur ce que porte réellement `local` de l'Optiplex (pvesm list local
+# --content vztmpl) : un template absent fait échouer `pct create`.
+ct_template: debian-13-standard_13.6-1_amd64.tar.zst
 ct_unprivileged: 0
 ct_features: nesting=1,fuse=1
 ct_cores: 4
-ct_memory: 3072 # Mo — safe sur 8 Go tant que la barrette 16 Go n'est pas posée
+# 8192 Mo, valeur réelle du CT 201. L'Optiplex a 31,8 Go mais seulement ~10 Go
+# d'`available` : la marge vient de la rétraction de l'ARC ZFS (c_max 8 GiB,
+# c_min 2 GiB), au détriment d'Immich qui tourne sur local-zfs. À surveiller
+# plutôt qu'à augmenter.
+ct_memory: 8192
 ct_swap: 2048
-# rootfs sur `local` (dir) et NON local-lvm : isole le CT du pool thin de HA (prod).
-ct_rootfs: local:12
+# rootfs réel du CT 201. Contrairement au Wyse — où le rootfs était mis sur
+# `local` (dir) pour isoler le CT du pool thin de prod — il est ici sur local-zfs,
+# partagé avec Immich. Compensation : ZFS compresse en lz4 (compressratio 1.62x
+# mesuré, jusqu'à 2,7x sur les JSONL), donc 42 G déclarés ne coûtent que ~10 G au
+# pool. ⚠️ Corollaire : `du` dans ce CT rend des tailles COMPRESSÉES, non
+# comparables à celles du Wyse — utiliser `du --apparent-size`.
+ct_rootfs: local-zfs:42
 ct_bridge: vmbr0
 ct_nameserver: 1.1.1.1
 ct_onboot: 1
+# ⚠️ Divergence connue : la tâche de création passe `--net0 … ip=dhcp`, alors que
+#    le CT 201 réel porte une IP STATIQUE (192.168.1.101/24, gw .254) parce qu'il
+#    a été restauré d'un dump, pas créé par ce rôle. Sans conséquence tant qu'on
+#    ne le recrée pas — et même recréé, l'inventaire le joint par le tailnet.
 # Clé publique du contrôleur (le Air), injectée dans le CT à la création via
 # --ssh-public-keys → accès SSH root du CT depuis Ansible (ProxyJump ensuite).
 # ⚠️ Adapter si la clé du contrôleur n'est pas id_ed25519.

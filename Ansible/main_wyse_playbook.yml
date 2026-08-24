@@ -1,28 +1,34 @@
 ---
-# Déploiement complet du stack claude-code sur le Wyse, en deux plays :
-#   1) sur l'hôte Proxmox        : créer/démarrer le CT (rôle proxmox_claude_lxc)
-#   2) sur le CT lui-même (SSH via ProxyJump) : Docker + prérequis (claude_code_host)
-# La migration des données (rsync + checksums) reste un runbook séparé
-# (MIGRATION-WYSE.md), tout comme le `docker compose up` final.
+# Hôte Proxmox « Wyse » (box domotique, site de la mère) — hygiène de l'hôte et
+# job de sauvegarde offsite. UN SEUL play.
 #
-# make wyse                      → les deux plays (déploiement complet)
-# make wyse ARGS='--limit claude_code_hosts'  → provisioning du CT seul (= make claude-code)
-# make wyse ARGS='--limit proxmox_wyse'       → création du CT seule
+# ⚠️ Ce playbook NE gère PLUS le CT claude-code. Il a été migré le 2026-08-23
+#    vers le CT 201 de l'Optiplex ; sa création et son provisioning vivent
+#    désormais dans main_optiplex_playbook.yml. Voir Catskan/nas-claude-code,
+#    MIGRATION-OPTIPLEX.md.
+#
+#    Le rôle proxmox_claude_lxc a été RETIRÉ d'ici pour une raison concrète, pas
+#    par cosmétique : sa tâche « Démarrer le CT » n'est gardée que par « pas déjà
+#    running », sans lien avec la création. Avec ct_vmid 101, une convergence
+#    complète DÉMARRAIT le CT 101 — qu'on garde volontairement arrêté comme filet
+#    de repli. Le CT redémarré reprenait alors la bagarre pour l'identité tailnet
+#    100.64.0.1, et le play suivant risquait de provisionner le mauvais CT.
+#
+# Ce qui RESTE chez la mère et continue d'être géré ici : la VM 100 Home Assistant
+# (dongle Zigbee sur place, non reconstructible ailleurs) et le CT 102 headscale,
+# plan de contrôle du tailnet. Les CT 101 et 103, migrés, sont exclus du job de
+# sauvegarde (pve_backup_exclude dans host_vars/wyse-proxmox).
+#
+# make wyse                          → le play complet
+# make check-wyse                    → dry-run (--check --diff)
+# make wyse ARGS='--tags backup'     → job de sauvegarde seul
+# make wyse ARGS='--tags maintenance'→ hygiène de l'hôte seule
 
-- name: Créer le LXC claude-code sur le Wyse (Proxmox)
+- name: Socle et sauvegarde de l'hôte Proxmox Wyse
   hosts: proxmox_wyse
   become: true
   gather_facts: true
 
   roles:
-    - role: proxmox_claude_lxc
     - role: proxmox_host_maintenance
       tags: [maintenance]
-
-- name: Provisionner le CT claude-code (Docker + prérequis)
-  hosts: claude_code_hosts
-  gather_facts: true
-
-  roles:
-    - role: claude_code_host
-    - role: cloudcli_service
