@@ -114,3 +114,36 @@ pve_backup_prune: "keep-last=2,keep-weekly=4,keep-monthly=3"
 #    reprendre si le rôle apprend un jour à gérer plusieurs jobs.
 #    Détails : Catskan/nas-claude-code, MIGRATION-OPTIPLEX.md §9.6
 pve_backup_exclude: "201"
+
+# --- Attente du NFS avant les invités ------------------------------------------
+# Constaté le 2026-08-24, après un redémarrage de l'hôte : les CT 103
+# ai-agent-astreinte et 202 vinted-bot NE SE SONT PAS rallumés, et il a fallu les
+# démarrer à la main. Le log de tâche est net :
+#
+#   run_buffer: 569 Script exited with status 2
+#   lxc_init: 1037 Failed to run lxc.hook.pre-start for container "103"
+#   TASK ERROR: startup for container '103' failed
+#
+# `lxc.hook.pre-start` est ce qui monte les points de montage du conteneur. Or ces
+# deux CT sont les SEULS à avoir des `mp` hors de leur rootfs, et tous pointent
+# /mnt/pve/NAS_Aurelien :
+#   103:mp0 → …/AI/Claude-data
+#   202:mp0 → …/Projects/vinted-bot/data-aurelien
+#   202:mp1 → …/Projects/vinted-bot/data-amandine
+# `startall` s'est lancé 7 secondes après le boot, avant que pvestatd n'ait monté
+# l'export. Les cinq autres invités, qui ne dépendent que de local-zfs, ont
+# démarré sans problème — d'où le caractère sélectif de la panne.
+#
+# ⚠️ Différence avec le Wyse, pour qui ce mécanisme a été écrit : ici le montage
+#    n'est PAS dans /etc/fstab, c'est un stockage PVE monté par pvestatd. La tâche
+#    de patch fstab ne trouvera donc rien à modifier (sans effet), et la boucle du
+#    script tentera un `systemctl start mnt-pve-NAS_Aurelien.mount` qui n'existe
+#    pas — échec avalé par son `|| true`. Le script se réduit alors à une pure
+#    attente de `findmnt`, ce qui est précisément le besoin.
+#
+# L'unité générée est `Before=pve-guests.service` sans `Requires` : elle ORDONNE
+# sans opposer de veto. Si le NAS reste absent, elle rend la main au bout de
+# tries × delay et les invités démarrent quand même — 103 et 202 échoueront alors
+# comme aujourd'hui, mais sans bloquer les autres.
+pve_nfs_wait_mounts:
+  - /mnt/pve/NAS_Aurelien
