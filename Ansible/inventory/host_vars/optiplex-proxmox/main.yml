@@ -145,5 +145,13 @@ pve_backup_exclude: "201"
 # sans opposer de veto. Si le NAS reste absent, elle rend la main au bout de
 # tries × delay et les invités démarrent quand même — 103 et 202 échoueront alors
 # comme aujourd'hui, mais sans bloquer les autres.
+#
+# ✅ VALIDÉ par un vrai redémarrage le 2026-08-25. Le journal de l'unité :
+#      nfs-mount-wait: /mnt/pve/NAS_Aurelien monté après 15s
+#      Finished nfs-mount-wait-mnt-pve-NAS_Aurelien.service
+#    puis startall a listé les SEPT invités — 100, 101, 102, 103, 200, 201, 202 —
+#    sans un seul échec, là où les deux boots précédents perdaient 103 et 202.
+#    Ces 15 secondes sont exactement la fenêtre qui manquait : startall partait
+#    auparavant à +7 s, avant que pvestatd n'ait monté l'export.
 pve_nfs_wait_mounts:
   - /mnt/pve/NAS_Aurelien
