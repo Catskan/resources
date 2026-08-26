@@ -1,9 +1,0 @@
----
-- name: Uninstall Windows AppX bloatware
-  hosts: aurelien-gaming
-  gather_facts: false
-
-  tasks:
-    - ansible.builtin.include_role:
-        name: windows_gaming
-        tasks_from: appx_bloatware.yml

@@ -1,9 +1,0 @@
----
-# Le Caddyfile et les certificats sont montés en volume : un restart suffit à les
-# reprendre, pas besoin de recréer le conteneur. Coupure < 1 s.
-#
-# `raw` et non `command` : DSM n'a pas de Python ≥ 3.9 (cf. en-tête de tasks/main.yml).
-- name: Restart caddy
-  ansible.builtin.raw: "PATH={{ immich_proxy_path }} docker restart {{ immich_proxy_container_name }}"
-  changed_when: true
-  when: not ansible_check_mode

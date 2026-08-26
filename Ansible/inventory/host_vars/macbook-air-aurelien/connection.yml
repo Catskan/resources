@@ -1,3 +1,0 @@
-# Le MacBook est désormais le contrôleur Ansible : on cible localhost.
-ansible_connection: local
-ansible_user: aurelien

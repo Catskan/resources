@@ -1,8 +1,0 @@
----
-- name: Configure Arch Linux laptop
-  hosts: arch-linux-laptop
-  gather_facts: yes
-
-  roles:
-    - role: linux_laptop
-    - role: common

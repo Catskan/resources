@@ -1,5 +1,0 @@
----
-- name: Redémarrer sshd
-  ansible.windows.win_service:
-    name: sshd
-    state: restarted

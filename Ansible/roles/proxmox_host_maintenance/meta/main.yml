@@ -1,7 +1,0 @@
----
-galaxy_info:
-  role_name: proxmox_host_maintenance
-  author: Aurélien
-  description: Hygiène d'un hôte Proxmox (fstrim des CT, alerte disque, journald, plafond ARC ZFS)
-  license: private
-  min_ansible_version: "2.14"

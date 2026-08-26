@@ -1,3 +1,14 @@
+> **Ansible a déménagé.** Le contenu de  vit désormais dans son propre dépôt :
+> **[Catskan/infra-ansible](https://github.com/Catskan/infra-ansible)** — extrait le 2026-08-26
+> par `git subtree split`, avec ses 311 commits d historique (2022-10-27 → 2026-08-25).
+>
+> Raison : 52 % des commits de ce dépôt ne touchaient que Ansible, il a son propre outillage
+> (`Makefile`, `ansible.cfg`, `.ansible-lint`) et ses propres consommateurs (Proxmox, Windows,
+> macOS, laptops Linux, CT). Le garder ici imposait 828 Mo de `Microsoft-Resources` à chaque
+> clone et à chaque runner CI.
+>
+> Ne pas le réintroduire ici : deux copies d un même dépôt dérivent toujours.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
